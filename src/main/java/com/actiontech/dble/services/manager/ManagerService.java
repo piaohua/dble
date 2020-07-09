@@ -1,8 +1,11 @@
 package com.actiontech.dble.services.manager;
 
+import com.actiontech.dble.config.Capabilities;
 import com.actiontech.dble.config.ErrorCode;
+import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.config.model.user.ManagerUserConfig;
 import com.actiontech.dble.net.connection.AbstractConnection;
+import com.actiontech.dble.net.mysql.AuthPacket;
 import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.net.mysql.PingPacket;
 import com.actiontech.dble.net.service.AuthResultInfo;
@@ -24,10 +27,16 @@ public class ManagerService extends MySQLBasedService {
     }
 
     public void initFromAuthInfo(AuthResultInfo info) {
+        AuthPacket auth = info.getMysqlAuthPacket();
         this.user = new Pair<>(info.getMysqlAuthPacket().getUser(), "");
         this.userConfig = info.getUserConfig();
         connection.initCharsetIndex(info.getMysqlAuthPacket().getCharsetIndex());
         this.clientFlags = info.getMysqlAuthPacket().getClientFlags();
+        boolean clientCompress = Capabilities.CLIENT_COMPRESS == (Capabilities.CLIENT_COMPRESS & auth.getClientFlags());
+        boolean usingCompress = SystemConfig.getInstance().getUseCompression() == 1;
+        if (clientCompress && usingCompress) {
+            this.setSupportCompress(true);
+        }
     }
 
 

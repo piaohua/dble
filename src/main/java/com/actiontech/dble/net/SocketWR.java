@@ -5,6 +5,8 @@
 
 package com.actiontech.dble.net;
 
+import com.actiontech.dble.net.connection.*;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -19,4 +21,6 @@ public abstract class SocketWR {
     public abstract void disableRead();
 
     public abstract void enableRead();
+
+    public abstract void initFromConnection(com.actiontech.dble.net.connection.AbstractConnection connection);
 }

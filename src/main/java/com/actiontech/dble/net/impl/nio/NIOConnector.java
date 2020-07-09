@@ -47,6 +47,7 @@ public final class NIOConnector extends Thread implements SocketConnector {
         this.connectQueue = new LinkedBlockingQueue<>();
     }
 
+    @Override
     public void postConnect(AbstractConnection c) {
         connectQueue.offer(c);
         selector.wakeup();

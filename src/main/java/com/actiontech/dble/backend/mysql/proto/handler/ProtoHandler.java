@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
  */
 public interface ProtoHandler {
 
-    ProtoHandlerResult handle(ByteBuffer dataBuffer, int dataBufferOffset);
+    ProtoHandlerResult handle(ByteBuffer dataBuffer, int dataBufferOffset, boolean isSupportCompress);
 
     String getSQL(byte[] data, CharsetNames charsetNames) throws UnsupportedEncodingException;
 

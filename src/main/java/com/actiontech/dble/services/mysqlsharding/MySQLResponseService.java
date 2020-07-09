@@ -21,6 +21,7 @@ import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.services.MySQLBasedService;
 import com.actiontech.dble.statistic.stat.ThreadWorkUsage;
+import com.actiontech.dble.util.CompressUtil;
 import com.actiontech.dble.util.StringUtil;
 import com.actiontech.dble.util.TimeUtil;
 import com.actiontech.dble.util.exception.UnknownTxIsolationException;
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -98,7 +100,7 @@ public class MySQLResponseService extends MySQLBasedService {
         super(connection);
         this.connection = (BackendConnection) connection;
         initFromConfig();
-        this.proto = new MySQLProtoHandlerImpl(false);
+        this.proto = new MySQLProtoHandlerImpl();
         this.logicHandler = new MysqlBackendLogicHandler(this);
     }
 
@@ -121,8 +123,16 @@ public class MySQLResponseService extends MySQLBasedService {
 
     @Override
     public void handleData(ServiceTask task) {
-        //LOGGER.info("count of the backend " + totalCommand++);
-        handleInnerData(task.getOrgData());
+        if (isSupportCompress()) {
+            List<byte[]> packs = CompressUtil.decompressMysqlPacket(task.getOrgData(), new ConcurrentLinkedQueue<byte[]>());
+            for (byte[] pack : packs) {
+                if (pack.length != 0) {
+                    handleInnerData(pack);
+                }
+            }
+        } else {
+            this.handleInnerData(task.getOrgData());
+        }
     }
 
 

@@ -19,22 +19,20 @@ import static com.actiontech.dble.backend.mysql.proto.handler.ProtoHandlerResult
  */
 public class MySQLProtoHandlerImpl implements ProtoHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(MySQLProtoHandlerImpl.class);
-    protected final boolean isSupportCompress;
 
     private byte[] incompleteData = null;
 
-    public MySQLProtoHandlerImpl(boolean isSupportCompress) {
-        this.isSupportCompress = isSupportCompress;
+    public MySQLProtoHandlerImpl() {
     }
 
     @Override
-    public ProtoHandlerResult handle(ByteBuffer dataBuffer, int offset) {
+    public ProtoHandlerResult handle(ByteBuffer dataBuffer, int offset, boolean isSupportCompress) {
         int position = dataBuffer.position();
         int length = getPacketLength(dataBuffer, offset, isSupportCompress);
         //LOGGER.debug("THE LENGTH is position " + length + " " + position);
         if (length > position) {
             for (int i = 0; i < 30; i++) {
-               // LOGGER.debug(" " + Integer.toHexString(dataBuffer.get(i)));
+                // LOGGER.debug(" " + Integer.toHexString(dataBuffer.get(i)));
             }
         }
         if (length == -1) {

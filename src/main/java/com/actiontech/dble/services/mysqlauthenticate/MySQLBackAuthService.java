@@ -22,6 +22,7 @@ import com.actiontech.dble.services.mysqlauthenticate.plugin.NativePwd;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.Executor;
 
 import static com.actiontech.dble.config.ErrorCode.ER_ACCESS_DENIED_ERROR;
@@ -49,7 +50,7 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
         this.schema = schema;
         this.passwd = passwd;
         this.listener = listener;
-        this.proto = new MySQLProtoHandlerImpl(false);
+        this.proto = new MySQLProtoHandlerImpl();
         this.handler = handler;
     }
 
@@ -100,7 +101,7 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
             boolean clientCompress = Capabilities.CLIENT_COMPRESS == (Capabilities.CLIENT_COMPRESS & plugin.getHandshakePacket().getServerCapabilities());
             boolean usingCompress = SystemConfig.getInstance().getUseCompression() == 1;
             if (clientCompress && usingCompress) {
-                connection.setSupportCompress(true);
+                connection.getService().setSupportCompress(true);
             }
             if (listener != null) {
                 listener.onCreateSuccess((PooledConnection) connection);
@@ -112,6 +113,10 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
         }
     }
 
+    @Override
+    public void register() throws IOException {
+       connection.getSocketWR().asyncRead();
+    }
 
     protected void TaskToTotalQueue(ServiceTask task) {
         //LOGGER.info("get connection data of the task " + task.getOrgData().length);

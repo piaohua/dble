@@ -121,6 +121,7 @@ public class MySQLShardingService extends MySQLBasedService implements FrontEndS
         this.commands = connection.getProcessor().getCommands();
         this.protoLogicHandler = new MySQLProtoLogicHandler(this);
         this.shardingSQLHandler = new MySQLShardingSQLHandler(this);
+        this.proto = new MySQLProtoHandlerImpl();
     }
 
     public void query(String sql) {
@@ -334,9 +335,7 @@ public class MySQLShardingService extends MySQLBasedService implements FrontEndS
         boolean clientCompress = Capabilities.CLIENT_COMPRESS == (Capabilities.CLIENT_COMPRESS & auth.getClientFlags());
         boolean usingCompress = SystemConfig.getInstance().getUseCompression() == 1;
         if (clientCompress && usingCompress) {
-            proto = new MySQLProtoHandlerImpl(true);
-        } else {
-            proto = new MySQLProtoHandlerImpl(false);
+            this.setSupportCompress(true);
         }
         if (LOGGER.isDebugEnabled()) {
             StringBuilder s = new StringBuilder();

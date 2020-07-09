@@ -24,12 +24,11 @@ public abstract class AbstractService implements Service {
     protected ServiceTask currentTask = null;
     protected volatile ProtoHandler proto;
 
-    private final AtomicBoolean executing = new AtomicBoolean(false);
-
-
     protected AbstractConnection connection;
 
     private AtomicInteger packetId = new AtomicInteger(0);
+
+    private volatile boolean isSupportCompress = false;
 
     public AbstractService(AbstractConnection connection) {
         this.connection = connection;
@@ -40,16 +39,16 @@ public abstract class AbstractService implements Service {
 
         boolean hasReming = true;
         int offset = 0;
-        int totalsize = 0;
+        //int totalsize = 0; debug usage
         while (hasReming) {
-            ProtoHandlerResult result = proto.handle(dataBuffer, offset);
+            ProtoHandlerResult result = proto.handle(dataBuffer, offset, isSupportCompress);
             switch (result.getCode()) {
                 case REACH_END_BUFFER:
                     connection.readReachEnd();
                     byte[] packetData = result.getPacketData();
                     if (packetData != null) {
                         //LOGGER.debug(" get the packet of length " + packetData.length + " of connection " + connection.toString());
-                        totalsize += packetData.length;
+                        //totalsize += packetData.length;
                         taskCreate(packetData);
                     }
                     dataBuffer.clear();
@@ -67,7 +66,7 @@ public abstract class AbstractService implements Service {
                     hasReming = false;
                     break;
                 case STLL_DATA_REMING:
-                    totalsize += result.getPacketData().length;
+                    //totalsize += result.getPacketData().length;
                     taskCreate(result.getPacketData());
                     offset = result.getOffset();
                     continue;
@@ -109,7 +108,7 @@ public abstract class AbstractService implements Service {
     public abstract void handleData(ServiceTask task);
 
     public int nextPacketId() {
-        LOGGER.info("get packetid increment " + packetId.get(), new Exception("test"));
+        //LOGGER.info("get packetid increment " + packetId.get(), new Exception("test"));
         return packetId.incrementAndGet();
     }
 
@@ -202,5 +201,12 @@ public abstract class AbstractService implements Service {
         return connection.writeToBuffer(src, buffer);
     }
 
+    public boolean isSupportCompress() {
+        return isSupportCompress;
+    }
+
+    public void setSupportCompress(boolean supportCompress) {
+        isSupportCompress = supportCompress;
+    }
 
 }

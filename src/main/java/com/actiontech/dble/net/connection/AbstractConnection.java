@@ -10,12 +10,14 @@ import com.actiontech.dble.net.mysql.CharsetNames;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.net.service.AuthResultInfo;
 import com.actiontech.dble.net.service.Service;
+import com.actiontech.dble.util.CompressUtil;
 import com.actiontech.dble.util.TimeUtil;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.NetworkChannel;
@@ -59,7 +61,6 @@ public abstract class AbstractConnection implements Connection {
     protected int readBufferChunk;
     protected int maxPacketSize;
     protected volatile CharsetNames charsetName = new CharsetNames();
-    protected volatile boolean isSupportCompress = false;
 
 
     //统计值先不值得多管
@@ -99,9 +100,9 @@ public abstract class AbstractConnection implements Connection {
         }
         netInBytes += got;
         //LOGGER.debug("-------------------------------------------NET IN BYTES ======== " + netInBytes);
-        if (netInBytes > 15000) {
+        /*if (netInBytes > 15000) {
             LOGGER.debug("----");
-        }
+        }*/
         service.handle(readBuffer);
     }
 
@@ -115,7 +116,6 @@ public abstract class AbstractConnection implements Connection {
             }
 
             this.cleanup();
-            isSupportCompress = false;
 
             // ignore null information
             if (Strings.isNullOrEmpty(reason)) {
@@ -250,6 +250,10 @@ public abstract class AbstractConnection implements Connection {
         return id;
     }
 
+    public boolean finishConnect() throws IOException {
+        localPort = ((InetSocketAddress) channel.getLocalAddress()).getPort();
+        return true;
+    }
 
     public AbstractService getService() {
         return service;
@@ -338,12 +342,12 @@ public abstract class AbstractConnection implements Connection {
             return;
         }
 
-        //这个地方不在connection层进行处理，而是由service层进行处理
-       /* if (isSupportCompress()) {
-            ByteBuffer newBuffer = CompressUtil.compressMysqlPacket(buffer, this, compressUnfinishedDataQueue);
-            writeQueue.offer(newBuffer);
-        } else {*/
-        writeQueue.offer(new WriteOutTask(buffer, false));
+        if (service.isSupportCompress()) {
+            ByteBuffer newBuffer = CompressUtil.compressMysqlPacket(buffer, this, new ConcurrentLinkedQueue<byte[]>());
+            writeQueue.offer(new WriteOutTask(newBuffer, false));
+        } else {
+            writeQueue.offer(new WriteOutTask(buffer, false));
+        }
 
         // if ansyn writeDirectly finished event got lock before me ,then writing
         // flag is set false but not start a writeDirectly request
@@ -356,9 +360,6 @@ public abstract class AbstractConnection implements Connection {
         }
     }
 
-    private void write() {
-
-    }
 
     public boolean isClosed() {
         return isClosed;
@@ -512,15 +513,6 @@ public abstract class AbstractConnection implements Connection {
 
     public void setCharsetName(CharsetNames charsetName) {
         this.charsetName = charsetName;
-    }
-
-
-    public boolean isSupportCompress() {
-        return isSupportCompress;
-    }
-
-    public void setSupportCompress(boolean supportCompress) {
-        isSupportCompress = supportCompress;
     }
 
 

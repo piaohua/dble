@@ -44,7 +44,6 @@ public final class SelectDatabase implements InnerFuncResponse {
         buffer = row.write(buffer, shardingService, true);
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(shardingService.nextPacketId());
-        buffer = lastEof.write(buffer, shardingService, true);
         lastEof.write(buffer,shardingService);
     }
 

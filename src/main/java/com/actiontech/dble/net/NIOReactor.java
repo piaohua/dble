@@ -165,8 +165,8 @@ public final class NIOReactor {
             }
             while ((c = registerQueue.poll()) != null) {
                 try {
-                    ((NIOSocketWR) c.getSocketWR()).register(finalSelector);
-                    c.register();
+                   /* ((NIOSocketWR) c.getSocketWR()).register(finalSelector);
+                    c.register();*/
                 } catch (Exception e) {
                     if (c instanceof FrontendConnection) {
                         c.close("register err" + e.toString());

@@ -68,7 +68,7 @@ public abstract class AbstractConnection implements NIOConnection {
     protected volatile Map<String, String> usrVariables;
     protected volatile Map<String, String> sysVariables;
 
-    private final SocketWR socketWR;
+    private final SocketWR socketWR = null;
 
     private byte[] rowData;
 
@@ -78,7 +78,7 @@ public abstract class AbstractConnection implements NIOConnection {
         this.channel = channel;
         boolean isAIO = (channel instanceof AsynchronousChannel);
 
-            socketWR = new NIOSocketWR(this);
+          //  socketWR = new NIOSocketWR(this);
         this.startupTime = TimeUtil.currentTimeMillis();
         this.lastReadTime = startupTime;
         this.lastWriteTime = startupTime;
@@ -87,7 +87,6 @@ public abstract class AbstractConnection implements NIOConnection {
     public AbstractConnection() {
         /* just for unit test */
         this.channel = null;
-        this.socketWR = null;
     }
 
     public void setCollationConnection(String collation) {
@@ -423,8 +422,8 @@ public abstract class AbstractConnection implements NIOConnection {
             return;
         }
         if (isSupportCompress()) {
-            ByteBuffer newBuffer = CompressUtil.compressMysqlPacket(buffer, this, compressUnfinishedDataQueue);
-            writeQueue.offer(newBuffer);
+           /* ByteBuffer newBuffer = CompressUtil.compressMysqlPacket(buffer, this, compressUnfinishedDataQueue);
+            writeQueue.offer(newBuffer);*/
         } else {
             writeQueue.offer(buffer);
         }

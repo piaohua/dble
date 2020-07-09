@@ -38,7 +38,7 @@ public class MySQLFrontAuthService extends MySQLBasedService implements AuthServ
 
     public MySQLFrontAuthService(AbstractConnection connection) {
         super(connection);
-        this.proto = new MySQLProtoHandlerImpl(connection.isSupportCompress());
+        this.proto = new MySQLProtoHandlerImpl();
         SystemConfig.getInstance().getFakeMySQLVersion();
 
         plugin = new NativePwd(connection);
@@ -48,6 +48,7 @@ public class MySQLFrontAuthService extends MySQLBasedService implements AuthServ
     @Override
     public void register() throws IOException {
         seed = plugin.greeting();
+        connection.getSocketWR().asyncRead();
     }
 
     @Override

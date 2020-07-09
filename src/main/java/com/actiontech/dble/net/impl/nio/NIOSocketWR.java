@@ -62,9 +62,7 @@ public class NIOSocketWR extends SocketWR {
                 if ((processKey.isValid() && (processKey.interestOps() & SelectionKey.OP_WRITE) != 0)) {
                     disableWrite();
                 }
-
             } else {
-
                 if ((processKey.isValid() && (processKey.interestOps() & SelectionKey.OP_WRITE) == 0)) {
                     enableWrite(false);
                 }
@@ -274,13 +272,6 @@ public class NIOSocketWR extends SocketWR {
         ByteBuffer theBuffer = con.findReadBuffer();
         int got = channel.read(theBuffer);
         con.onReadData(got);
-    }
-
-    private boolean bufferIsQuit(ByteBuffer buffer) {
-        byte[] data = new byte[5];
-        buffer.position(0);
-        buffer.get(data);
-        return data[0] == 1 && data[1] == 0 && data[2] == 0 && data[3] == 0 && data[4] == 1;
     }
 
 }

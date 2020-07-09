@@ -168,7 +168,7 @@ public final class NIOReactor {
                     ((NIOSocketWR) c.getSocketWR()).register(finalSelector);
                     c.register();
                 } catch (Exception e) {
-
+                    //todo 确认调用register的时候会发生什么
                     /*if (c instanceof FrontendConnection) {
                         c.close("register err" + e.toString());
                     } else if (c instanceof MySQLConnection) {

@@ -26,6 +26,8 @@ import com.actiontech.dble.net.SocketAcceptor;
 import com.actiontech.dble.net.SocketConnector;
 import com.actiontech.dble.net.executor.FrontEndHandlerRunnable;
 import com.actiontech.dble.net.executor.WriteToBackendRunnable;
+import com.actiontech.dble.net.impl.aio.AIOAcceptor;
+import com.actiontech.dble.net.impl.aio.AIOConnector;
 import com.actiontech.dble.net.impl.nio.NIOAcceptor;
 import com.actiontech.dble.net.impl.nio.NIOConnector;
 import com.actiontech.dble.net.impl.nio.NIOReactorPool;
@@ -178,17 +180,16 @@ public final class DbleServer {
 
         aio = (SystemConfig.getInstance().getUsingAIO() == 1);
         if (aio) {
-            /*int processorCount = frontProcessorCount + backendProcessorCount;
+            int processorCount = frontProcessorCount + backendProcessorCount;
             LOGGER.info("using aio network handler ");
             asyncChannelGroups = new AsynchronousChannelGroup[processorCount];
             initAioProcessor(processorCount);
 
             connector = new AIOConnector();
-           *//* manager = new AIOAcceptor(NAME + "Manager", SystemConfig.getInstance().getBindIp(),
-                    SystemConfig.getInstance().getManagerPort(), 100, new ManagerConnectionFactory(), this.asyncChannelGroups[0]);*//*
+            manager = new AIOAcceptor(NAME + "Manager", SystemConfig.getInstance().getBindIp(),
+                    SystemConfig.getInstance().getManagerPort(), 100, new ManagerConnectionFactory(), this.asyncChannelGroups[0]);
             server = new AIOAcceptor(NAME + "Server", SystemConfig.getInstance().getBindIp(),
                     SystemConfig.getInstance().getServerPort(), SystemConfig.getInstance().getServerBacklog(), new ServerConnectionFactory(), this.asyncChannelGroups[0]);
-*/
         } else {
             NIOReactorPool frontReactorPool = new NIOReactorPool(
                     DirectByteBufferPool.LOCAL_BUF_THREAD_PREX + "NIO_REACTOR_FRONT",
@@ -198,7 +199,7 @@ public final class DbleServer {
                     backendProcessorCount);
 
             connector = new NIOConnector(DirectByteBufferPool.LOCAL_BUF_THREAD_PREX + "NIOConnector", backendReactorPool);
-            ((NIOConnector) connector).start();
+            connector.start();
 
             manager = new NIOAcceptor(DirectByteBufferPool.LOCAL_BUF_THREAD_PREX + NAME + "Manager", SystemConfig.getInstance().getBindIp(),
                     SystemConfig.getInstance().getManagerPort(), 100, new ManagerConnectionFactory(), frontReactorPool);

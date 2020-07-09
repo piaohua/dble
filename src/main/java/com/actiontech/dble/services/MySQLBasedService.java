@@ -8,9 +8,12 @@ import com.actiontech.dble.net.mysql.ErrorPacket;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.net.service.ServiceTask;
 import com.actiontech.dble.route.parser.util.Pair;
+import com.actiontech.dble.util.CompressUtil;
 import com.actiontech.dble.util.StringUtil;
 
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created by szf on 2020/6/28.
@@ -58,7 +61,16 @@ public abstract class MySQLBasedService extends AbstractService {
             if (data != null && !executeTask.isReuse()) {
                 this.setPacketId(data[3]);
             }
-            this.handleInnerData(data);
+            if (isSupportCompress()) {
+                List<byte[]> packs = CompressUtil.decompressMysqlPacket(data, new ConcurrentLinkedQueue<byte[]>());
+                for (byte[] pack : packs) {
+                    if (pack.length != 0) {
+                        handleInnerData(pack);
+                    }
+                }
+            } else {
+                this.handleInnerData(data);
+            }
             currentTask = null;
         }
     }
