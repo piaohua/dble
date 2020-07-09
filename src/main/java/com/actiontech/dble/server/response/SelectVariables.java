@@ -8,10 +8,7 @@ package com.actiontech.dble.server.response;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.backend.mysql.VersionUtil;
 import com.actiontech.dble.config.Fields;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.google.common.base.Splitter;
 import org.slf4j.Logger;
@@ -42,11 +39,10 @@ public final class SelectVariables {
         FieldPacket[] fields = new FieldPacket[fieldCount];
 
         int i = 0;
-        byte packetId = setCurrentPacket(service);
-        header.setPacketId(++packetId);
+        header.setPacketId(service.nextPacketId());
         for (String s : splitVar) {
             fields[i] = PacketUtil.getField(s, Fields.FIELD_TYPE_VAR_STRING);
-            fields[i++].setPacketId(++packetId);
+            fields[i++].setPacketId(service.nextPacketId());
         }
 
 
@@ -62,7 +58,7 @@ public final class SelectVariables {
 
 
         EOFPacket eof = new EOFPacket();
-        eof.setPacketId(++packetId);
+        eof.setPacketId(service.nextPacketId());
         // writeDirectly eof
         buffer = eof.write(buffer, service, true);
 
@@ -88,19 +84,14 @@ public final class SelectVariables {
 
         }
 
-        row.setPacketId(++packetId);
+        row.setPacketId(service.nextPacketId());
         buffer = row.write(buffer, service, true);
 
 
         // writeDirectly lastEof
-        EOFPacket lastEof = new EOFPacket();
-        lastEof.setPacketId(++packetId);
-        service.getSession2().multiStatementPacket(lastEof, packetId);
-        buffer = lastEof.write(buffer, service, true);
-        boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-        // writeDirectly buffer
-        service.writeDirectly(buffer);
-        service.getSession2().multiStatementNextSql(multiStatementFlag);
+        EOFRowPacket lastEof = new EOFRowPacket();
+        lastEof.setPacketId(service.nextPacketId());
+        lastEof.write(buffer,service);
     }
 
     private static List<String> convert(List<String> in) {

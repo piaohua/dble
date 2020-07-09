@@ -4,6 +4,7 @@ import com.actiontech.dble.backend.mysql.nio.handler.transaction.xa.handler.Abst
 import com.actiontech.dble.backend.mysql.xa.TxState;
 import com.actiontech.dble.backend.mysql.xa.XAStateLog;
 import com.actiontech.dble.btrace.provider.XaDelayProvider;
+import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
@@ -19,7 +20,7 @@ public class XACommitStage extends XAStage {
     }
 
     @Override
-    public XAStage next(boolean isFail, String errMsg, byte[] errPacket) {
+    public XAStage next(boolean isFail, String errMsg, MySQLPacket errPacket) {
         if (isFail) {
             return new XACommitFailStage(session, xaHandler);
         }

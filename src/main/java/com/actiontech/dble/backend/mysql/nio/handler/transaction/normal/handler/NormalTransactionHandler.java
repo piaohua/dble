@@ -14,6 +14,7 @@ import com.actiontech.dble.backend.mysql.nio.handler.transaction.normal.stage.Ro
 import com.actiontech.dble.net.connection.BackendConnection;
 import com.actiontech.dble.net.mysql.ErrorPacket;
 import com.actiontech.dble.net.mysql.FieldPacket;
+import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.net.mysql.RowDataPacket;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.route.RouteResultsetNode;
@@ -30,7 +31,7 @@ public class NormalTransactionHandler extends MultiNodeHandler implements Transa
     private static Logger logger = LoggerFactory.getLogger(NormalTransactionHandler.class);
 
     private volatile TransactionStage currentStage;
-    private volatile byte[] sendData;
+    private volatile MySQLPacket sendData;
 
     public NormalTransactionHandler(NonBlockingSession session) {
         super(session);
@@ -92,7 +93,7 @@ public class NormalTransactionHandler extends MultiNodeHandler implements Transa
     }
 
     @Override
-    public void turnOnAutoCommit(byte[] previousSendData) {
+    public void turnOnAutoCommit(MySQLPacket previousSendData) {
         this.sendData = previousSendData;
     }
 
@@ -104,9 +105,9 @@ public class NormalTransactionHandler extends MultiNodeHandler implements Transa
     }
 
     private TransactionStage next() {
-        byte[] data = null;
+        MySQLPacket data = null;
         if (isFail()) {
-            data = createErrPkg(error).toBytes();
+            data = createErrPkg(error);
         } else if (sendData != null) {
             data = sendData;
         }

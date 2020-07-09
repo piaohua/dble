@@ -8,10 +8,7 @@ package com.actiontech.dble.server.response;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.config.Versions;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 
@@ -31,11 +28,10 @@ public final class SelectVersionComment {
 
     public static void response(AbstractService service) {
 
-        byte packetId = setCurrentPacket(service);
-        HEADER.setPacketId(++packetId);
+        HEADER.setPacketId(service.nextPacketId());
         FIELDS[0] = PacketUtil.getField("@@VERSION_COMMENT", Fields.FIELD_TYPE_VAR_STRING);
-        FIELDS[0].setPacketId(++packetId);
-        EOF.setPacketId(++packetId);
+        FIELDS[0].setPacketId(service.nextPacketId());
+        EOF.setPacketId(service.nextPacketId());
 
         ByteBuffer buffer = service.allocate();
 
@@ -54,25 +50,14 @@ public final class SelectVersionComment {
 
         RowDataPacket row = new RowDataPacket(FIELD_COUNT);
         row.add(Versions.VERSION_COMMENT);
-        row.setPacketId(++packetId);
+        row.setPacketId(service.nextPacketId());
         buffer = row.write(buffer, service, true);
 
         // writeDirectly last eof
-        EOFPacket lastEof = new EOFPacket();
-        lastEof.setPacketId(++packetId);
-        boolean multiStatementFlag = false;
-        if (service instanceof MySQLShardingService) {
-            multiStatementFlag = ((MySQLShardingService) service).getSession2().getIsMultiStatement().get();
-            ((MySQLShardingService) service).getSession2().multiStatementPacket(lastEof, packetId);
-        }
-        buffer = lastEof.write(buffer, service, true);
+        EOFRowPacket lastEof = new EOFRowPacket();
+        lastEof.setPacketId(service.nextPacketId());
 
-        // post writeDirectly
-        service.writeDirectly(buffer);
-        if (service instanceof MySQLShardingService) {
-            ((MySQLShardingService) service).getSession2().multiStatementNextSql(multiStatementFlag);
-        }
-
+        lastEof.write(buffer,service);
     }
 
 

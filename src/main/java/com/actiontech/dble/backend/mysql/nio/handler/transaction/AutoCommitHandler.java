@@ -1,6 +1,7 @@
 package com.actiontech.dble.backend.mysql.nio.handler.transaction;
 
 import com.actiontech.dble.net.connection.BackendConnection;
+import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
@@ -11,11 +12,11 @@ public class AutoCommitHandler implements TransactionHandler {
 
     private final NonBlockingSession session;
     private TransactionHandler realHandler;
-    private final byte[] sendData;
+    private final MySQLPacket sendData;
     private final RouteResultsetNode[] nodes;
     private final List<MySQLResponseService> errConnection;
 
-    public AutoCommitHandler(NonBlockingSession session, byte[] packet, RouteResultsetNode[] nodes, List<MySQLResponseService> errConnection) {
+    public AutoCommitHandler(NonBlockingSession session, MySQLPacket packet, RouteResultsetNode[] nodes, List<MySQLResponseService> errConnection) {
         this.session = session;
         this.sendData = packet;
         this.nodes = nodes;
@@ -41,7 +42,7 @@ public class AutoCommitHandler implements TransactionHandler {
             }
             session.getTargetMap().clear();
             errConnection.clear();
-            session.getFrontConnection().write(sendData);
+            sendData.write(session.getFrontConnection());
             return;
         }
         if (errConnection != null && errConnection.size() > 0) {
@@ -58,7 +59,7 @@ public class AutoCommitHandler implements TransactionHandler {
     }
 
     @Override
-    public void turnOnAutoCommit(byte[] previousSendData) {
+    public void turnOnAutoCommit(MySQLPacket previousSendData) {
         // no need
     }
 }

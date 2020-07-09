@@ -118,9 +118,7 @@ public class MysqlCreateViewHandler implements ResponseHandler {
         session.releaseConnectionIfSafe(responseService, false);
         session.setResponseTime(true);
         session.multiStatementPacket(ok, packetId);
-        boolean multiStatementFlag = session.getIsMultiStatement().get();
         ok.write(session.getFrontConnection());
-        session.multiStatementNextSql(multiStatementFlag);
     }
 
     private void backConnectionErr(ErrorPacket errPkg, MySQLResponseService service, boolean syncFinished) {

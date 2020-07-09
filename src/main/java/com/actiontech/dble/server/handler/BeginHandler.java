@@ -18,9 +18,7 @@ public final class BeginHandler {
         } else {
             service.setTxStarted(true);
             TxnLogHelper.putTxnLog(service, stmt);
-            boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-            service.writeDirectly(service.writeToBuffer(service.getSession2().getOkByteArray(), service.allocate()));
-            service.getSession2().multiStatementNextSql(multiStatementFlag);
+            service.write(service.getSession2().getOKPacket());
         }
     }
 }

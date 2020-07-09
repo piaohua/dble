@@ -1000,16 +1000,6 @@ public class NonBlockingSession implements Session {
         }*/
     }
 
-
-    public byte[] getOkByteArray() {
-        OkPacket ok = new OkPacket();
-        byte packet = (byte) this.getPacketId().incrementAndGet();
-        ok.read(OkPacket.OK);
-        ok.setPacketId(packet);
-        this.multiStatementPacket(ok, packet);
-        return ok.toBytes();
-    }
-
     public OkPacket getOKPacket(){
         OkPacket ok = new OkPacket();
         byte packet = (byte) this.getPacketId().incrementAndGet();
@@ -1017,6 +1007,7 @@ public class NonBlockingSession implements Session {
         ok.setPacketId(packet);
         return ok;
     }
+
 
     public void queryCount() {
         queriesCounter.incrementAndGet();

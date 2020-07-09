@@ -26,9 +26,7 @@ public final class SetInnerHandler {
         if (preHandleSingleXA(shardingService, valueExpr, innerSetTask)) {
             String key = innerSetTask.get(0).getValue().getKey();
             shardingService.getSession2().getTransactionManager().setXaTxEnabled(Boolean.valueOf(key), shardingService);
-            boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-            shardingService.writeDirectly(shardingService.writeToBuffer(shardingService.getSession2().getOkByteArray(), shardingService.allocate()));
-            shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+            shardingService.write(shardingService.getSession2().getOKPacket());
             return true;
         }
         return false;
@@ -62,9 +60,7 @@ public final class SetInnerHandler {
         if (preHandleSingleTrace(shardingService, valueExpr, innerSetTask)) {
             String key = innerSetTask.get(0).getValue().getKey();
             shardingService.getSession2().setTrace(Boolean.valueOf(key));
-            boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-            shardingService.writeDirectly(shardingService.writeToBuffer(shardingService.getSession2().getOkByteArray(), shardingService.allocate()));
-            shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+            shardingService.write(shardingService.getSession2().getOKPacket());
             return true;
         }
         return false;
@@ -88,9 +84,7 @@ public final class SetInnerHandler {
         if (preHandleAutocommit(service, valueExpr, innerSetTask)) {
             String key = innerSetTask.get(0).getValue().getKey();
             if (!execSetAutoCommit(stmt, service, Boolean.valueOf(key))) {
-                boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-                service.writeDirectly(service.writeToBuffer(service.getSession2().getOkByteArray(), service.allocate()));
-                service.getSession2().multiStatementNextSql(multiStatementFlag);
+                service.write(service.getSession2().getOKPacket());
             }
             return true;
         }
@@ -114,9 +108,7 @@ public final class SetInnerHandler {
         if (setValue) {
             if (!shardingService.isAutocommit() && shardingService.getSession2().getTargetCount() > 0) {
                 shardingService.getSession2().implicitCommit(() -> {
-                    boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-                    shardingService.writeDirectly(shardingService.writeToBuffer(shardingService.getSession2().getOkByteArray(), shardingService.allocate()));
-                    shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+                    shardingService.write(shardingService.getSession2().getOKPacket());
                 });
                 shardingService.setAutocommit(true);
                 return true;

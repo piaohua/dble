@@ -12,6 +12,7 @@ import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.net.connection.BackendConnection;
 import com.actiontech.dble.net.mysql.ErrorPacket;
 import com.actiontech.dble.net.mysql.FieldPacket;
+import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.net.mysql.RowDataPacket;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.server.NonBlockingSession;
@@ -27,7 +28,7 @@ public abstract class AbstractXAHandler extends MultiNodeHandler {
     private static Logger logger = LoggerFactory.getLogger(AbstractXAHandler.class);
     protected volatile XAStage currentStage;
     protected volatile boolean interruptTx = true;
-    protected volatile byte[] packetIfSuccess;
+    protected volatile MySQLPacket packetIfSuccess;
     protected volatile ImplicitCommitHandler implicitCommitHandler;
 
     public AbstractXAHandler(NonBlockingSession session) {
@@ -35,7 +36,7 @@ public abstract class AbstractXAHandler extends MultiNodeHandler {
     }
 
     public XAStage next() {
-        byte[] sendData = error == null ? null : makeErrorPacket(error);
+        MySQLPacket sendData = error == null ? null : makeErrorPacket(error);
         return (XAStage) currentStage.next(isFail(), error, sendData);
     }
 
@@ -158,26 +159,26 @@ public abstract class AbstractXAHandler extends MultiNodeHandler {
         return interruptTx;
     }
 
-    public byte[] getPacketIfSuccess() {
+    public MySQLPacket getPacketIfSuccess() {
         return packetIfSuccess;
     }
 
-    public void setPacketIfSuccess(byte[] packetIfSuccess) {
+    public void setPacketIfSuccess(MySQLPacket packetIfSuccess) {
         this.packetIfSuccess = packetIfSuccess;
     }
 
     public void interruptTx(String reason) {
         setFail(reason);
         session.getShardingService().setTxInterrupt(reason);
-        session.getFrontConnection().write(makeErrorPacket(reason));
+        makeErrorPacket(reason).write(session.getFrontConnection());
     }
 
-    private byte[] makeErrorPacket(String errMsg) {
+    private MySQLPacket makeErrorPacket(String errMsg) {
         ErrorPacket errPacket = new ErrorPacket();
-        errPacket.setPacketId(1);
+        errPacket.setPacketId(session.getShardingService().nextPacketId());
         errPacket.setErrNo(ErrorCode.ER_UNKNOWN_ERROR);
         errPacket.setMessage(StringUtil.encode(errMsg, session.getShardingService().getCharset().getResults()));
-        return errPacket.toBytes();
+        return errPacket;
     }
 
     public ImplicitCommitHandler getImplicitCommitHandler() {

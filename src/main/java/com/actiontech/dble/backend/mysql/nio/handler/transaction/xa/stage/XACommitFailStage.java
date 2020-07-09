@@ -13,6 +13,7 @@ import com.actiontech.dble.backend.mysql.xa.XAStateLog;
 import com.actiontech.dble.btrace.provider.XaDelayProvider;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.config.model.SystemConfig;
+import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
@@ -40,7 +41,7 @@ public class XACommitFailStage extends XACommitStage {
     }
 
     @Override
-    public XAStage next(boolean isFail, String errMsg, byte[] errPacket) {
+    public XAStage next(boolean isFail, String errMsg, MySQLPacket errPacket) {
         String xaId = session.getSessionXaID();
         if (!isFail || xaOldThreadIds.isEmpty()) {
             XAStateLog.saveXARecoveryLog(xaId, TxState.TX_COMMITTED_STATE);

@@ -8,10 +8,7 @@ package com.actiontech.dble.server.response;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.config.Isolations;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.util.StringUtil;
 
@@ -31,11 +28,10 @@ public final class SessionIsolation {
 
 
     public static void response(MySQLShardingService service, String column) {
-        byte packetId = setCurrentPacket(service);
-        HEADER.setPacketId(++packetId);
+        HEADER.setPacketId(service.nextPacketId());
         FIELDS[0] = PacketUtil.getField(column, Fields.FIELD_TYPE_STRING);
-        FIELDS[0].setPacketId(++packetId);
-        EOF.setPacketId(++packetId);
+        FIELDS[0].setPacketId(service.nextPacketId());
+        EOF.setPacketId(service.nextPacketId());
 
         ByteBuffer buffer = service.allocate();
         buffer = HEADER.write(buffer, service, true);
@@ -64,20 +60,11 @@ public final class SessionIsolation {
                 break;
         }
         row.add(StringUtil.encode(value, service.getCharset().getResults()));
-        row.setPacketId(++packetId);
+        row.setPacketId(service.nextPacketId());
         buffer = row.write(buffer, service, true);
-        EOFPacket lastEof = new EOFPacket();
-        lastEof.setPacketId(++packetId);
-        service.getSession2().multiStatementPacket(lastEof, packetId);
-        buffer = lastEof.write(buffer, service, true);
-        boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-        service.writeDirectly(buffer);
-        service.getSession2().multiStatementNextSql(multiStatementFlag);
-    }
-
-    public static byte setCurrentPacket(MySQLShardingService service) {
-        byte packetId = (byte) service.getSession2().getPacketId().get();
-        return packetId;
+        EOFRowPacket lastEof = new EOFRowPacket();
+        lastEof.setPacketId(service.nextPacketId());
+        lastEof.write(buffer,service);
     }
 
 }

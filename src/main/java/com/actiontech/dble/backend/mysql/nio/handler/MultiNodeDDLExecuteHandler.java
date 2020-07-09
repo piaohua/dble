@@ -12,6 +12,7 @@ import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.log.transaction.TxnLogHelper;
 import com.actiontech.dble.net.connection.BackendConnection;
 import com.actiontech.dble.net.mysql.ErrorPacket;
+import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.net.mysql.OkPacket;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.route.RouteResultset;
@@ -104,7 +105,7 @@ public class MultiNodeDDLExecuteHandler extends MultiNodeQueryHandler {
                 if (byteBuffer != null) {
                     session.getFrontConnection().write(byteBuffer);
                 }
-                handleEndPacket(errPacket.toBytes(), false);
+                handleEndPacket(errPacket, false);
             }
         } finally {
             lock.unlock();
@@ -177,7 +178,7 @@ public class MultiNodeDDLExecuteHandler extends MultiNodeQueryHandler {
                     DDLTraceManager.getInstance().endDDL(source, "ddl end with execution failure");
                     session.handleSpecial(rrs, false, null);
                     session.resetMultiStatementStatus();
-                    handleEndPacket(err.toBytes(), false);
+                    handleEndPacket(err, false);
                 } else {
                     boolean metaInitial = session.handleSpecial(rrs, true, null);
                     if (!metaInitial) {
@@ -190,10 +191,8 @@ public class MultiNodeDDLExecuteHandler extends MultiNodeQueryHandler {
                         ok.setMessage(null);
                         ok.setAffectedRows(0);
                         ok.setServerStatus(source.isAutocommit() ? 2 : 1);
-                        boolean multiStatementFlag = session.multiStatementPacket(ok);
                         doSqlStat();
-                        handleEndPacket(ok.toBytes(), true);
-                        session.multiStatementNextSql(multiStatementFlag);
+                        handleEndPacket(ok, true);
                     }
                 }
             } finally {
@@ -217,7 +216,7 @@ public class MultiNodeDDLExecuteHandler extends MultiNodeQueryHandler {
         errPacket.setMessage(StringUtil.encode(errMsg, session.getShardingService().getCharset().getResults()));
         session.multiStatementPacket(errPacket);
         doSqlStat();
-        handleEndPacket(errPacket.toBytes(), false);
+        handleEndPacket(errPacket, false);
     }
 
 
@@ -252,10 +251,10 @@ public class MultiNodeDDLExecuteHandler extends MultiNodeQueryHandler {
             session.handleSpecial(rrs, false, null);
             DDLTraceManager.getInstance().endDDL(session.getShardingService(), new String(err.getMessage()));
             if (byteBuffer == null) {
-                handleEndPacket(err.toBytes(), false);
+                handleEndPacket(err, false);
             } else {
                 session.getFrontConnection().write(byteBuffer);
-                handleEndPacket(err.toBytes(), false);
+                handleEndPacket(err, false);
             }
         }
     }
@@ -274,10 +273,10 @@ public class MultiNodeDDLExecuteHandler extends MultiNodeQueryHandler {
     }
 
 
-    private void handleEndPacket(byte[] data, boolean isSuccess) {
+    private void handleEndPacket(MySQLPacket packet, boolean isSuccess) {
         session.clearResources(false);
         session.setResponseTime(isSuccess);
-        session.getFrontConnection().write(data);
+        packet.write(session.getFrontConnection());
     }
 
 }

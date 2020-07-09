@@ -139,9 +139,7 @@ public final class KillHandler {
         }
         fc.killAndClose("killed");*/
 
-        boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
         getOkPacket(service).write(service.getConnection());
-        service.getSession2().multiStatementNextSql(multiStatementFlag);
     }
 
     private static FrontendConnection findFrontConn(long connId) {

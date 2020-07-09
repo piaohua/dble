@@ -3,6 +3,7 @@ package com.actiontech.dble.backend.mysql.nio.handler.transaction.xa.stage;
 import com.actiontech.dble.backend.mysql.nio.handler.transaction.ImplicitCommitHandler;
 import com.actiontech.dble.backend.mysql.nio.handler.transaction.TransactionStage;
 import com.actiontech.dble.backend.mysql.nio.handler.transaction.xa.handler.AbstractXAHandler;
+import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
@@ -50,11 +51,11 @@ public abstract class XAStage implements TransactionStage {
             }
         }
         session.setResponseTime(isSuccess);
-        byte[] sendData = xaHandler.getPacketIfSuccess();
+        MySQLPacket sendData = xaHandler.getPacketIfSuccess();
         if (sendData != null) {
-            session.getFrontConnection().write(sendData);
+            sendData.write(session.getFrontConnection());
         } else {
-            session.getFrontConnection().write(session.getOkByteArray());
+            session.getShardingService().write(session.getShardingService().getSession2().getOKPacket());
         }
         xaHandler.clearResources();
     }

@@ -15,6 +15,6 @@ public class EOFRowPacket extends EOFPacket{
     }
 
     public boolean isEndOfQuery() {
-        return false;
+        return true;
     }
 }

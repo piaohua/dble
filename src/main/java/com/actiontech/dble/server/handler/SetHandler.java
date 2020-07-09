@@ -80,9 +80,7 @@ public final class SetHandler {
             } else if (innerSetTask.size() > 0) {
                 shardingService.setInnerSetTask(innerSetTask);
                 if (!shardingService.executeInnerSetTask()) {
-                    boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-                    shardingService.writeDirectly(shardingService.writeToBuffer(shardingService.getSession2().getOkByteArray(), shardingService.allocate()));
-                    shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+                    shardingService.write(shardingService.getSession2().getOKPacket());
                 }
             }
         } catch (SQLSyntaxErrorException e) {
@@ -161,9 +159,7 @@ public final class SetHandler {
                 return false;
             } else {
                 shardingService.setNames(charsetInfo.charset, charsetInfo.collation);
-                boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-                shardingService.writeDirectly(shardingService.writeToBuffer(shardingService.getSession2().getOkByteArray(), shardingService.allocate()));
-                shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+                shardingService.write(shardingService.getSession2().getOKPacket());
                 return true;
             }
         } else {
@@ -185,9 +181,7 @@ public final class SetHandler {
                 return false;
             } else {
                 shardingService.setCharacterSet(charset);
-                boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-                shardingService.writeDirectly(shardingService.writeToBuffer(shardingService.getSession2().getOkByteArray(), shardingService.allocate()));
-                shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+                shardingService.write(shardingService.getSession2().getOKPacket());
                 return true;
             }
         } else {
@@ -460,14 +454,10 @@ public final class SetHandler {
             return false;
         } else if (switchStatus) {
             shardingService.setSessionReadOnly(true);
-            boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-            shardingService.writeDirectly(shardingService.writeToBuffer(shardingService.getSession2().getOkByteArray(), shardingService.allocate()));
-            shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+            shardingService.write(shardingService.getSession2().getOKPacket());
         } else {
             shardingService.setSessionReadOnly(false);
-            boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-            shardingService.writeDirectly(shardingService.writeToBuffer(shardingService.getSession2().getOkByteArray(), shardingService.allocate()));
-            shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+            shardingService.write(shardingService.getSession2().getOKPacket());
         }
         return true;
     }
@@ -480,9 +470,7 @@ public final class SetHandler {
             return false;
         }
         service.setTxIsolation(txIsolation);
-        boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-        service.writeDirectly(service.writeToBuffer(service.getSession2().getOkByteArray(), service.allocate()));
-        service.getSession2().multiStatementNextSql(multiStatementFlag);
+        service.write(service.getSession2().getOKPacket());
         return true;
     }
 
@@ -505,9 +493,7 @@ public final class SetHandler {
         String collation = SetInnerHandler.parseStringValue(valueExpr);
         if (checkCollation(collation)) {
             service.setCollationConnection(collation);
-            boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-            service.writeDirectly(service.writeToBuffer(service.getSession2().getOkByteArray(), service.allocate()));
-            service.getSession2().multiStatementNextSql(multiStatementFlag);
+            service.write(service.getSession2().getOKPacket());
             return true;
         } else {
             service.writeErrMessage(ErrorCode.ER_UNKNOWN_COLLATION, "Unknown collation '" + collation + "'");
@@ -519,9 +505,7 @@ public final class SetHandler {
         String charsetResult = SetInnerHandler.parseStringValue(valueExpr);
         if (charsetResult.equalsIgnoreCase("NULL") || checkCharset(charsetResult)) {
             shardingService.setCharacterResults(charsetResult);
-            boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-            shardingService.writeDirectly(shardingService.writeToBuffer(shardingService.getSession2().getOkByteArray(), shardingService.allocate()));
-            shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+            shardingService.write(shardingService.getSession2().getOKPacket());
             return true;
         } else {
             shardingService.writeErrMessage(ErrorCode.ER_UNKNOWN_CHARACTER_SET, "Unknown character set '" + charsetResult + "'");
@@ -538,9 +522,7 @@ public final class SetHandler {
         String collationName = CharsetUtil.getDefaultCollation(charsetConnection);
         if (collationName != null) {
             shardingService.setCharacterConnection(collationName);
-            boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-            shardingService.writeDirectly(shardingService.writeToBuffer(shardingService.getSession2().getOkByteArray(), shardingService.allocate()));
-            shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+            shardingService.write(shardingService.getSession2().getOKPacket());
             return true;
         } else {
             shardingService.writeErrMessage(ErrorCode.ER_UNKNOWN_CHARACTER_SET, "Unknown character set '" + charsetConnection + "'");
@@ -560,9 +542,7 @@ public final class SetHandler {
                 return false;
             } else {
                 service.setCharacterClient(charsetClient);
-                boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-                service.writeDirectly(service.writeToBuffer(service.getSession2().getOkByteArray(), service.allocate()));
-                service.getSession2().multiStatementNextSql(multiStatementFlag);
+                service.write(service.getSession2().getOKPacket());
                 return true;
             }
         } else {
@@ -724,9 +704,7 @@ public final class SetHandler {
             } else {
                 service.setSessionReadOnly(false);
             }
-            boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-            service.writeDirectly(service.writeToBuffer(service.getSession2().getOkByteArray(), service.allocate()));
-            service.getSession2().multiStatementNextSql(multiStatementFlag);
+            service.write(service.getSession2().getOKPacket());
             return true;
         } else {
             int txIsolation = Isolations.REPEATABLE_READ;
@@ -748,9 +726,7 @@ public final class SetHandler {
                     break;
             }
             service.setTxIsolation(txIsolation);
-            boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-            service.writeDirectly(service.writeToBuffer(service.getSession2().getOkByteArray(), service.allocate()));
-            service.getSession2().multiStatementNextSql(multiStatementFlag);
+            service.write(service.getSession2().getOKPacket());
             return true;
         }
     }

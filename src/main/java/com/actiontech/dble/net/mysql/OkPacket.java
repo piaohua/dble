@@ -8,6 +8,7 @@ package com.actiontech.dble.net.mysql;
 import com.actiontech.dble.backend.mysql.BufferUtil;
 import com.actiontech.dble.backend.mysql.MySQLMessage;
 import com.actiontech.dble.net.connection.AbstractConnection;
+import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.singleton.BufferPoolManager;
 
 import java.nio.ByteBuffer;
@@ -56,7 +57,7 @@ public class OkPacket extends MySQLPacket {
         }
     }
 
-    public void read(byte[] data) {
+    public OkPacket read(byte[] data) {
         MySQLMessage mm = new MySQLMessage(data);
         packetLength = mm.readUB3();
         packetId = mm.read();
@@ -68,6 +69,7 @@ public class OkPacket extends MySQLPacket {
         if (mm.hasRemaining()) {
             this.message = mm.readBytesWithLength();
         }
+        return this;
     }
 
     public ByteBuffer write(ByteBuffer buffer, AbstractConnection c) {
@@ -87,14 +89,14 @@ public class OkPacket extends MySQLPacket {
         }
 
         return buffer;
+    }
 
+    public void write(ByteBuffer buffer, AbstractService service) {
+        service.writeWithBuffer(this, buffer);
     }
 
     @Override
     public void bufferWrite(AbstractConnection c) {
-        /*if (c instanceof ServerConnection) {
-            SerializableLock.getInstance().unLock(c.getId());
-        }*/
         ByteBuffer buffer = write(c.allocate(), c);
         c.write(buffer);
     }

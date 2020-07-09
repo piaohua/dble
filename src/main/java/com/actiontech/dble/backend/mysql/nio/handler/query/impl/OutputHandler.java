@@ -35,6 +35,7 @@ public class OutputHandler extends BaseDMLHandler {
     private boolean isBinary;
     private long netOutBytes;
     private long selectRows;
+
     public OutputHandler(long id, NonBlockingSession session) {
         super(id, session);
         session.setOutputHandler(this);
@@ -54,20 +55,12 @@ public class OutputHandler extends BaseDMLHandler {
         this.netOutBytes += ok.length;
         OkPacket okPacket = new OkPacket();
         okPacket.read(ok);
+        okPacket.setPacketId(++packetId);
         MySQLShardingService sessionShardingService = session.getShardingService();
         lock.lock();
         try {
-            ok[3] = ++packetId;
-            session.multiStatementPacket(okPacket, packetId);
-            boolean multiStatementFlag = session.getIsMultiStatement().get();
-            if ((okPacket.getServerStatus() & StatusFlags.SERVER_MORE_RESULTS_EXISTS) > 0) {
-                buffer = sessionShardingService.writeToBuffer(ok, buffer);
-            } else {
-                HandlerTool.terminateHandlerTree(this);
-                buffer = sessionShardingService.writeToBuffer(ok, buffer);
-                sessionShardingService.writeDirectly(buffer);
-            }
-            session.multiStatementNextSql(multiStatementFlag);
+            HandlerTool.terminateHandlerTree(this);
+            okPacket.write(buffer, sessionShardingService);
         } finally {
             lock.unlock();
         }
@@ -134,6 +127,7 @@ public class OutputHandler extends BaseDMLHandler {
             }
             selectRows++;
             byte[] row;
+
             if (this.isBinary) {
                 BinaryRowDataPacket binRowPacket = new BinaryRowDataPacket();
                 binRowPacket.read(this.fieldPackets, rowPacket);
@@ -149,16 +143,11 @@ public class OutputHandler extends BaseDMLHandler {
                     this.packetId = (byte) session.getPacketId().get();
                 } else {
                     row = rowNull;
+                    RowDataPacket rowDataPk = new RowDataPacket(this.fieldPackets.size());
+                    row[3] = (byte) session.getShardingService().nextPacketId();
+                    rowDataPk.read(row);
                     this.netOutBytes += row.length;
-                    boolean isBigPackage = row.length >= MySQLPacket.MAX_PACKET_SIZE + MySQLPacket.PACKET_HEADER_SIZE;
-                    if (isBigPackage) {
-                        //todo deal with the big package
-                       /* buffer = session.getFrontConnection().writeBigPackageToBuffer(row, buffer, packetId);
-                        this.packetId = (byte) session.getPacketId().get();*/
-                    } else {
-                        row[3] = ++packetId;
-                        buffer = session.getFrontConnection().writeToBuffer(row, buffer);
-                    }
+                    rowDataPk.write(buffer, session.getShardingService(), true);
                 }
             }
         } finally {
@@ -179,7 +168,7 @@ public class OutputHandler extends BaseDMLHandler {
             if (terminate.get()) {
                 return;
             }
-            EOFPacket eofPacket = new EOFPacket();
+            EOFRowPacket eofPacket = new EOFRowPacket();
             if (data != null) {
                 eofPacket.read(data);
             }
@@ -187,14 +176,9 @@ public class OutputHandler extends BaseDMLHandler {
             this.netOutBytes += eofPacket.calcPacketSize();
             doSqlStat();
             HandlerTool.terminateHandlerTree(this);
-            session.multiStatementPacket(eofPacket, packetId);
-            byte[] eof = eofPacket.toBytes();
-            buffer = mySQLShardingService.writeToBuffer(eof, buffer);
             session.setHandlerEnd(this);
             session.setResponseTime(true);
-            boolean multiStatementFlag = session.getIsMultiStatement().get();
-            mySQLShardingService.writeDirectly(buffer);
-            session.multiStatementNextSql(multiStatementFlag);
+            eofPacket.write(buffer,mySQLShardingService);
         } finally {
             lock.unlock();
         }

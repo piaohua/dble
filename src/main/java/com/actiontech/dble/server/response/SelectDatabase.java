@@ -7,10 +7,7 @@ package com.actiontech.dble.server.response;
 
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.util.StringUtil;
 
@@ -29,12 +26,11 @@ public final class SelectDatabase implements InnerFuncResponse {
     private static final EOFPacket EOF = new EOFPacket();
 
     public static void response(MySQLShardingService shardingService) {
-        byte packetId = setCurrentPacket(shardingService);
 
-        HEADER.setPacketId(++packetId);
+        HEADER.setPacketId(shardingService.nextPacketId());
         FIELDS[0] = PacketUtil.getField("DATABASE()", Fields.FIELD_TYPE_VAR_STRING);
-        FIELDS[0].setPacketId(++packetId);
-        EOF.setPacketId(++packetId);
+        FIELDS[0].setPacketId(shardingService.nextPacketId());
+        EOF.setPacketId(shardingService.nextPacketId());
         ByteBuffer buffer = shardingService.allocate();
         buffer = HEADER.write(buffer, shardingService, true);
         for (FieldPacket field : FIELDS) {
@@ -44,15 +40,12 @@ public final class SelectDatabase implements InnerFuncResponse {
 
         RowDataPacket row = new RowDataPacket(FIELD_COUNT);
         row.add(StringUtil.encode(shardingService.getSchema(), shardingService.getCharset().getResults()));
-        row.setPacketId(++packetId);
+        row.setPacketId(shardingService.nextPacketId());
         buffer = row.write(buffer, shardingService, true);
-        EOFPacket lastEof = new EOFPacket();
-        lastEof.setPacketId(++packetId);
-        shardingService.getSession2().multiStatementPacket(lastEof, packetId);
+        EOFRowPacket lastEof = new EOFRowPacket();
+        lastEof.setPacketId(shardingService.nextPacketId());
         buffer = lastEof.write(buffer, shardingService, true);
-        boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-        shardingService.writeDirectly(buffer);
-        shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+        lastEof.write(buffer,shardingService);
     }
 
     public static byte setCurrentPacket(MySQLShardingService service) {

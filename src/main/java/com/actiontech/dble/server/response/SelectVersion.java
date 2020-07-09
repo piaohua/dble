@@ -8,10 +8,7 @@ package com.actiontech.dble.server.response;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.config.Versions;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 
 import java.nio.ByteBuffer;
@@ -30,11 +27,10 @@ public final class SelectVersion implements InnerFuncResponse {
 
 
     public static void response(MySQLShardingService service) {
-        byte packetId = setCurrentPacket(service);
-        HEADER.setPacketId(++packetId);
+        HEADER.setPacketId(service.nextPacketId());
         FIELDS[0] = PacketUtil.getField("VERSION()", Fields.FIELD_TYPE_VAR_STRING);
-        FIELDS[0].setPacketId(++packetId);
-        EOF.setPacketId(++packetId);
+        FIELDS[0].setPacketId(service.nextPacketId());
+        EOF.setPacketId(service.nextPacketId());
 
 
         ByteBuffer buffer = service.allocate();
@@ -46,21 +42,13 @@ public final class SelectVersion implements InnerFuncResponse {
 
         RowDataPacket row = new RowDataPacket(FIELD_COUNT);
         row.add(Versions.getServerVersion());
-        row.setPacketId(++packetId);
+        row.setPacketId(service.nextPacketId());
         buffer = row.write(buffer, service, true);
-        EOFPacket lastEof = new EOFPacket();
-        lastEof.setPacketId(++packetId);
-        service.getSession2().multiStatementPacket(lastEof, packetId);
-        buffer = lastEof.write(buffer, service, true);
-        boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-        service.writeDirectly(buffer);
-        service.getSession2().multiStatementNextSql(multiStatementFlag);
+        EOFRowPacket lastEof = new EOFRowPacket();
+        lastEof.setPacketId(service.nextPacketId());
+        lastEof.write(buffer,service);
     }
 
-
-    public static byte setCurrentPacket(MySQLShardingService service) {
-        return (byte) service.getSession2().getPacketId().get();
-    }
 
     public List<FieldPacket> getField() {
         List<FieldPacket> result = new ArrayList<>();

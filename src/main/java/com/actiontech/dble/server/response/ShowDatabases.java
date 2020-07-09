@@ -12,10 +12,7 @@ import com.actiontech.dble.config.ServerConfig;
 import com.actiontech.dble.config.model.user.ShardingUserConfig;
 import com.actiontech.dble.config.model.user.UserConfig;
 import com.actiontech.dble.config.model.user.UserName;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.util.StringUtil;
 
@@ -38,13 +35,11 @@ public final class ShowDatabases {
 
 
     public static void response(MySQLShardingService shardingService) {
-
-
-        byte packetId = (byte) shardingService.getSession2().getPacketId().get();
-        HEADER.setPacketId(++packetId);
+        
+        HEADER.setPacketId(shardingService.nextPacketId());
         FIELDS[0] = PacketUtil.getField("DATABASE", Fields.FIELD_TYPE_VAR_STRING);
-        FIELDS[0].setPacketId(++packetId);
-        EOF.setPacketId(++packetId);
+        FIELDS[0].setPacketId(shardingService.nextPacketId());
+        EOF.setPacketId(shardingService.nextPacketId());
 
         ByteBuffer buffer = shardingService.allocate();
         // writeDirectly header
@@ -75,19 +70,15 @@ public final class ShowDatabases {
             for (String name : schemaSet) {
                 RowDataPacket row = new RowDataPacket(FIELD_COUNT);
                 row.add(StringUtil.encode(name, shardingService.getCharset().getResults()));
-                row.setPacketId(++packetId);
+                row.setPacketId(shardingService.nextPacketId());
                 buffer = row.write(buffer, shardingService, true);
             }
         }
 
         // writeDirectly last eof
-        EOFPacket lastEof = new EOFPacket();
-        lastEof.setPacketId(++packetId);
-        shardingService.getSession2().multiStatementPacket(lastEof, packetId);
-        buffer = lastEof.write(buffer, shardingService, true);
-        boolean multiStatementFlag = shardingService.getSession2().getIsMultiStatement().get();
-        shardingService.writeDirectly(buffer);
-        shardingService.getSession2().multiStatementNextSql(multiStatementFlag);
+        EOFRowPacket lastEof = new EOFRowPacket();
+        lastEof.setPacketId(shardingService.nextPacketId());
+        lastEof.write(buffer,shardingService);
     }
 
 }

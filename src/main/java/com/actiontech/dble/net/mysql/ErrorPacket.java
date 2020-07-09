@@ -178,6 +178,6 @@ public class ErrorPacket extends MySQLPacket {
     }
 
     public boolean isEndOfSession() {
-        return false;
+        return true;
     }
 }

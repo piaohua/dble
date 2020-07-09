@@ -2,10 +2,7 @@ package com.actiontech.dble.backend.mysql.nio.handler.transaction.savepoint;
 
 import com.actiontech.dble.backend.mysql.nio.handler.MultiNodeHandler;
 import com.actiontech.dble.net.connection.BackendConnection;
-import com.actiontech.dble.net.mysql.ErrorPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.OkPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
@@ -219,7 +216,6 @@ public class SavePointHandler extends MultiNodeHandler {
     }
 
     private void cleanAndFeedback() {
-        byte[] send = sendData;
         // clear all resources
         if (session.closed()) {
             return;
@@ -238,9 +234,8 @@ public class SavePointHandler extends MultiNodeHandler {
                     LOGGER.warn("unknown savepoint perform type!");
                     break;
             }
-            boolean multiStatementFlag = session.getIsMultiStatement().get();
-            session.getFrontConnection().write(send);
-            session.multiStatementNextSql(multiStatementFlag);
+            OkPacket ok = new OkPacket().read(sendData);
+            ok.write(session.getFrontConnection());
         }
     }
 

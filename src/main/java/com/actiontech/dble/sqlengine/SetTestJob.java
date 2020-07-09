@@ -120,9 +120,7 @@ public class SetTestJob implements ResponseHandler, Runnable {
         if (hasReturn.compareAndSet(false, true)) {
             doFinished(false);
             if (!((SetCallBack) ((OneRawSQLQueryResultHandler) jobHandler).getCallback()).isBackToOtherThread()) {
-                boolean multiStatementFlag = responseService.getSession().getIsMultiStatement().get();
-                responseService.writeDirectly(responseService.writeToBuffer(responseService.getSession().getOkByteArray(), responseService.allocate()));
-                responseService.getSession().multiStatementNextSql(multiStatementFlag);
+                service.write(responseService.getSession().getOKPacket());
             }
             ResetConnHandler handler = new ResetConnHandler();
             responseService.setResponseHandler(handler);

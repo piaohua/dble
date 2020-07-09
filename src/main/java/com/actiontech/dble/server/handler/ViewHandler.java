@@ -178,8 +178,6 @@ public final class ViewHandler {
         ok.setPacketId(++packetId);
         service.getSession2().multiStatementPacket(ok, packetId);
         ok.write(service.getConnection());
-        boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-        service.getSession2().multiStatementNextSql(multiStatementFlag);
     }
 
 }

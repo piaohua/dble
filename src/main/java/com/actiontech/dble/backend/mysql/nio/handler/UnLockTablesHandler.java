@@ -122,10 +122,7 @@ public class UnLockTablesHandler extends MultiNodeHandler implements ResponseHan
                 } finally {
                     lock.unlock();
                 }
-                session.multiStatementPacket(ok);
-                boolean multiStatementFlag = session.getIsMultiStatement().get();
                 ok.write(session.getFrontConnection());
-                session.multiStatementNextSql(multiStatementFlag);
             }
         }
     }

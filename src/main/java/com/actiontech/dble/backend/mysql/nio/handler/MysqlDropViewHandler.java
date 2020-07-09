@@ -126,10 +126,7 @@ public class MysqlDropViewHandler implements ResponseHandler {
             session.setBackendResponseEndTime(((MySQLResponseService) service));
             session.releaseConnectionIfSafe(((MySQLResponseService) service), false);
             session.setResponseTime(true);
-            session.multiStatementPacket(ok, packetId);
-            boolean multiStatementFlag = session.getIsMultiStatement().get();
             ok.write(session.getFrontConnection());
-            session.multiStatementNextSql(multiStatementFlag);
         }
     }
 

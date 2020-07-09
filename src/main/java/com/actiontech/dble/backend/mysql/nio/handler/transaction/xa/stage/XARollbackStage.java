@@ -8,6 +8,7 @@ import com.actiontech.dble.backend.mysql.xa.TxState;
 import com.actiontech.dble.backend.mysql.xa.XAStateLog;
 import com.actiontech.dble.btrace.provider.XaDelayProvider;
 import com.actiontech.dble.config.ErrorCode;
+import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
@@ -30,7 +31,7 @@ public class XARollbackStage extends XAStage {
     }
 
     @Override
-    public TransactionStage next(boolean isFail, String errMsg, byte[] errPacket) {
+    public TransactionStage next(boolean isFail, String errMsg, MySQLPacket errPacket) {
         if (isFail && !xaOldThreadIds.isEmpty()) {
             return new XARollbackFailStage(session, xaHandler, lastStageIsXAEnd);
         }

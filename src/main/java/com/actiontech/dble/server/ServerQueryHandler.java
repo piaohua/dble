@@ -139,14 +139,10 @@ public class ServerQueryHandler implements FrontendQueryHandler {
                     service.writeErrMessage(ErrorCode.ER_SYNTAX_ERROR, "Unsupported command");
                     break;
                 case ServerParse.MYSQL_CMD_COMMENT:
-                    boolean multiStatementFlag = this.service.getSession2().getIsMultiStatement().get();
-                    service.writeDirectly(service.writeToBuffer(this.service.getSession2().getOkByteArray(), service.allocate()));
-                    service.getSession2().multiStatementNextSql(multiStatementFlag);
+                    service.write(service.getSession2().getOKPacket());
                     break;
                 case ServerParse.MYSQL_COMMENT:
-                    boolean multiStatementFlag2 = this.service.getSession2().getIsMultiStatement().get();
-                    service.writeDirectly(service.writeToBuffer(this.service.getSession2().getOkByteArray(), service.allocate()));
-                    service.getSession2().multiStatementNextSql(multiStatementFlag2);
+                    service.write(service.getSession2().getOKPacket());
                     break;
                 case ServerParse.LOAD_DATA_INFILE_SQL:
                     service.loadDataInfileStart(sql);

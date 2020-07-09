@@ -15,6 +15,7 @@ import com.actiontech.dble.backend.mysql.xa.ParticipantLogEntry;
 import com.actiontech.dble.backend.mysql.xa.TxState;
 import com.actiontech.dble.backend.mysql.xa.XAStateLog;
 import com.actiontech.dble.net.connection.BackendConnection;
+import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 
@@ -31,9 +32,7 @@ public class XAHandler extends AbstractXAHandler implements TransactionHandler {
                 implicitCommitHandler.next();
                 return;
             }
-            boolean multiStatementFlag = session.getIsMultiStatement().get();
-            session.getFrontConnection().write(session.getOkByteArray());
-            session.multiStatementNextSql(multiStatementFlag);
+            session.getShardingService().write(session.getShardingService().getSession2().getOKPacket());
             return;
         }
 
@@ -56,9 +55,7 @@ public class XAHandler extends AbstractXAHandler implements TransactionHandler {
     @Override
     public void rollback() {
         if (session.getTargetCount() <= 0) {
-            boolean multiStatementFlag = session.getIsMultiStatement().get();
-            session.getFrontConnection().write(session.getOkByteArray());
-            session.multiStatementNextSql(multiStatementFlag);
+            session.getShardingService().write(session.getShardingService().getSession2().getOKPacket());
             return;
         }
 
@@ -82,8 +79,7 @@ public class XAHandler extends AbstractXAHandler implements TransactionHandler {
         changeStageTo(next());
     }
 
-    @Override
-    public void turnOnAutoCommit(byte[] previousSendData) {
+    public void turnOnAutoCommit(MySQLPacket previousSendData) {
         this.packetIfSuccess = previousSendData;
         this.interruptTx = false;
     }
@@ -98,7 +94,7 @@ public class XAHandler extends AbstractXAHandler implements TransactionHandler {
             final BackendConnection conn = session.getTarget(rrn);
             conn.getBackendService().setResponseHandler(this);
 
-            XAStateLog.initRecoveryLog(session.getSessionXaID(), position,conn.getBackendService());
+            XAStateLog.initRecoveryLog(session.getSessionXaID(), position, conn.getBackendService());
             position++;
         }
     }

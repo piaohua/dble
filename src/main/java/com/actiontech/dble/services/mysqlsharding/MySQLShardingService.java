@@ -557,6 +557,7 @@ public class MySQLShardingService extends MySQLBasedService implements FrontEndS
         boolean multiQueryFlag = session.multiStatementPacket(packet);
         if (packet.isEndOfSession()) {
             //error finished do resource clean up
+            session.resetMultiStatementStatus();
             packet.bufferWrite(connection);
             SerializableLock.getInstance().unLock(this.connection.getId());
         } else if (packet.isEndOfQuery()) {
@@ -574,9 +575,10 @@ public class MySQLShardingService extends MySQLBasedService implements FrontEndS
         boolean multiQueryFlag = session.multiStatementPacket(packet);
         if (packet.isEndOfSession()) {
             //error finished do resource clean up
-
+            session.resetMultiStatementStatus();
         }
-        packet.write(buffer, this, true);
+        buffer = packet.write(buffer, this, true);
+        connection.write(buffer);
         if (packet.isEndOfQuery() && !packet.isEndOfSession()) {
             multiStatementNextSql(multiQueryFlag);
         }
