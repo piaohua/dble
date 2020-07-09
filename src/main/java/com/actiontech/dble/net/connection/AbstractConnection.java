@@ -385,14 +385,6 @@ public abstract class AbstractConnection implements Connection {
 
         service.cleanup();
 
-        /** todo : 压缩和解压的故事不应该在这网络级别进行处理
-         if (!decompressUnfinishedDataQueue.isEmpty()) {
-         decompressUnfinishedDataQueue.clear();
-         }
-
-         if (!compressUnfinishedDataQueue.isEmpty()) {
-         compressUnfinishedDataQueue.clear();
-         }**/
         WriteOutTask task;
         while ((task = writeQueue.poll()) != null) {
             recycle(task.getBuffer());

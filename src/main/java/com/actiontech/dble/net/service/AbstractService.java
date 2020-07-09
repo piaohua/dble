@@ -105,6 +105,10 @@ public abstract class AbstractService implements Service {
 
     }
 
+    public void consumerInternalData() {
+        throw new RuntimeException("function not support");
+    }
+
     public abstract void handleData(ServiceTask task);
 
     public int nextPacketId() {

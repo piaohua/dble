@@ -158,7 +158,13 @@ public class MySQLResponseService extends MySQLBasedService {
     @Override
     public void TaskToTotalQueue(ServiceTask task) {
         //LOGGER.info("count of the xxxxxxxxxxxxxxxxxxxxxx " + taskCommand++);
-        Executor executor = DbleServer.getInstance().getBackendBusinessExecutor();
+        Executor executor;
+        if (this.isComplexQuery()) {
+            executor = DbleServer.getInstance().getComplexQueryExecutor();
+        } else {
+            executor = DbleServer.getInstance().getBackendBusinessExecutor();
+        }
+
         if (isHandling.compareAndSet(false, true)) {
             executor.execute(new Runnable() {
                 @Override
@@ -192,7 +198,7 @@ public class MySQLResponseService extends MySQLBasedService {
     }
 
 
-    private void handleInnerData() {
+    protected void handleInnerData() {
         ServiceTask task;
         //LOGGER.info("LOOP FOR BACKEND " + Thread.currentThread().getName() + " " + taskQueue.size());
         //threadUsageStat start

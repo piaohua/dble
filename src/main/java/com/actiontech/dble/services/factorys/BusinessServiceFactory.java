@@ -1,5 +1,6 @@
 package com.actiontech.dble.services.factorys;
 
+import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.config.model.user.ManagerUserConfig;
 import com.actiontech.dble.config.model.user.ShardingUserConfig;
 import com.actiontech.dble.config.model.user.UserConfig;
@@ -7,6 +8,7 @@ import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.net.service.AuthResultInfo;
 import com.actiontech.dble.services.manager.ManagerService;
+import com.actiontech.dble.services.mysqlsharding.MySQLCurrentResponseService;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 
@@ -31,8 +33,12 @@ public class BusinessServiceFactory {
 
 
     public static AbstractService getBackendBusinessService(AuthResultInfo info, AbstractConnection connection) {
-        MySQLResponseService service = new MySQLResponseService(connection);
-
+        MySQLResponseService service;
+        if (SystemConfig.getInstance().getUsePerformanceMode() == 1) {
+            service = new MySQLCurrentResponseService(connection);
+        } else {
+            service = new MySQLResponseService(connection);
+        }
         return service;
     }
 }

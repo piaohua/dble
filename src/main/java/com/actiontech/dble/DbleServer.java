@@ -24,7 +24,9 @@ import com.actiontech.dble.meta.ProxyMetaManager;
 import com.actiontech.dble.net.IOProcessor;
 import com.actiontech.dble.net.SocketAcceptor;
 import com.actiontech.dble.net.SocketConnector;
-import com.actiontech.dble.net.executor.FrontEndHandlerRunnable;
+import com.actiontech.dble.net.executor.BackendCurrentRunnable;
+import com.actiontech.dble.net.executor.FrontendBlockRunnable;
+import com.actiontech.dble.net.executor.FrontendCurrentRunnable;
 import com.actiontech.dble.net.executor.WriteToBackendRunnable;
 import com.actiontech.dble.net.impl.aio.AIOAcceptor;
 import com.actiontech.dble.net.impl.aio.AIOConnector;
@@ -96,15 +98,12 @@ public final class DbleServer {
     private ExecutorService complexQueryExecutor;
     private ExecutorService timerExecutor;
     private Map<String, ThreadWorkUsage> threadUsedMap = new ConcurrentHashMap<>();
-/*    private BlockingQueue<FrontendCommandHandler> frontHandlerQueue;
-    private BlockingQueue<List<WriteToBackendTask>> writeToBackendQueue;
-    private Queue<FrontendCommandHandler> concurrentFrontHandlerQueue;
-    private Queue<BackendAsyncHandler> concurrentBackHandlerQueue;*/
 
-
-    private BlockingQueue<ServiceTask> frontHandlerQueue;
+    private Queue<ServiceTask> frontHandlerQueue;
     private BlockingQueue<List<WriteToBackendTask>> writeToBackendQueue;
     private Queue<ServiceTask> frontPriorityQueue;
+
+    private Queue<ServiceTask> concurrentBackHandlerQueue;
 
     private volatile boolean startup = false;
 
@@ -283,10 +282,25 @@ public final class DbleServer {
     }
 
     private void initTaskQueue() {
-        frontPriorityQueue = new ConcurrentLinkedQueue<ServiceTask>();
-        frontHandlerQueue = new LinkedBlockingQueue<ServiceTask>();
-        for (int i = 0; i < SystemConfig.getInstance().getProcessorExecutor(); i++) {
-            businessExecutor.execute(new FrontEndHandlerRunnable(frontHandlerQueue, frontPriorityQueue));
+        if (SystemConfig.getInstance().getUsePerformanceMode() == 1) {
+            frontPriorityQueue = new ConcurrentLinkedQueue<ServiceTask>();
+            frontHandlerQueue = new ConcurrentLinkedQueue<ServiceTask>();
+            for (int i = 0; i < SystemConfig.getInstance().getProcessorExecutor(); i++) {
+                businessExecutor.execute(new FrontendCurrentRunnable(frontHandlerQueue, frontPriorityQueue));
+            }
+
+            concurrentBackHandlerQueue = new ConcurrentLinkedQueue<>();
+            for (int i = 0; i < SystemConfig.getInstance().getBackendProcessorExecutor(); i++) {
+                backendBusinessExecutor.execute(new BackendCurrentRunnable(concurrentBackHandlerQueue));
+            }
+
+        } else {
+            frontPriorityQueue = new ConcurrentLinkedQueue<ServiceTask>();
+            frontHandlerQueue = new LinkedBlockingQueue<ServiceTask>();
+            for (int i = 0; i < SystemConfig.getInstance().getProcessorExecutor(); i++) {
+                businessExecutor.execute(new FrontendBlockRunnable((LinkedBlockingQueue) frontHandlerQueue, frontPriorityQueue));
+            }
+
         }
 
         writeToBackendQueue = new LinkedBlockingQueue<>();
@@ -656,6 +670,15 @@ public final class DbleServer {
 
     public boolean isStartup() {
         return startup;
+    }
+
+
+    public Queue<ServiceTask> getConcurrentBackHandlerQueue() {
+        return concurrentBackHandlerQueue;
+    }
+
+    public void setConcurrentBackHandlerQueue(Queue<ServiceTask> concurrentBackHandlerQueue) {
+        this.concurrentBackHandlerQueue = concurrentBackHandlerQueue;
     }
 
 }
