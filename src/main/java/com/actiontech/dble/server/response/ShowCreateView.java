@@ -10,10 +10,7 @@ import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.meta.SchemaMeta;
 import com.actiontech.dble.meta.ViewMeta;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.route.factory.RouteStrategyFactory;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
@@ -119,11 +116,9 @@ public final class ShowCreateView {
         row.setPacketId(++packetId);
         buffer = row.write(buffer, service, true);
         // writeDirectly last eof
-        EOFPacket lastEof = new EOFPacket();
+        EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
-        buffer = lastEof.write(buffer, service, true);
-        // writeDirectly buffer
-        service.writeDirectly(buffer);
+        lastEof.write(buffer,service);
     }
 
     public static RowDataPacket getRow(ViewMeta view, String charset, String collationConnection) {

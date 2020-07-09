@@ -10,10 +10,7 @@ import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.config.model.sharding.SchemaConfig;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.route.factory.RouteStrategyFactory;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.util.StringUtil;
@@ -71,11 +68,9 @@ public final class ShowCreateDatabase {
             row.setPacketId(++packetId);
             buffer = row.write(buffer, shardingService, true);
             // writeDirectly last eof
-            EOFPacket lastEof = new EOFPacket();
+            EOFRowPacket lastEof = new EOFRowPacket();
             lastEof.setPacketId(++packetId);
-            buffer = lastEof.write(buffer, shardingService, true);
-            // writeDirectly buffer
-            shardingService.writeDirectly(buffer);
+            lastEof.write(buffer,shardingService);
         } catch (Exception e) {
             shardingService.writeErrMessage(ErrorCode.ER_PARSE_ERROR, e.getMessage());
         }

@@ -8,6 +8,7 @@ package com.actiontech.dble.server.response;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.net.mysql.EOFPacket;
+import com.actiontech.dble.net.mysql.EOFRowPacket;
 import com.actiontech.dble.net.mysql.FieldPacket;
 import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
 import com.actiontech.dble.net.service.AbstractService;
@@ -62,14 +63,9 @@ public final class InformationSchemaProfiling {
 
 
         // writeDirectly last eof
-        EOFPacket lastEof = new EOFPacket();
+        EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
-        buffer = lastEof.write(buffer, service, true);
-
-        // post writeDirectly
-        service.writeDirectly(buffer);
-
-
+        lastEof.write(buffer, service);
     }
 
 

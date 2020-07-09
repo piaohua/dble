@@ -75,35 +75,33 @@ public final class MysqlSystemSchemaHandler {
 
         // writeDirectly header
         ResultSetHeaderPacket header = PacketUtil.getHeader(fieldCount);
-        byte packetId = header.getPacketId();
+        header.setPacketId(service.nextPacketId());
         buffer = header.write(buffer, service, true);
 
         // writeDirectly fields
         for (FieldPacket field : fields) {
-            field.setPacketId(++packetId);
+            field.setPacketId(service.nextPacketId());
             buffer = field.write(buffer, service, true);
         }
 
         // writeDirectly eof
         EOFPacket eof = new EOFPacket();
-        eof.setPacketId(++packetId);
+        eof.setPacketId(service.nextPacketId());
         buffer = eof.write(buffer, service, true);
 
         // writeDirectly rows
         if (rows != null) {
             for (RowDataPacket row : rows) {
-                row.setPacketId(++packetId);
+                row.setPacketId(service.nextPacketId());
                 buffer = row.write(buffer, service, true);
             }
         }
 
         // writeDirectly last eof
-        EOFPacket lastEof = new EOFPacket();
-        lastEof.setPacketId(++packetId);
-        buffer = lastEof.write(buffer, service, true);
+        EOFRowPacket lastEof = new EOFRowPacket();
+        lastEof.setPacketId(service.nextPacketId());
 
-        // post writeDirectly
-        service.writeDirectly(buffer);
+        lastEof.write(buffer, service);
     }
 }
 

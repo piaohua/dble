@@ -8,10 +8,7 @@ package com.actiontech.dble.server.handler;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.backend.mysql.nio.handler.SingleNodeHandler;
 import com.actiontech.dble.config.Fields;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.parser.ServerParse;
@@ -73,33 +70,30 @@ public final class Explain2Handler {
         ByteBuffer buffer = service.allocate();
         // writeDirectly header
         ResultSetHeaderPacket header = PacketUtil.getHeader(FIELD_COUNT);
-        byte packetId = header.getPacketId();
+        header.setPacketId(service.nextPacketId());
         buffer = header.write(buffer, service, true);
 
         // writeDirectly fields
         for (FieldPacket field : FIELDS) {
-            field.setPacketId(++packetId);
+            field.setPacketId(service.nextPacketId());
             buffer = field.write(buffer, service, true);
         }
 
         // writeDirectly eof
         EOFPacket eof = new EOFPacket();
-        eof.setPacketId(++packetId);
+        eof.setPacketId(service.nextPacketId());
         buffer = eof.write(buffer, service, true);
 
 
         RowDataPacket row = new RowDataPacket(FIELD_COUNT);
         row.add(StringUtil.encode(stmt, service.getCharset().getResults()));
         row.add(StringUtil.encode(msg, service.getCharset().getResults()));
-        row.setPacketId(++packetId);
+        row.setPacketId(service.nextPacketId());
         buffer = row.write(buffer, service, true);
 
         // writeDirectly last eof
-        EOFPacket lastEof = new EOFPacket();
-        lastEof.setPacketId(++packetId);
-        buffer = lastEof.write(buffer, service, true);
-
-        // post writeDirectly
-        service.writeDirectly(buffer);
+        EOFRowPacket lastEof = new EOFRowPacket();
+        lastEof.setPacketId(service.nextPacketId());
+        lastEof.write(buffer, service);
     }
 }

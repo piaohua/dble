@@ -11,10 +11,7 @@ import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.meta.SchemaMeta;
 import com.actiontech.dble.meta.TableMeta;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.util.StringUtil;
@@ -76,12 +73,9 @@ public final class ShowTableStatus {
 
     private static void writeRowEof(ByteBuffer buffer, MySQLShardingService shardingService, byte packetId) {
         // writeDirectly last eof
-        EOFPacket lastEof = new EOFPacket();
+        EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
-        buffer = lastEof.write(buffer, shardingService, true);
-
-        // post writeDirectly
-        shardingService.writeDirectly(buffer);
+        lastEof.write(buffer,shardingService);
     }
 
     private static PackageBufINf writeTablesHeaderAndRows(ByteBuffer buffer, MySQLShardingService service, Map<String, TableMeta> tableMap, String likeCondition) {

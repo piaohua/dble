@@ -20,10 +20,7 @@ import com.actiontech.dble.config.model.sharding.table.SingleTableConfig;
 import com.actiontech.dble.config.model.user.ShardingUserConfig;
 import com.actiontech.dble.meta.SchemaMeta;
 import com.actiontech.dble.meta.ViewMeta;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.plan.common.field.Field;
 import com.actiontech.dble.plan.common.item.Item;
 import com.actiontech.dble.plan.visitor.MySQLItemVisitor;
@@ -232,12 +229,9 @@ public final class ShowTables {
 
     private static void writeRowEof(ByteBuffer buffer, MySQLShardingService shardingService, byte packetId) {
         // writeDirectly last eof
-        EOFPacket lastEof = new EOFPacket();
+        EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
-        buffer = lastEof.write(buffer, shardingService, true);
-
-        // post writeDirectly
-        shardingService.writeDirectly(buffer);
+        lastEof.write(buffer,shardingService);
     }
 
     public static Map<String, String> getTableSet(String cSchema, ShowTablesStmtInfo info) {

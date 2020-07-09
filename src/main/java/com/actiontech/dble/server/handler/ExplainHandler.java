@@ -15,10 +15,7 @@ import com.actiontech.dble.config.model.sharding.SchemaConfig;
 import com.actiontech.dble.config.model.sharding.table.BaseTableConfig;
 import com.actiontech.dble.config.model.sharding.table.ChildTableConfig;
 import com.actiontech.dble.config.model.sharding.table.ShardingTableConfig;
-import com.actiontech.dble.net.mysql.EOFPacket;
-import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.net.mysql.ResultSetHeaderPacket;
-import com.actiontech.dble.net.mysql.RowDataPacket;
+import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.plan.node.PlanNode;
 import com.actiontech.dble.plan.optimizer.MyOptimizer;
 import com.actiontech.dble.plan.util.ComplexQueryPlanUtil;
@@ -237,11 +234,8 @@ public final class ExplainHandler {
             }
         }
         // writeDirectly last eof
-        EOFPacket lastEof = new EOFPacket();
+        EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
-        buffer = lastEof.write(buffer, service, true);
-
-        // post writeDirectly
-        service.writeDirectly(buffer);
+        lastEof.write(buffer, service);
     }
 }
