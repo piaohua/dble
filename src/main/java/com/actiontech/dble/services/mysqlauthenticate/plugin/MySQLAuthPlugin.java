@@ -6,6 +6,8 @@ import com.actiontech.dble.config.Versions;
 import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.mysql.AuthPacket;
+import com.actiontech.dble.net.mysql.AuthSwitchRequestPackage;
+import com.actiontech.dble.net.mysql.AuthSwitchResponsePackage;
 import com.actiontech.dble.net.mysql.HandshakeV10Packet;
 import com.actiontech.dble.net.service.AuthResultInfo;
 import com.actiontech.dble.services.mysqlauthenticate.PluginName;
@@ -23,12 +25,14 @@ public abstract class MySQLAuthPlugin {
     protected AuthResultInfo info;
     protected AuthPacket authPacket;
     protected HandshakeV10Packet handshakePacket;
+    protected volatile byte[] authPluginData;
 
     MySQLAuthPlugin(AbstractConnection connection) {
         this.connection = connection;
     }
 
     public MySQLAuthPlugin(MySQLAuthPlugin plugin) {
+        this.authPluginData = plugin.authPluginData;
         this.seed = plugin.seed;
         this.authPacket = plugin.authPacket;
         this.connection = plugin.connection;
@@ -130,6 +134,13 @@ public abstract class MySQLAuthPlugin {
         packet.setClientFlags(getClientFlagSha());
         packet.setAuthPlugin(authPluginName);
         packet.setDatabase(schema);
+        packet.bufferWrite(this.connection);
+    }
+
+    protected void sendAuthPacket(AuthSwitchResponsePackage  packet, byte[] authPluginData,byte packetId) {
+        packet.setAuthPluginData(authPluginData);
+        packet.setPacketId(packetId);
+        packet.setPacketLength(authPluginData.length);
         packet.bufferWrite(this.connection);
     }
 

@@ -50,7 +50,9 @@ public class BackendConnection extends PooledConnection {
 
     @Override
     public void businessClose(String reason) {
-        this.getBackendService().setResponseHandler(null);
+        if (!(getService() instanceof AuthService)) {
+            this.getBackendService().setResponseHandler(null);
+        }
         this.close(reason);
     }
 
@@ -95,6 +97,7 @@ public class BackendConnection extends PooledConnection {
 
     @Override
     public synchronized void close(final String reason) {
+        //LOGGER.info("connection id " + threadId + " close for reason " + reason, new Exception());
         boolean isAuthed = !(this.getService() instanceof AuthService);
         if (!isClosed) {
             if (isAuthed && channel.isOpen() && closeReason != null) {
@@ -153,5 +156,12 @@ public class BackendConnection extends PooledConnection {
 
     public ReadTimeStatusInstance getInstance() {
         return instance;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("").append(this.getClass()).
+                append(" Connection  with").append("port = " + port).append(" threadid = " + threadId).append(" db config = " + instance);
+        return sb.toString();
     }
 }

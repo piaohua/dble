@@ -250,6 +250,7 @@ public class MySQLResponseService extends MySQLBasedService {
         if (size >= MySQLPacket.MAX_PACKET_SIZE) {
             packet.writeBigPackage(this, size);
         } else {
+            LOGGER.info("try write to the backend of the query == " + query);
             packet.write(this);
         }
     }
@@ -288,6 +289,7 @@ public class MySQLResponseService extends MySQLBasedService {
     public void query(String query, boolean isAutoCommit) {
         RouteResultsetNode rrn = new RouteResultsetNode("default", ServerParse.SELECT, query);
         StringBuilder synSQL = getSynSql(null, rrn, this.getConnection().getCharsetName(), this.txIsolation, isAutoCommit, usrVariables, sysVariables);
+        LOGGER.info("try to send command of " + rrn);
         synAndDoExecute(synSQL, rrn, this.getConnection().getCharsetName());
     }
 
@@ -511,7 +513,9 @@ public class MySQLResponseService extends MySQLBasedService {
             public void run() {
                 try {
                     responseService.backendSpecialCleanUp();
-                    handler.connectionClose(responseService, reason);
+                    if (handler != null) {
+                        handler.connectionClose(responseService, reason);
+                    }
                 } catch (Throwable e) {
                     LOGGER.warn("get error close mysql connection ", e);
                 }

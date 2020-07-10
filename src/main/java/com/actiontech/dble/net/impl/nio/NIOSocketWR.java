@@ -19,6 +19,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class NIOSocketWR extends SocketWR {
@@ -157,7 +158,7 @@ public class NIOSocketWR extends SocketWR {
         }
         WriteOutTask task;
         while ((task = writeQueue.poll()) != null) {
-            quitFlag = leftoverWriteTask == null ? false : leftoverWriteTask.closeFlag();
+            quitFlag = task == null ? false : task.closeFlag();
             buffer = task.getBuffer();
             if (buffer.limit() == 0) {
                 con.recycle(buffer);
@@ -170,6 +171,7 @@ public class NIOSocketWR extends SocketWR {
                 while (buffer.hasRemaining()) {
                     written = channel.write(buffer);
                     if (written > 0) {
+                        LOGGER.info("debug write finish for buffer " + buffer + " " + this.processKey.interestOps() + " this channel " + channel.getLocalAddress());
                         con.writeStatistics(written);
                     } else {
                         break;

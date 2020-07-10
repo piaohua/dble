@@ -31,8 +31,6 @@ public class CachingSHA2Pwd extends MySQLAuthPlugin {
 
     private volatile int clientAuthStage = STAGE_QUICK_AUTH;
 
-    private volatile byte[] authPluginData;
-
     private volatile String password;
 
     public CachingSHA2Pwd(AbstractConnection connection) {
@@ -102,10 +100,11 @@ public class CachingSHA2Pwd extends MySQLAuthPlugin {
             case AUTH_SWITCH_MORE:
                 //need full auth of the caching_sha2_password
                 this.clientAuthStage = WATI_FOR_PUBLIC_KEY;
+                /*
                 BinaryPacket binaryPacket = new BinaryPacket();
                 binaryPacket.setData(new byte[]{2});
                 binaryPacket.setPacketId(++data[3]);
-                binaryPacket.bufferWrite(connection);
+                binaryPacket.bufferWrite(connection);*/
                 return plugin_same_with_default;
             case OkPacket.FIELD_COUNT:
                 // get ok from mysql,login success

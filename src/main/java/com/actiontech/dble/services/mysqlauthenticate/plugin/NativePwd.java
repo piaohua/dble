@@ -41,7 +41,11 @@ public class NativePwd extends MySQLAuthPlugin {
         packet.setCharsetIndex(charsetIndex);
         packet.setUser(user);
         try {
-            sendAuthPacket(packet, PasswordAuthPlugin.passwd(password, handshakePacket), PLUGIN_NAME.name(), schema);
+            if (authPluginData == null) {
+                sendAuthPacket(packet, PasswordAuthPlugin.passwd(password, handshakePacket), PLUGIN_NAME.name(), schema);
+            } else {
+                sendAuthPacket(new AuthSwitchResponsePackage(), PasswordAuthPlugin.passwd(password, handshakePacket), packetId);
+            }
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -53,7 +57,7 @@ public class NativePwd extends MySQLAuthPlugin {
             case AuthSwitchRequestPackage.STATUS:
                 BinaryPacket bin2 = new BinaryPacket();
                 String authPluginName = bin2.getAuthPluginName(data);
-                byte[] authPluginData = bin2.getAuthPluginData(data);
+                authPluginData = bin2.getAuthPluginData(data);
                 try {
                     PluginName name = PluginName.valueOf(authPluginName);
                     return name;

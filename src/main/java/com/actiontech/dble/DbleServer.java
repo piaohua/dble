@@ -283,8 +283,8 @@ public final class DbleServer {
 
     private void initTaskQueue() {
         if (SystemConfig.getInstance().getUsePerformanceMode() == 1) {
-            frontPriorityQueue = new ConcurrentLinkedQueue<ServiceTask>();
-            frontHandlerQueue = new ConcurrentLinkedQueue<ServiceTask>();
+            frontPriorityQueue = new ConcurrentLinkedQueue<>();
+            frontHandlerQueue = new ConcurrentLinkedQueue<>();
             for (int i = 0; i < SystemConfig.getInstance().getProcessorExecutor(); i++) {
                 businessExecutor.execute(new FrontendCurrentRunnable(frontHandlerQueue, frontPriorityQueue));
             }
@@ -295,8 +295,8 @@ public final class DbleServer {
             }
 
         } else {
-            frontPriorityQueue = new ConcurrentLinkedQueue<ServiceTask>();
-            frontHandlerQueue = new LinkedBlockingQueue<ServiceTask>();
+            frontPriorityQueue = new ConcurrentLinkedQueue<>();
+            frontHandlerQueue = new LinkedBlockingQueue<>();
             for (int i = 0; i < SystemConfig.getInstance().getProcessorExecutor(); i++) {
                 businessExecutor.execute(new FrontendBlockRunnable((LinkedBlockingQueue) frontHandlerQueue, frontPriorityQueue));
             }

@@ -19,11 +19,13 @@ import com.actiontech.dble.services.mysqlauthenticate.plugin.BackendDefaulPlugin
 import com.actiontech.dble.services.mysqlauthenticate.plugin.CachingSHA2Pwd;
 import com.actiontech.dble.services.mysqlauthenticate.plugin.MySQLAuthPlugin;
 import com.actiontech.dble.services.mysqlauthenticate.plugin.NativePwd;
+import com.actiontech.dble.statistic.stat.ThreadWorkUsage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.actiontech.dble.config.ErrorCode.ER_ACCESS_DENIED_ERROR;
 
@@ -36,6 +38,8 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
     private static final Logger LOGGER = LoggerFactory.getLogger(MySQLBackAuthService.class);
 
     private volatile MySQLAuthPlugin plugin;
+
+    protected final AtomicBoolean isHandling = new AtomicBoolean(false);
 
     private volatile String user;
     private volatile String schema;
@@ -68,6 +72,7 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
                     break;
                 case plugin_same_with_default:
                     checkForResult();
+                    LOGGER.info("the auth finished with queue size " + taskQueue.size() + "of connection " + connection.toString());
                     break;
                 default:
                     String authPluginErrorMessage = "Client don't support the password plugin ,please check the default auth Plugin";
@@ -118,24 +123,56 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
         connection.getSocketWR().asyncRead();
     }
 
-    protected void TaskToTotalQueue(ServiceTask task) {
-        //LOGGER.info("get connection data of the task " + task.getOrgData().length);
-        handleQueue(DbleServer.getInstance().getComplexQueryExecutor(), task);
+    @Override
+    public void TaskToTotalQueue(ServiceTask task) {
+        Executor executor = DbleServer.getInstance().getBackendBusinessExecutor();
+        if (isHandling.compareAndSet(false, true)) {
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        handleInnerData();
+                    } catch (Exception e) {
+                        handleDataError(e);
+                    } finally {
+                        isHandling.set(false);
+                        if (taskQueue.size() > 0) {
+                            TaskToTotalQueue(null);
+                        }
+                    }
+                }
+            });
+        }
     }
 
-
-    protected void handleQueue(final Executor executor, ServiceTask task) {
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    handleData(task);
-                } catch (Exception e) {
-                    handleDataError(e);
+    protected void handleInnerData() {
+        ServiceTask task;
+        //LOGGER.info("LOOP FOR BACKEND " + Thread.currentThread().getName() + " " + taskQueue.size());
+        //threadUsageStat start
+        String threadName = null;
+        ThreadWorkUsage workUsage = null;
+        long workStart = 0;
+        if (SystemConfig.getInstance().getUseThreadUsageStat() == 1) {
+            threadName = Thread.currentThread().getName();
+            workUsage = DbleServer.getInstance().getThreadUsedMap().get(threadName);
+            if (threadName.startsWith("backend")) {
+                if (workUsage == null) {
+                    workUsage = new ThreadWorkUsage();
+                    DbleServer.getInstance().getThreadUsedMap().put(threadName, workUsage);
                 }
             }
-        });
+            workStart = System.nanoTime();
+        }
+        //handleData
+        while ((task = taskQueue.poll()) != null) {
+            handleInnerData(task.getOrgData());
+        }
+        //threadUsageStat end
+        if (workUsage != null && threadName.startsWith("backend")) {
+            workUsage.setCurrentSecondUsed(workUsage.getCurrentSecondUsed() + System.nanoTime() - workStart);
+        }
     }
+
 
     protected void handleDataError(Exception e) {
         LOGGER.info(this.toString() + " handle data error:", e);

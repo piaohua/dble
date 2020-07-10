@@ -39,6 +39,7 @@ public class MySQLConnectionFactory extends PooledConnectionFactory {
             socketWR = new AIOSocketWR();
         }
         BackendConnection connection = new BackendConnection(channel, socketWR, instance, handler);
+        connection.setSocketParams(false);
         socketWR.initFromConnection(connection);
         IOProcessor processor = DbleServer.getInstance().nextBackendProcessor();
         connection.setProcessor(processor);
@@ -58,8 +59,10 @@ public class MySQLConnectionFactory extends PooledConnectionFactory {
             channel = AsynchronousSocketChannel.open(DbleServer.getInstance().getNextAsyncChannelGroup());
             socketWR = new AIOSocketWR();
         }
+
         BackendConnection connection = new BackendConnection(channel, socketWR, instance, listener, schema);
         socketWR.initFromConnection(connection);
+        connection.setSocketParams(false);
         IOProcessor processor = DbleServer.getInstance().nextBackendProcessor();
         connection.setProcessor(processor);
         DbleServer.getInstance().getConnector().postConnect(connection);

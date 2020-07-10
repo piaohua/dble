@@ -10,6 +10,8 @@ import com.actiontech.dble.backend.mysql.MySQLMessage;
 import com.actiontech.dble.backend.mysql.StreamUtil;
 import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -73,7 +75,7 @@ import java.nio.ByteBuffer;
  * @author mycat
  */
 public class CommandPacket extends MySQLPacket {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthSwitchRequestPackage.class);
     private byte command;
     private byte[] arg;
 
@@ -101,6 +103,7 @@ public class CommandPacket extends MySQLPacket {
             buffer.put(packetId);
             buffer.put(command);
             buffer = service.writeToBuffer(arg, buffer);
+            LOGGER.info("TRY TO WRITE FOR BUFFER " + buffer);
             service.writeDirectly(buffer);
         } catch (java.nio.BufferOverflowException e1) {
             //fixed issues #98 #1072
