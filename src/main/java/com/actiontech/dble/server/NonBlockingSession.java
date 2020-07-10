@@ -992,7 +992,7 @@ public class NonBlockingSession implements Session {
 
 
     public void multiStatementNextSql(boolean flag) {
-        //todo 多语句回环需要处理
+        //todo 多语句回环需要处理 后续删除
         /*if (flag) {
             this.setRequestTime();
             this.setQueryStartTime(System.currentTimeMillis());
@@ -1000,7 +1000,7 @@ public class NonBlockingSession implements Session {
         }*/
     }
 
-    public OkPacket getOKPacket(){
+    public OkPacket getOKPacket() {
         OkPacket ok = new OkPacket();
         byte packet = (byte) this.getPacketId().incrementAndGet();
         ok.read(OkPacket.OK);
@@ -1147,24 +1147,26 @@ public class NonBlockingSession implements Session {
 
     public void stopFlowControl() {
         LOGGER.info("Session stop flow control " + this.getFrontConnection());
-       /* synchronized (flowControlledBackendConnections) {
-            service.setFlowControlled(false);
+        synchronized (flowControlledBackendConnections) {
+            service.getConnection().setFlowControlled(false);
             for (BackendConnection entry : flowControlledBackendConnections) {
-                entry.enableRead();
+                entry.getSocketWR().enableRead();
             }
             flowControlledBackendConnections.clear();
-        }*/
+        }
     }
 
-    public void startFlowControl(BackendConnection backendConnection) {
-        /*synchronized (flowControlledBackendConnections) {
+    public void startFlowControl() {
+        synchronized (flowControlledBackendConnections) {
             if (!service.isFlowControlled()) {
                 LOGGER.info("Session start flow control " + this.getFrontConnection());
             }
-            service.setFlowControlled(true);
-            backendConnection.disableRead();
-            flowControlledBackendConnections.add(backendConnection);
-        }*/
+            service.getConnection().setFlowControlled(true);
+            for (BackendConnection backendConnection : target.values()) {
+                backendConnection.getSocketWR().disableRead();
+                flowControlledBackendConnections.add(backendConnection);
+            }
+        }
     }
 
     public void releaseConnectionFromFlowCntrolled(BackendConnection con) {

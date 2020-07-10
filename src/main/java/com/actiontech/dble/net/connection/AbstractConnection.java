@@ -9,7 +9,6 @@ import com.actiontech.dble.net.WriteOutTask;
 import com.actiontech.dble.net.mysql.CharsetNames;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.net.service.AuthResultInfo;
-import com.actiontech.dble.net.service.Service;
 import com.actiontech.dble.util.CompressUtil;
 import com.actiontech.dble.util.TimeUtil;
 import com.google.common.base.Strings;
@@ -430,10 +429,6 @@ public abstract class AbstractConnection implements Connection {
         this.id = id;
     }
 
-    /**
-     * 流量控制相关方法，暂时不管，后续再进行处理
-     * ----------------------------------------------------------------------------------------------------------------------
-     */
 
     public boolean isFlowControlled() {
         return flowControlled;
@@ -443,7 +438,7 @@ public abstract class AbstractConnection implements Connection {
         this.flowControlled = flowControlled;
     }
 
-    public abstract void startFlowControl(BackendConnection bcon);
+    public abstract void startFlowControl();
 
     public abstract void stopFlowControl();
 

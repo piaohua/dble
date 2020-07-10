@@ -121,9 +121,7 @@ public class LockTablesHandler extends MultiNodeHandler {
                     lock.unlock();
                 }
                 session.multiStatementPacket(ok);
-                boolean multiStatementFlag = session.getIsMultiStatement().get();
                 ok.write(session.getFrontConnection());
-                session.multiStatementNextSql(multiStatementFlag);
             }
         }
     }

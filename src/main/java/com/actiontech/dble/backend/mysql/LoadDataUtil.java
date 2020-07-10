@@ -9,6 +9,7 @@ import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.net.mysql.BinaryPacket;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
+import com.actiontech.dble.singleton.WriteQueueFlowController;
 import com.actiontech.dble.sqlengine.mpp.LoadData;
 
 import java.io.*;
@@ -68,18 +69,18 @@ public final class LoadDataUtil {
             int len = -1;
 
             while ((len = inputStream.read(buffer)) != -1) {
-                //todo 流量控制还是要注意下
-               /* if (WriteQueueFlowController.isEnableFlowControl() &&
-                        c.getWriteQueue().size() > WriteQueueFlowController.getFlowStart()) {
-                    c.startFlowControl(c);
+
+                 if (WriteQueueFlowController.isEnableFlowControl() &&
+                         service.getConnection().getWriteQueue().size() > WriteQueueFlowController.getFlowStart()) {
+                     service.getConnection().startFlowControl();
                 }
-                while (c.isFlowControlled()) {
+                while (service.getConnection().isFlowControlled()) {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         //ignore error
                     }
-                }*/
+                }
                 byte[] temp = null;
                 if (len == packSize) {
                     temp = buffer;

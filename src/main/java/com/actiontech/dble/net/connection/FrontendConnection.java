@@ -3,6 +3,7 @@ package com.actiontech.dble.net.connection;
 import com.actiontech.dble.net.SocketWR;
 import com.actiontech.dble.net.service.AuthResultInfo;
 import com.actiontech.dble.net.service.FrontEndService;
+import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.singleton.FrontendUserManager;
 
 import java.io.IOException;
@@ -47,13 +48,13 @@ public class FrontendConnection extends AbstractConnection {
     }
 
     @Override
-    public void startFlowControl(BackendConnection bcon) {
-
+    public void startFlowControl() {
+        ((MySQLShardingService) this.getService()).getSession2().startFlowControl();
     }
 
     @Override
     public void stopFlowControl() {
-
+        ((MySQLShardingService) this.getService()).getSession2().stopFlowControl();
     }
 
     public synchronized void cleanup() {

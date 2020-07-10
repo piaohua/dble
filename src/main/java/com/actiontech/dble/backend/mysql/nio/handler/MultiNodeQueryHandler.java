@@ -426,7 +426,7 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
                 FlowControllerConfig fconfig = WriteQueueFlowController.getFlowCotrollerConfig();
                 if (fconfig.isEnableFlowControl() &&
                         session.getFrontConnection().getWriteQueue().size() > fconfig.getStart()) {
-                    session.getFrontConnection().startFlowControl(((MySQLResponseService) service).getConnection());
+                    session.getFrontConnection().startFlowControl();
                 }
 
                 RowDataPacket rowDataPk = new RowDataPacket(fieldCount);

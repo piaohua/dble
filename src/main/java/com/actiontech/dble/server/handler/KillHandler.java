@@ -60,8 +60,7 @@ public final class KillHandler {
      * @param service  serverConnection
      */
     private static void killQuery(long id, MySQLShardingService service) {
-        //todo kill
-        /*FrontendConnection killConn;
+        FrontendConnection killConn;
         if (id == service.getConnection().getId()) {
             service.writeErrMessage(ErrorCode.ER_QUERY_INTERRUPTED, "Query was interrupted.");
             return;
@@ -71,16 +70,16 @@ public final class KillHandler {
         if (killConn == null) {
             service.writeErrMessage(ErrorCode.ER_NO_SUCH_THREAD, "Unknown connection id:" + id);
             return;
-        } else if (!killConn.getUser().equals(service.getUser())) {
+        } else if (!killConn.getService().getUser().equals(service.getUser())) {
             service.writeErrMessage(ErrorCode.ER_NO_SUCH_THREAD, "can't kill other user's connection" + id);
             return;
         }
 
-        NonBlockingSession killSession = ((ServerConnection) killConn).getSession2();
+        NonBlockingSession killSession =  killConn.getService().getSession2();
         if (killSession.getTransactionManager().getXAStage() != null ||
                 killSession.getSessionStage() == SessionStage.Init || killSession.getSessionStage() == SessionStage.Finished) {
             boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-            getOkPacket(service).writeDirectly(service.getConnection());
+            getOkPacket(service).write(service.getConnection());
             service.getSession2().multiStatementNextSql(multiStatementFlag);
             return;
         }
@@ -88,7 +87,7 @@ public final class KillHandler {
         killSession.setKilled(true);
         // return ok to front connection that sends kill query
         boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
-        getOkPacket(service).writeDirectly(service.getConnection());
+        getOkPacket(service).write(service.getConnection());
         service.getSession2().multiStatementNextSql(multiStatementFlag);
 
         while (true) {
@@ -110,7 +109,7 @@ public final class KillHandler {
                     backendConnection.close("Query was interrupted.");
                 }
             }
-        }*/
+        }
     }
 
     /**

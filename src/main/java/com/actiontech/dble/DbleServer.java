@@ -271,7 +271,6 @@ public final class DbleServer {
                         @Override
                         public Thread newThread(Runnable r) {
                             Thread th = new Thread(r);
-                            //TODO
                             th.setName(DirectByteBufferPool.LOCAL_BUF_THREAD_PREX + "AIO" + (inx++));
                             LOGGER.info("created new AIO thread " + th.getName());
                             return th;
@@ -424,8 +423,7 @@ public final class DbleServer {
                 throw new IOException(e);
             }
         } else {
-            //TODO Self check should be execute when the dbGroup not exists
-            // reviseSchemas();
+            reviseSchemas();
         }
     }
 

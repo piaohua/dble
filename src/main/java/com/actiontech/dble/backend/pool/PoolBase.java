@@ -29,8 +29,7 @@ public class PoolBase {
         try {
             factory.make(instance, handler, schema);
         } catch (IOException ioe) {
-            // todo response for IOException  service.connectionError(ioe, null);
-            ioe.printStackTrace();
+            handler.connectionError(ioe, null);
         }
     }
 
