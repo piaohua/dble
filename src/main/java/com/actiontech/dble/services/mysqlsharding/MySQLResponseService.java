@@ -250,7 +250,6 @@ public class MySQLResponseService extends MySQLBasedService {
         if (size >= MySQLPacket.MAX_PACKET_SIZE) {
             packet.writeBigPackage(this, size);
         } else {
-            LOGGER.info("try write to the backend of the query == " + query);
             packet.write(this);
         }
     }

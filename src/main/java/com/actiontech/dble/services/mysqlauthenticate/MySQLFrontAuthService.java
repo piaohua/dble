@@ -39,9 +39,7 @@ public class MySQLFrontAuthService extends MySQLBasedService implements AuthServ
     public MySQLFrontAuthService(AbstractConnection connection) {
         super(connection);
         this.proto = new MySQLProtoHandlerImpl();
-        SystemConfig.getInstance().getFakeMySQLVersion();
-
-        plugin = new NativePwd(connection);
+        plugin = MySQLAuthPlugin.getDefaultPlugin(connection);
     }
 
 

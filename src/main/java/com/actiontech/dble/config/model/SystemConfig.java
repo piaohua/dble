@@ -34,7 +34,7 @@ public final class SystemConfig {
      * For Other MySQL branch ,like MariaDB 10.1.x,
      * but its protocol is compatible with MySQL. So the versions array only contain official version here
      */
-    public static final String[] MYSQL_VERSIONS = {"5.5", "5.6", "5.7"};
+    public static final String[] MYSQL_VERSIONS = {"5.5", "5.6", "5.7", "8.0"};
     // base config
     private String homePath = null;
     private String serverId = NetUtil.getHostIp();

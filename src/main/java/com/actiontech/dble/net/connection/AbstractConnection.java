@@ -382,8 +382,9 @@ public abstract class AbstractConnection implements Connection {
             this.recycle(readBuffer);
             this.readBuffer = null;
         }
-
-        service.cleanup();
+        if (service != null) {
+            service.cleanup();
+        }
 
         WriteOutTask task;
         while ((task = writeQueue.poll()) != null) {

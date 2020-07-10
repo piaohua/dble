@@ -46,7 +46,7 @@ public class AuthSwitchResponsePackage extends MySQLPacket {
         ByteBuffer buffer = connection.allocate();
         BufferUtil.writeUB3(buffer, calcPacketSize());
         buffer.put(packetId);
-        BufferUtil.writeWithNull(buffer, authPluginData);
+        buffer.put(authPluginData);
         connection.write(buffer);
     }
 

@@ -115,7 +115,7 @@ public class NativePwd extends MySQLAuthPlugin {
 
     @Override
     public PluginName getName() {
-        return null;
+        return mysql_native_password;
     }
 
 }

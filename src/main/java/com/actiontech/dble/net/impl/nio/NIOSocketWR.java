@@ -171,7 +171,6 @@ public class NIOSocketWR extends SocketWR {
                 while (buffer.hasRemaining()) {
                     written = channel.write(buffer);
                     if (written > 0) {
-                        LOGGER.info("debug write finish for buffer " + buffer + " " + this.processKey.interestOps() + " this channel " + channel.getLocalAddress());
                         con.writeStatistics(written);
                     } else {
                         break;

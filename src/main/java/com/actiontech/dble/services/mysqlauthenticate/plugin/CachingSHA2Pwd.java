@@ -146,7 +146,7 @@ public class CachingSHA2Pwd extends MySQLAuthPlugin {
 
     @Override
     public PluginName getName() {
-        return null;
+        return caching_sha2_password;
     }
 
 

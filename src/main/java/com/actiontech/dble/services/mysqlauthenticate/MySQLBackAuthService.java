@@ -72,7 +72,6 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
                     break;
                 case plugin_same_with_default:
                     checkForResult();
-                    LOGGER.info("the auth finished with queue size " + taskQueue.size() + "of connection " + connection.toString());
                     break;
                 default:
                     String authPluginErrorMessage = "Client don't support the password plugin ,please check the default auth Plugin";
@@ -81,9 +80,7 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
             }
         } catch (Exception e) {
             LOGGER.warn(e.getMessage());
-            if (listener != null) {
-                listener.onCreateFail((PooledConnection) connection, e);
-            }
+            onConnectFailed(e);
         } finally {
             synchronized (this) {
                 currentTask = null;
@@ -91,10 +88,7 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
         }
     }
 
-    @Override
-    public void markFinished() {
 
-    }
 
     public void checkForResult() {
         if (plugin.getInfo() == null) {
@@ -198,7 +192,7 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
     }
 
     @Override
-    public void cleanup() {
-        this.onConnectFailed(new Exception(connection.getCloseReason()));
+    public void markFinished() {
+
     }
 }

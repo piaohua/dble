@@ -52,7 +52,9 @@ public class BackendConnection extends PooledConnection {
     public void businessClose(String reason) {
         if (!(getService() instanceof AuthService)) {
             this.getBackendService().setResponseHandler(null);
+            this.getService().cleanup();
         }
+        this.setService(null);
         this.close(reason);
     }
 
@@ -98,7 +100,7 @@ public class BackendConnection extends PooledConnection {
     @Override
     public synchronized void close(final String reason) {
         //LOGGER.info("connection id " + threadId + " close for reason " + reason, new Exception());
-        boolean isAuthed = !(this.getService() instanceof AuthService);
+        boolean isAuthed = this.getService() != null && !(this.getService() instanceof AuthService);
         if (!isClosed) {
             if (isAuthed && channel.isOpen() && closeReason != null) {
                 try {

@@ -103,7 +103,6 @@ public class CommandPacket extends MySQLPacket {
             buffer.put(packetId);
             buffer.put(command);
             buffer = service.writeToBuffer(arg, buffer);
-            LOGGER.info("TRY TO WRITE FOR BUFFER " + buffer);
             service.writeDirectly(buffer);
         } catch (java.nio.BufferOverflowException e1) {
             //fixed issues #98 #1072

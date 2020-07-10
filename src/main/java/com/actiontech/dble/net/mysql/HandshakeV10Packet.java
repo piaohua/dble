@@ -67,6 +67,7 @@ public class HandshakeV10Packet extends MySQLPacket {
     private byte serverCharsetIndex;
     private int serverStatus;
     private byte[] restOfScrambleBuff; // auth-plugin-data-part-2
+
     private byte[] authPluginName = NATIVE_PASSWORD_PLUGIN;
 
     public byte[] getAuthPluginName() {
@@ -224,5 +225,9 @@ public class HandshakeV10Packet extends MySQLPacket {
 
     public void setRestOfScrambleBuff(byte[] restOfScrambleBuff) {
         this.restOfScrambleBuff = restOfScrambleBuff;
+    }
+
+    public void setAuthPluginName(byte[] authPluginName) {
+        this.authPluginName = authPluginName;
     }
 }

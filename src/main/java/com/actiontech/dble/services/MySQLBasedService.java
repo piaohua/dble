@@ -88,7 +88,7 @@ public abstract class MySQLBasedService extends AbstractService {
     }
 
     public void writeErrMessage(int vendorCode, String msg) {
-        writeErrMessage((byte) 1, vendorCode, msg);
+        writeErrMessage((byte) this.nextPacketId(), vendorCode, msg);
     }
 
     public void writeErrMessage(byte id, int vendorCode, String msg) {

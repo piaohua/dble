@@ -6,12 +6,14 @@ import com.actiontech.dble.config.Versions;
 import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.mysql.AuthPacket;
-import com.actiontech.dble.net.mysql.AuthSwitchRequestPackage;
 import com.actiontech.dble.net.mysql.AuthSwitchResponsePackage;
 import com.actiontech.dble.net.mysql.HandshakeV10Packet;
 import com.actiontech.dble.net.service.AuthResultInfo;
 import com.actiontech.dble.services.mysqlauthenticate.PluginName;
 import com.actiontech.dble.util.RandomUtil;
+
+import static com.actiontech.dble.services.mysqlauthenticate.PluginName.caching_sha2_password;
+import static com.actiontech.dble.services.mysqlauthenticate.PluginName.mysql_native_password;
 
 
 /**
@@ -19,6 +21,7 @@ import com.actiontech.dble.util.RandomUtil;
  */
 public abstract class MySQLAuthPlugin {
 
+    public static final PluginName[] MYSQL_DEFAULT_PLUGIN = {mysql_native_password, mysql_native_password, mysql_native_password, caching_sha2_password};
     protected byte[] seed;
     private boolean authSwitch;
     protected final AbstractConnection connection;
@@ -48,7 +51,7 @@ public abstract class MySQLAuthPlugin {
 
     public abstract void handleSwitchData(byte[] data);
 
-    public byte[] greeting(){
+    public byte[] greeting() {
         // generate auth data
         byte[] rand1 = RandomUtil.randomBytes(8);
         byte[] rand2 = RandomUtil.randomBytes(12);
@@ -70,6 +73,7 @@ public abstract class MySQLAuthPlugin {
         hs.setServerCharsetIndex((byte) (charsetIndex & 0xff));
         hs.setServerStatus(2);
         hs.setRestOfScrambleBuff(rand2);
+        hs.setAuthPluginName(this.getName().toString().getBytes());
 
         //writeDirectly out
         hs.write(connection);
@@ -137,7 +141,7 @@ public abstract class MySQLAuthPlugin {
         packet.bufferWrite(this.connection);
     }
 
-    protected void sendAuthPacket(AuthSwitchResponsePackage  packet, byte[] authPluginData,byte packetId) {
+    protected void sendAuthPacket(AuthSwitchResponsePackage packet, byte[] authPluginData, byte packetId) {
         packet.setAuthPluginData(authPluginData);
         packet.setPacketId(packetId);
         packet.setPacketLength(authPluginData.length);
@@ -151,6 +155,25 @@ public abstract class MySQLAuthPlugin {
         return flag;
     }
 
+    public static MySQLAuthPlugin getDefaultPlugin(AbstractConnection connection) {
+        String majorMySQLVersion = SystemConfig.getInstance().getFakeMySQLVersion();
+        String[] versions = majorMySQLVersion.split("\\.");
+        if (versions.length == 3) {
+            majorMySQLVersion = versions[0] + "." + versions[1];
+            for (int i = 0; i < SystemConfig.MYSQL_VERSIONS.length; i++) {
+                // version is x.y.z ,just compare the x.y
+                if (majorMySQLVersion.equals(SystemConfig.MYSQL_VERSIONS[i])) {
+                    switch (MYSQL_DEFAULT_PLUGIN[i]) {
+                        case mysql_native_password:
+                            return new NativePwd(connection);
+                        case caching_sha2_password:
+                            return new CachingSHA2Pwd(connection);
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
     private static long initClientFlags() {
         int flag = 0;
