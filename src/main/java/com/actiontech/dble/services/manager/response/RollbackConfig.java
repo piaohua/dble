@@ -27,7 +27,7 @@ import com.actiontech.dble.net.connection.FrontendConnection;
 import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.meta.ReloadManager;
 import com.actiontech.dble.net.mysql.OkPacket;
-import com.actiontech.dble.server.ServerConnection;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

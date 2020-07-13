@@ -12,7 +12,6 @@ import com.actiontech.dble.net.connection.FrontendConnection;
 import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.net.mysql.OkPacket;
 import com.actiontech.dble.route.RouteResultsetNode;
-import com.actiontech.dble.server.ServerConnection;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.singleton.PauseShardingNodeManager;
 import org.slf4j.Logger;

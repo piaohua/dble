@@ -5,7 +5,7 @@
 
 package com.actiontech.dble.cluster.values;
 
-import com.actiontech.dble.backend.mysql.nio.MySQLConnection;
+
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
 

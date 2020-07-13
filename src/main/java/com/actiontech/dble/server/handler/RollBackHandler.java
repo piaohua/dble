@@ -6,7 +6,7 @@
 package com.actiontech.dble.server.handler;
 
 import com.actiontech.dble.log.transaction.TxnLogHelper;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 
 public final class RollBackHandler {

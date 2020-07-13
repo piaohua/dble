@@ -6,11 +6,7 @@
 package com.actiontech.dble.net.mysql;
 
 import com.actiontech.dble.backend.mysql.BufferUtil;
-import com.actiontech.dble.net.FrontendConnection;
 import com.actiontech.dble.net.connection.AbstractConnection;
-import com.actiontech.dble.net.impl.nio.NIOSocketWR;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 

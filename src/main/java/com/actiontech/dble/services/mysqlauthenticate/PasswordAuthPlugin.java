@@ -1,7 +1,6 @@
 package com.actiontech.dble.services.mysqlauthenticate;
 
 import com.actiontech.dble.backend.mysql.nio.MySQLInstance;
-import com.actiontech.dble.net.AbstractConnection;
 import com.actiontech.dble.net.mysql.BinaryPacket;
 import com.actiontech.dble.net.mysql.HandshakeV10Packet;
 import com.actiontech.dble.net.mysql.Reply323Packet;
@@ -44,11 +43,14 @@ public final class PasswordAuthPlugin {
 
     public static final byte[] NATIVE_PASSWORD_WITH_PLUGINDATA = new byte[]{0x14, 0, 0, 3};
 
+
     public static final byte AUTH_SWITCH_MORE = 0x01;
 
     public static final byte AUTHSTAGE_FAST_COMPLETE = 0x03;
 
     public static final byte AUTHSTAGE_FULL = 0x04;
+
+    public static final byte AUTH_SWITCH_PACKET = 0x01;
 
 
     private static byte[] seedTotal = null;
@@ -192,16 +194,6 @@ public final class PasswordAuthPlugin {
     }
 
 
-    public static void sendEnPaGetPub(byte[] getPublicKeyType, AbstractConnection s) throws Exception {
-        if (Arrays.equals(getPublicKeyType, PasswordAuthPlugin.GETPUBLICKEY_NATIVE_FIRST)) {
-            s.write(PasswordAuthPlugin.GETPUBLICKEY_NATIVE_FIRST);
-        } else if (Arrays.equals(getPublicKeyType, PasswordAuthPlugin.GETPUBLICKEY)) {
-            s.write(PasswordAuthPlugin.GETPUBLICKEY);
-        } else {
-            return;
-        }
-    }
-
     public static byte[] sendEnPasswordWithPublicKey(byte[] authPluginData, byte[] publicKey, String password, byte packetId) throws Exception {
         byte[] input = password != null ? getBytesNullTerminated(password, "UTF-8") : new byte[]{0};
         byte[] mysqlScrambleBuff = new byte[input.length];
@@ -249,5 +241,24 @@ public final class PasswordAuthPlugin {
         return target;
     }
 
+    public static byte[] combineHeaderAndPassword(byte[] des1, byte[] des2) {
+        byte[] target = new byte[des1.length + des2.length];
+        int i;
+        for (i = 0; i < des1.length; i++) {
+            target[i] = des1[i];
+        }
+        for (int j = 0; j < des2.length; j++, i++) {
+            target[i] = des2[j];
+        }
+        return target;
+    }
+
+    public static byte[] nativePassword(byte[] cs2p) {
+        return combineHeaderAndPassword(NATIVE_PASSWORD_WITH_PLUGINDATA, cs2p);
+    }
+
+    public static byte[] cachingSha2Password(byte[] cs2p) {
+        return combineHeaderAndPassword(WRITECACHINGPASSWORD, cs2p);
+    }
 
 }

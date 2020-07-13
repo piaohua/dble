@@ -5,7 +5,7 @@
 
 package com.actiontech.dble.backend.mysql.nio.handler.util;
 
-import com.actiontech.dble.backend.mysql.nio.MySQLConnection;
+
 import com.actiontech.dble.net.mysql.RowDataPacket;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
 

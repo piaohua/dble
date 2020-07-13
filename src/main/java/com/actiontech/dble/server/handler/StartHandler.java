@@ -6,7 +6,7 @@
 package com.actiontech.dble.server.handler;
 
 import com.actiontech.dble.config.ErrorCode;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.parser.ServerParseStart;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;

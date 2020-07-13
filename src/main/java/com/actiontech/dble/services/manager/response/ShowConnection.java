@@ -15,7 +15,7 @@ import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.MySQLBasedService;
 import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.route.factory.RouteStrategyFactory;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.util.IntegerUtil;
 import com.actiontech.dble.util.LongUtil;

@@ -6,7 +6,6 @@
 package com.actiontech.dble.meta;
 
 import com.actiontech.dble.route.RouteResultset;
-import com.actiontech.dble.server.ServerConnection;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.util.ExecutorUtil;
 import org.slf4j.Logger;

@@ -6,7 +6,7 @@
 package com.actiontech.dble.backend.mysql.nio.handler;
 
 import com.actiontech.dble.DbleServer;
-import com.actiontech.dble.backend.BackendConnection;
+
 import com.actiontech.dble.backend.mysql.nio.handler.query.DMLResponseHandler;
 import com.actiontech.dble.backend.mysql.nio.handler.util.HandlerTool;
 import com.actiontech.dble.net.mysql.FieldPacket;
@@ -17,7 +17,7 @@ import com.actiontech.dble.plan.common.item.Item;
 import com.actiontech.dble.plan.visitor.MySQLItemVisitor;
 import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.server.NonBlockingSession;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.server.response.PackageBufINf;
 import com.actiontech.dble.server.response.ShowTables;
 import com.actiontech.dble.server.response.ShowTablesStmtInfo;

@@ -12,7 +12,7 @@ import com.actiontech.dble.route.factory.RouteStrategyFactory;
 import com.actiontech.dble.route.handler.HintHandler;
 import com.actiontech.dble.route.handler.HintHandlerFactory;
 import com.actiontech.dble.route.handler.HintSQLHandler;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import org.slf4j.Logger;

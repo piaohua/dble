@@ -4,7 +4,7 @@ import com.actiontech.dble.DbleServer;
 import com.actiontech.dble.net.IOProcessor;
 import com.actiontech.dble.net.connection.FrontendConnection;
 import com.actiontech.dble.server.NonBlockingSession;
-import com.actiontech.dble.server.ServerConnection;
+
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 

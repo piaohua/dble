@@ -7,7 +7,7 @@ package com.actiontech.dble.log.transaction;
 
 import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.log.DailyRotateLogStore;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.util.TimeUtil;
 import org.slf4j.Logger;

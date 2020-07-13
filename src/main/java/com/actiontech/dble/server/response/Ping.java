@@ -7,7 +7,6 @@ package com.actiontech.dble.server.response;
 
 import com.actiontech.dble.DbleServer;
 import com.actiontech.dble.backend.mysql.PacketUtil;
-import com.actiontech.dble.net.FrontendConnection;
 import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.mysql.ErrorPacket;
 import com.actiontech.dble.net.mysql.OkPacket;
@@ -23,13 +22,6 @@ public final class Ping {
 
     private static final ErrorPacket ERROR = PacketUtil.getShutdown();
 
-    public static void response(FrontendConnection c) {
-      /*  if (DbleServer.getInstance().isOnline()) {
-            c.writeDirectly(c.writeToBuffer(OkPacket.OK, c.allocate()));
-        } else {
-            ERROR.writeDirectly(c);
-        }*/
-    }
 
     public static void response(AbstractConnection c) {
         if (DbleServer.getInstance().isOnline()) {

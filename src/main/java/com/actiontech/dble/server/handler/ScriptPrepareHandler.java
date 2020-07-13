@@ -6,7 +6,7 @@
 package com.actiontech.dble.server.handler;
 
 import com.actiontech.dble.config.ErrorCode;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.server.parser.ScriptPrepareParse;
 import com.actiontech.dble.server.response.SptDrop;
 import com.actiontech.dble.server.response.SptExecute;

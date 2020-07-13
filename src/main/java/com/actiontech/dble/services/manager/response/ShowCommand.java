@@ -11,7 +11,6 @@ import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.net.IOProcessor;
 import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.manager.ManagerService;
-import com.actiontech.dble.net.NIOProcessor;
 import com.actiontech.dble.statistic.CommandCount;
 import com.actiontech.dble.util.LongUtil;
 

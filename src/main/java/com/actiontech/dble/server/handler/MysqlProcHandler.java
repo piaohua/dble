@@ -9,7 +9,7 @@ package com.actiontech.dble.server.handler;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.net.mysql.FieldPacket;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 
 public final class MysqlProcHandler {

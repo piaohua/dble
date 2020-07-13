@@ -35,7 +35,7 @@ import com.actiontech.dble.net.IOProcessor;
 import com.actiontech.dble.net.connection.BackendConnection;
 import com.actiontech.dble.net.connection.FrontendConnection;
 import com.actiontech.dble.route.RouteResultsetNode;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.services.manager.response.ReloadConfig;
 import com.actiontech.dble.services.manager.response.RollbackConfig;
 import com.actiontech.dble.services.manager.response.ShowBinlogStatus;

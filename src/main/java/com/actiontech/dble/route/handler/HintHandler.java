@@ -7,7 +7,7 @@ package com.actiontech.dble.route.handler;
 
 import com.actiontech.dble.config.model.sharding.SchemaConfig;
 import com.actiontech.dble.route.RouteResultset;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 
 import java.sql.SQLException;

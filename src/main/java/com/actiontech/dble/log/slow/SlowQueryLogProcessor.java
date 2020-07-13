@@ -7,7 +7,7 @@ package com.actiontech.dble.log.slow;
 
 import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.log.DailyRotateLogStore;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.server.status.SlowQueryLog;
 import com.actiontech.dble.server.trace.TraceResult;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;

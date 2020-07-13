@@ -11,7 +11,7 @@ import com.actiontech.dble.config.Capabilities;
 import com.actiontech.dble.config.model.db.DbGroupConfig;
 import com.actiontech.dble.config.model.db.DbInstanceConfig;
 import com.actiontech.dble.net.mysql.*;
-import com.actiontech.dble.util.PasswordAuthPlugin;
+import com.actiontech.dble.services.mysqlauthenticate.PasswordAuthPlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

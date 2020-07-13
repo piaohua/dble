@@ -7,11 +7,9 @@ package com.actiontech.dble.net.mysql;
 
 import com.actiontech.dble.backend.mysql.BufferUtil;
 import com.actiontech.dble.backend.mysql.StreamUtil;
-import com.actiontech.dble.backend.mysql.nio.MySQLConnection;
-import com.actiontech.dble.net.FrontendConnection;
+
 import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.service.AbstractService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 
 import java.io.IOException;
 import java.io.InputStream;

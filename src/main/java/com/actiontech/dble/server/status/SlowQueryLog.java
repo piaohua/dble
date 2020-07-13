@@ -7,7 +7,7 @@ package com.actiontech.dble.server.status;
 
 import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.log.slow.SlowQueryLogProcessor;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.server.trace.TraceResult;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import org.slf4j.Logger;

@@ -6,7 +6,7 @@
 package com.actiontech.dble.net.impl.aio;
 
 import com.actiontech.dble.DbleServer;
-import com.actiontech.dble.backend.mysql.nio.MySQLConnection;
+
 import com.actiontech.dble.net.IOProcessor;
 import com.actiontech.dble.net.SocketConnector;
 import com.actiontech.dble.net.connection.AbstractConnection;

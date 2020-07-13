@@ -1,9 +1,9 @@
 package com.actiontech.dble.singleton;
 
-import com.actiontech.dble.backend.mysql.nio.MySQLConnection;
+
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.cluster.values.DDLTraceInfo;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.util.TimeUtil;

@@ -6,7 +6,7 @@
 package com.actiontech.dble.server.handler;
 
 import com.actiontech.dble.route.parser.util.ParseUtil;
-import com.actiontech.dble.server.ServerConnection;
+
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.parser.ServerParseSelect;
 import com.actiontech.dble.server.response.*;
