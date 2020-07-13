@@ -78,6 +78,7 @@ public abstract class AbstractConnection implements Connection {
         this.startupTime = TimeUtil.currentTimeMillis();
         this.lastReadTime = startupTime;
         this.lastWriteTime = startupTime;
+        this.startupTime = TimeUtil.currentTimeMillis();
     }
 
 
@@ -493,6 +494,10 @@ public abstract class AbstractConnection implements Connection {
         return charsetName;
     }
 
+    public ByteBuffer getReadBuffer() {
+        return readBuffer;
+    }
+
     public void setCharacterSet(String name) {
         charsetName.setClient(name);
         charsetName.setResults(name);
@@ -512,5 +517,24 @@ public abstract class AbstractConnection implements Connection {
         return processor;
     }
 
+    public long getNetInBytes() {
+        return netInBytes;
+    }
 
+    public long getNetOutBytes() {
+        return netOutBytes;
+    }
+
+    public long getStartupTime() {
+        return startupTime;
+    }
+
+
+    public long getLastReadTime() {
+        return lastReadTime;
+    }
+
+    public long getLastWriteTime() {
+        return lastWriteTime;
+    }
 }

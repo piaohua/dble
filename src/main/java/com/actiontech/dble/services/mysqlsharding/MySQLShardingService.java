@@ -99,9 +99,6 @@ public class MySQLShardingService extends MySQLBasedService implements FrontEndS
 
     private volatile boolean multiStatementAllow = false;
 
-    protected final Map<String, String> usrVariables = new LinkedHashMap<>();
-    protected final Map<String, String> sysVariables = new LinkedHashMap<>();
-
     private final NonBlockingSession session;
 
     private boolean sessionReadOnly = false;

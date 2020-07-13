@@ -33,8 +33,13 @@ import com.actiontech.dble.meta.ReloadManager;
 import com.actiontech.dble.meta.ViewMeta;
 import com.actiontech.dble.net.IOProcessor;
 import com.actiontech.dble.net.connection.BackendConnection;
+import com.actiontech.dble.net.connection.FrontendConnection;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.ServerConnection;
+import com.actiontech.dble.services.manager.response.ReloadConfig;
+import com.actiontech.dble.services.manager.response.RollbackConfig;
+import com.actiontech.dble.services.manager.response.ShowBinlogStatus;
+import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.singleton.HaConfigManager;
 import com.actiontech.dble.singleton.PauseShardingNodeManager;
 import com.actiontech.dble.singleton.ProxyMeta;
@@ -65,8 +70,10 @@ public final class ClusterLogic {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLogic.class);
 
     private static Map<String, String> ddlLockMap = new ConcurrentHashMap<String, String>();
+
     private ClusterLogic() {
     }
+
     public static void executeViewEvent(String path, String key, String value) throws Exception {
         String[] childNameInfo = key.split(Repository.SCHEMA_VIEW_SPLIT);
         String schema = childNameInfo[0];
@@ -124,12 +131,12 @@ public final class ClusterLogic {
         //step 2  try to lock all the commit
         DbleServer.getInstance().getBackupLocked().compareAndSet(false, true);
         LOGGER.info("start pause for binlog status");
-        //boolean isPaused = ShowBinlogStatus.waitAllSession();
-        /*if (!isPaused) {
+        boolean isPaused = ShowBinlogStatus.waitAllSession();
+        if (!isPaused) {
             cleanBackupLocked();
             ClusterHelper.createSelfTempNode(ClusterPathUtil.getBinlogPauseStatus(), "Error can't wait all session finished ");
             return;
-        }*/
+        }
         try {
             ClusterHelper.createSelfTempNode(ClusterPathUtil.getBinlogPauseStatus(), ClusterPathUtil.SUCCESS);
         } catch (Exception e) {
@@ -169,6 +176,7 @@ public final class ClusterLogic {
         ProxyMeta.getInstance().getTmManager().removeMetaLock(schema, table);
         ClusterHelper.createSelfTempNode(ClusterPathUtil.getDDLPath(fullName), ClusterPathUtil.SUCCESS);
     }
+
     public static void ddlUpdateEvent(String keyName, DDLInfo ddlInfo) throws Exception {
         LOGGER.info("ddl execute success notice");
         String[] tableInfo = keyName.split("\\.");
@@ -229,10 +237,10 @@ public final class ClusterLogic {
         try {
             ClusterDelayProvider.delayBeforeSlaveRollback();
             try {
-                /*boolean result = RollbackConfig.rollback(TRIGGER_TYPE_CLUSTER);
+                boolean result = RollbackConfig.rollback(TRIGGER_TYPE_CLUSTER);
                 if (!checkLocalResult(result)) {
                     return;
-                }*/
+                }
             } catch (Exception e) {
                 LOGGER.warn("rollback config for cluster error: ", e);
                 throw e;
@@ -267,10 +275,10 @@ public final class ClusterLogic {
                     return;
                 }
                 try {
-                    /*boolean result = ReloadConfig.reloadAll(Integer.parseInt(params));
+                    boolean result = ReloadConfig.reloadAll(Integer.parseInt(params));
                     if (!checkLocalResult(result)) {
                         return;
-                    }*/
+                    }
                 } catch (Exception e) {
                     LOGGER.warn("reload config for cluster error: ", e);
                     throw e;
@@ -321,11 +329,10 @@ public final class ClusterLogic {
                         try {
                             boolean nextTurn = false;
                             for (IOProcessor processor : DbleServer.getInstance().getFrontProcessors()) {
-                                //todo pause should be rewrite
-                                /*for (Map.Entry<Long, FrontendConnection> entry : processor.getFrontends().entrySet()) {
-                                    if (entry.getValue() instanceof ServerConnection) {
-                                        ServerConnection sconnection = (ServerConnection) entry.getValue();
-                                        for (Map.Entry<RouteResultsetNode, BackendConnection> conEntry : sconnection.getSession2().getTargetMap().entrySet()) {
+                                for (Map.Entry<Long, FrontendConnection> entry : processor.getFrontends().entrySet()) {
+                                    if (!entry.getValue().isManager()) {
+                                        MySQLShardingService shardingService = (MySQLShardingService) entry.getValue().getService();
+                                        for (Map.Entry<RouteResultsetNode, BackendConnection> conEntry : shardingService.getSession2().getTargetMap().entrySet()) {
                                             if (shardingNodeSet.contains(conEntry.getKey().getName())) {
                                                 nextTurn = true;
                                                 break;
@@ -335,7 +342,7 @@ public final class ClusterLogic {
                                             break;
                                         }
                                     }
-                                }*/
+                                }
                                 if (nextTurn) {
                                     break;
                                 }
@@ -493,7 +500,7 @@ public final class ClusterLogic {
                         try {
                             ConfFileRWUtils.writeFile(writeMsg.getName(), writeMsg.getValue());
                         } catch (IOException e) {
-                            LOGGER.warn("writeDirectly File IOException", e);
+                            LOGGER.warn("write File IOException", e);
                         }
                     }
                 }
@@ -781,7 +788,7 @@ public final class ClusterLogic {
         try {
             responseList = getKVBeanOfChildPath(path);
         } catch (Exception e) {
-            LOGGER.warn("syncHaStatusFromCluster error :", e);
+            LOGGER.warn("checkResponseForOneTime error :", e);
             errorMsg.append(e.getMessage());
             return true;
         }
@@ -798,7 +805,7 @@ public final class ClusterLogic {
             for (KvBean kvBean : responseList) {
                 String responseNode = lastItemOfArray(kvBean.getKey().split(ClusterPathUtil.SEPARATOR));
                 if (lastItemOfArray(entry.getKey().split(ClusterPathUtil.SEPARATOR)).equals(responseNode)) {
-                    if (checkString != null) {
+                    if (!StringUtil.isEmpty(checkString)) {
                         if (!checkString.equals(kvBean.getValue())) {
                             if (errorMsg != null) {
                                 errorMsg.append(responseNode).append(":").append(kvBean.getValue()).append(";");
@@ -832,8 +839,7 @@ public final class ClusterLogic {
         }
     }
 
-    public static String writeAndWaitingForAllTheNode(String checkString, String path) throws Exception {
-        ClusterHelper.createSelfTempNode(path, checkString);
+    public static String waitingForAllTheNode(String path, String checkString) throws Exception {
         Map<String, String> expectedMap = ClusterHelper.getOnlineMap();
         StringBuffer errorMsg = new StringBuffer();
         for (; ; ) {
@@ -857,11 +863,11 @@ public final class ClusterLogic {
         String path = ResourceUtil.getResourcePathFromRoot(ClusterPathUtil.LOCAL_WRITE_PATH);
         path = new File(path).getPath() + File.separator + ConfigFileName.DB_XML;
 
-        LOGGER.info("cluster to local xml writeDirectly Path :" + path);
+        LOGGER.info("cluster to local xml write Path :" + path);
 
         xmlParseBase.baseParseAndWriteToXml(dbs, path, "db");
 
-        LOGGER.info("cluster to local xml writeDirectly :" + path + " is success");
+        LOGGER.info("cluster to local xml write :" + path + " is success");
     }
 
     public static void syncDbXmlToCluster(XmlProcessBase xmlParseBase) throws Exception {
@@ -869,7 +875,7 @@ public final class ClusterLogic {
         String path = ClusterPathUtil.LOCAL_WRITE_PATH + ConfigFileName.DB_XML;
         String json = parseDbGroupXmlFileToJson(xmlParseBase, new Gson(), path);
         ClusterHelper.setKV(ClusterPathUtil.getDbConfPath(), json);
-        LOGGER.info("xml local to cluster writeDirectly :" + path + " is success");
+        LOGGER.info("xml local to cluster write :" + path + " is success");
     }
 
     public static void syncShardingXmlToCluster(XmlProcessBase xmlParseBase, Gson gson) throws Exception {
@@ -877,7 +883,7 @@ public final class ClusterLogic {
         String path = ClusterPathUtil.LOCAL_WRITE_PATH + ConfigFileName.SHARDING_XML;
         String json = ClusterLogic.parseShardingXmlFileToJson(xmlParseBase, gson, path);
         ClusterHelper.setKV(ClusterPathUtil.getConfShardingPath(), json);
-        LOGGER.info("xml local to cluster writeDirectly :" + path + " is success");
+        LOGGER.info("xml local to cluster write :" + path + " is success");
     }
 
     public static void syncShardingXmlToLocal(KvBean configValue, XmlProcessBase xmlParseBase, Gson gson) throws Exception {
@@ -898,7 +904,7 @@ public final class ClusterLogic {
 
         xmlParseBase.baseParseAndWriteToXml(sharding, path, "sharding");
 
-        LOGGER.info("cluster to local writeDirectly :" + path + " is success");
+        LOGGER.info("cluster to local write :" + path + " is success");
     }
 
 
@@ -907,7 +913,7 @@ public final class ClusterLogic {
         String path = ClusterPathUtil.LOCAL_WRITE_PATH + ConfigFileName.USER_XML;
         String json = ClusterLogic.parseUserXmlFileToJson(xmlParseBase, gson, path);
         ClusterHelper.setKV(ClusterPathUtil.getUserConfPath(), json);
-        LOGGER.info("xml local to cluster writeDirectly :" + path + " is success");
+        LOGGER.info("xml local to cluster write :" + path + " is success");
     }
 
     public static void syncUserXmlToLocal(KvBean configValue, XmlProcessBase xmlParseBase, Gson gson) throws Exception {
@@ -927,7 +933,7 @@ public final class ClusterLogic {
 
         xmlParseBase.baseParseAndWriteToXml(users, path, "user");
 
-        LOGGER.info("cluster to local writeDirectly :" + path + " is success");
+        LOGGER.info("cluster to local write :" + path + " is success");
     }
 
     public static void syncDbGroupStatusToCluster() throws Exception {
@@ -976,6 +982,7 @@ public final class ClusterLogic {
             LOGGER.warn(" server offline binlog status check error: ", e);
         }
     }
+
     public static void checkDDLAndRelease(String crashNode) {
         //deal with the status when the ddl is init notified
         //and than the ddl server is shutdown

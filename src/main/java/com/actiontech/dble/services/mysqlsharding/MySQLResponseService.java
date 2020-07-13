@@ -61,8 +61,7 @@ public class MySQLResponseService extends MySQLBasedService {
     private final MySQLConnectionStatus status = new MySQLConnectionStatus();
 
     private volatile boolean metaDataSynced = true;
-    protected volatile Map<String, String> usrVariables = new LinkedHashMap<>();
-    protected volatile Map<String, String> sysVariables = new LinkedHashMap<>();
+
     private final AtomicBoolean logResponse = new AtomicBoolean(false);
     private volatile boolean complexQuery;
     private volatile boolean isDDL = false;

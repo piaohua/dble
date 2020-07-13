@@ -12,7 +12,9 @@ import com.actiontech.dble.util.CompressUtil;
 import com.actiontech.dble.util.StringUtil;
 
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -22,10 +24,10 @@ public abstract class MySQLBasedService extends AbstractService {
 
     protected UserConfig userConfig;
 
-    protected Pair<String, String> user;
-
     protected long clientFlags;
 
+    protected volatile Map<String, String> usrVariables = new LinkedHashMap<>();
+    protected volatile Map<String, String> sysVariables = new LinkedHashMap<>();
 
     public MySQLBasedService(AbstractConnection connection) {
         super(connection);
@@ -103,6 +105,41 @@ public abstract class MySQLBasedService extends AbstractService {
         err.setSqlState(StringUtil.encode(sqlState, connection.getCharsetName().getResults()));
         err.setMessage(StringUtil.encode(msg, connection.getCharsetName().getResults()));
         err.write(connection);
+    }
+
+
+    public String getStringOfSysVariables() {
+        StringBuilder sbSysVariables = new StringBuilder();
+        int cnt = 0;
+        if (sysVariables != null) {
+            for (Map.Entry sysVariable : sysVariables.entrySet()) {
+                if (cnt > 0) {
+                    sbSysVariables.append(",");
+                }
+                sbSysVariables.append(sysVariable.getKey());
+                sbSysVariables.append("=");
+                sbSysVariables.append(sysVariable.getValue());
+                cnt++;
+            }
+        }
+        return sbSysVariables.toString();
+    }
+
+    public String getStringOfUsrVariables() {
+        StringBuilder sbUsrVariables = new StringBuilder();
+        int cnt = 0;
+        if (usrVariables != null) {
+            for (Map.Entry usrVariable : usrVariables.entrySet()) {
+                if (cnt > 0) {
+                    sbUsrVariables.append(",");
+                }
+                sbUsrVariables.append(usrVariable.getKey());
+                sbUsrVariables.append("=");
+                sbUsrVariables.append(usrVariable.getValue());
+                cnt++;
+            }
+        }
+        return sbUsrVariables.toString();
     }
 
 

@@ -22,8 +22,7 @@ public class WriteToBackendTask {
     public void execute() {
         int size = packet.calcPacketSize();
         if (size >= MySQLPacket.MAX_PACKET_SIZE) {
-            //todo let the service to deal with the big packet in the mysql
-            //packet.writeBigPackage(service, size);
+            packet.writeBigPackage(service, size);
         } else {
             writeCommonPackage(service);
         }

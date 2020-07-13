@@ -5,9 +5,6 @@
 */
 package com.actiontech.dble.net.handler;
 
-import com.actiontech.dble.DbleServer;
-import com.actiontech.dble.config.model.user.ManagerUserConfig;
-import com.actiontech.dble.config.model.user.UserName;
 import com.actiontech.dble.net.FrontendConnection;
 import com.actiontech.dble.net.mysql.AuthPacket;
 
@@ -18,7 +15,7 @@ public class ManagerAuthenticator extends FrontendAuthenticator {
 
     @Override
     protected void setConnProperties(AuthPacket auth) {
-        /*ManagerConnection sc = (ManagerConnection) source;
+        /*ManagerService sc = (ManagerConnection) source;
         sc.setAuthenticated(true);
         UserName user = new UserName(auth.getUser(), "");
         sc.setUser(user);

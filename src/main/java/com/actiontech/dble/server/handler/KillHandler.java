@@ -56,8 +56,8 @@ public final class KillHandler {
     /**
      * kill query
      *
-     * @param id connection id
-     * @param service  serverConnection
+     * @param id      connection id
+     * @param service serverConnection
      */
     private static void killQuery(long id, MySQLShardingService service) {
         FrontendConnection killConn;
@@ -70,12 +70,12 @@ public final class KillHandler {
         if (killConn == null) {
             service.writeErrMessage(ErrorCode.ER_NO_SUCH_THREAD, "Unknown connection id:" + id);
             return;
-        } else if (!killConn.getService().getUser().equals(service.getUser())) {
+        } else if (!killConn.isManager() && !((MySQLShardingService) killConn.getService()).getUser().equals(service.getUser())) {
             service.writeErrMessage(ErrorCode.ER_NO_SUCH_THREAD, "can't kill other user's connection" + id);
             return;
         }
 
-        NonBlockingSession killSession =  killConn.getService().getSession2();
+        NonBlockingSession killSession = ((MySQLShardingService) killConn.getService()).getSession2();
         if (killSession.getTransactionManager().getXAStage() != null ||
                 killSession.getSessionStage() == SessionStage.Init || killSession.getSessionStage() == SessionStage.Finished) {
             boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
@@ -115,8 +115,8 @@ public final class KillHandler {
     /**
      * kill connection
      *
-     * @param id connection id
-     * @param service  serverConnection
+     * @param id      connection id
+     * @param service serverConnection
      */
     private static void killConnection(long id, MySQLShardingService service) {
         // kill myself

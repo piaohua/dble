@@ -110,10 +110,6 @@ public class ErrorPacket extends MySQLPacket {
 
     @Override
     public void bufferWrite(AbstractConnection c) {
-        /* todo change the logic into the normal place 在提供sharding服务的那个方法里面使用多态来进行处理
-          if (c instanceof ServerConnection) {
-            SerializableLock.getInstance().unLock(c.getId());
-        }*/
         ByteBuffer buffer = c.allocate();
         buffer = this.write(buffer, (AbstractService) c.getService(), true);
         c.write(buffer);

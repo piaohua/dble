@@ -4,22 +4,28 @@ import com.actiontech.dble.config.Capabilities;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.config.model.user.ManagerUserConfig;
+import com.actiontech.dble.config.model.user.UserName;
 import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.mysql.AuthPacket;
 import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.net.mysql.PingPacket;
 import com.actiontech.dble.net.service.AuthResultInfo;
+import com.actiontech.dble.net.service.FrontEndService;
 import com.actiontech.dble.route.parser.util.Pair;
 import com.actiontech.dble.services.MySQLBasedService;
+import com.actiontech.dble.singleton.FrontendUserManager;
 
 import java.io.UnsupportedEncodingException;
 
 /**
  * Created by szf on 2020/6/28.
  */
-public class ManagerService extends MySQLBasedService {
+public class ManagerService extends MySQLBasedService implements FrontEndService {
 
     private final ManagerQueryHandler handler;
+
+    protected UserName user;
+
 
     public ManagerService(AbstractConnection connection) {
         super(connection);
@@ -28,7 +34,7 @@ public class ManagerService extends MySQLBasedService {
 
     public void initFromAuthInfo(AuthResultInfo info) {
         AuthPacket auth = info.getMysqlAuthPacket();
-        this.user = new Pair<>(info.getMysqlAuthPacket().getUser(), "");
+        this.user = new UserName(auth.getUser(), auth.getTenant());
         this.userConfig = info.getUserConfig();
         connection.initCharsetIndex(info.getMysqlAuthPacket().getCharsetIndex());
         this.clientFlags = info.getMysqlAuthPacket().getClientFlags();
@@ -73,4 +79,21 @@ public class ManagerService extends MySQLBasedService {
     public ManagerUserConfig getUserConfig() {
         return (ManagerUserConfig) userConfig;
     }
+
+    @Override
+    public void userConnectionCount() {
+        FrontendUserManager.getInstance().countDown(user, false);
+    }
+
+    @Override
+    public UserName getUser() {
+        return user;
+    }
+
+    @Override
+    public String getExecuteSql() {
+        return "";
+    }
+
+
 }

@@ -5,6 +5,11 @@
  */
 package com.actiontech.dble.services.manager;
 
+import com.actiontech.dble.config.ErrorCode;
+import com.actiontech.dble.net.mysql.OkPacket;
+import com.actiontech.dble.route.parser.ManagerParse;
+import com.actiontech.dble.services.manager.handler.*;
+import com.actiontech.dble.services.manager.response.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,8 +23,8 @@ public class ManagerQueryHandler {
 
     private Boolean readOnly = true;
 
-    public ManagerQueryHandler(ManagerService source) {
-        this.service = source;
+    public ManagerQueryHandler(ManagerService service) {
+        this.service = service;
     }
 
 
@@ -27,7 +32,7 @@ public class ManagerQueryHandler {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.valueOf(service) + sql);
         }
-        /*
+
         int rs = ManagerParse.parse(sql);
         int sqlType = rs & 0xff;
         if (readOnly && sqlType != ManagerParse.SELECT && sqlType != ManagerParse.SHOW) {
@@ -39,8 +44,9 @@ public class ManagerQueryHandler {
                 SelectHandler.handle(sql, service, rs >>> SHIFT);
                 break;
             case ManagerParse.SET:
-                //todo set 什么都应该返回OK
-                //service.writeDirectly(service.writeToBuffer(OkPacket.OK, service.allocate()));
+                OkPacket ok = new OkPacket();
+                ok.setPacketId(service.nextPacketId());
+                ok.write(service.getConnection());
                 break;
             case ManagerParse.SHOW:
                 ShowHandler.handle(sql, service, rs >>> SHIFT);
@@ -115,7 +121,7 @@ public class ManagerQueryHandler {
                 break;
             default:
                 service.writeErrMessage(ErrorCode.ER_YES, "Unsupported statement");
-        }*/
+        }
     }
 
 }

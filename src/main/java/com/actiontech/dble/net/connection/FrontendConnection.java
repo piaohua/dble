@@ -68,4 +68,8 @@ public class FrontendConnection extends AbstractConnection {
     public boolean isManager() {
         return isManager;
     }
+
+    public FrontEndService getFrontEndService() {
+        return (FrontEndService) getService();
+    }
 }
