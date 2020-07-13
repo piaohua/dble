@@ -23,7 +23,7 @@ import static com.actiontech.dble.services.mysqlauthenticate.PluginName.plugin_s
  */
 public class CachingSHA2Pwd extends MySQLAuthPlugin {
 
-    private final PluginName PLUGIN_NAME = caching_sha2_password;
+    private final PluginName pluginName = caching_sha2_password;
 
     private static final int STAGE_QUICK_AUTH = 1;
     private static final int WATI_FOR_PUBLIC_KEY = 2;
@@ -42,9 +42,9 @@ public class CachingSHA2Pwd extends MySQLAuthPlugin {
     }
 
     @Override
-    public void authenticate(String user, String password, String schema, byte packetId) {
+    public void authenticate(String user, String passwordInput, String schema, byte packetId) {
         AuthPacket packet = new AuthPacket();
-        this.password = password;
+        this.password = passwordInput;
         packet.setPacketId(packetId);
         packet.setMaxPacketSize(connection.getMaxPacketSize());
         int charsetIndex = CharsetUtil.getCharsetDefaultIndex(SystemConfig.getInstance().getCharset());
@@ -56,8 +56,7 @@ public class CachingSHA2Pwd extends MySQLAuthPlugin {
             seed = new byte[sl1 + sl2];
             System.arraycopy(handshakePacket.getSeed(), 0, seed, 0, sl1);
             System.arraycopy(handshakePacket.getRestOfScrambleBuff(), 0, seed, sl1, sl2);
-
-            sendAuthPacket(packet, PasswordAuthPlugin.passwdSha256(password, handshakePacket), PLUGIN_NAME.name(), schema);
+            sendAuthPacket(packet, PasswordAuthPlugin.passwdSha256(passwordInput, handshakePacket), pluginName.name(), schema);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -70,8 +69,8 @@ public class CachingSHA2Pwd extends MySQLAuthPlugin {
         authPacket = auth;
         try {
             PluginName name = PluginName.valueOf(auth.getAuthPlugin());
-            if (PLUGIN_NAME == name) {
-                String errMsg = AuthUtil.auhth(new UserName(authPacket.getUser(), authPacket.getTenant()), connection, seed, authPacket.getPassword(), authPacket.getDatabase(), PLUGIN_NAME);
+            if (pluginName == name) {
+                String errMsg = AuthUtil.auhth(new UserName(authPacket.getUser(), authPacket.getTenant()), connection, seed, authPacket.getPassword(), authPacket.getDatabase(), pluginName);
                 UserConfig userConfig = DbleServer.getInstance().getConfig().getUsers().get(new UserName(authPacket.getUser(), authPacket.getTenant()));
                 info = new AuthResultInfo(errMsg, authPacket, userConfig);
                 return plugin_same_with_default;
@@ -128,8 +127,10 @@ public class CachingSHA2Pwd extends MySQLAuthPlugin {
                 } catch (IllegalArgumentException e) {
                     return PluginName.unsupport_plugin;
                 }
+            default:
+                return PluginName.unsupport_plugin;
         }
-        return PluginName.unsupport_plugin;
+
     }
 
     @Override
@@ -138,7 +139,7 @@ public class CachingSHA2Pwd extends MySQLAuthPlugin {
         authSwitchResponse.read(data);
         authPacket.setPassword(authSwitchResponse.getAuthPluginData());
 
-        String errMsg = AuthUtil.auhth(new UserName(authPacket.getUser(), authPacket.getTenant()), connection, seed, authPacket.getPassword(), authPacket.getDatabase(), PLUGIN_NAME);
+        String errMsg = AuthUtil.auhth(new UserName(authPacket.getUser(), authPacket.getTenant()), connection, seed, authPacket.getPassword(), authPacket.getDatabase(), pluginName);
 
         UserConfig userConfig = DbleServer.getInstance().getConfig().getUsers().get(new UserName(authPacket.getUser(), authPacket.getTenant()));
         info = new AuthResultInfo(errMsg, authPacket, userConfig);

@@ -149,6 +149,35 @@ public class MySQLResponseService extends MySQLBasedService {
         }
     }
 
+    protected void handleInnerData() {
+        ServiceTask task;
+        //LOGGER.info("LOOP FOR BACKEND " + Thread.currentThread().getName() + " " + taskQueue.size());
+        //threadUsageStat start
+        String threadName = null;
+        ThreadWorkUsage workUsage = null;
+        long workStart = 0;
+        if (SystemConfig.getInstance().getUseThreadUsageStat() == 1) {
+            threadName = Thread.currentThread().getName();
+            workUsage = DbleServer.getInstance().getThreadUsedMap().get(threadName);
+            if (threadName.startsWith("backend")) {
+                if (workUsage == null) {
+                    workUsage = new ThreadWorkUsage();
+                    DbleServer.getInstance().getThreadUsedMap().put(threadName, workUsage);
+                }
+            }
+
+            workStart = System.nanoTime();
+        }
+        //handleData
+        while ((task = taskQueue.poll()) != null) {
+            handleData(task);
+        }
+        //threadUsageStat end
+        if (workUsage != null && threadName.startsWith("backend")) {
+            workUsage.setCurrentSecondUsed(workUsage.getCurrentSecondUsed() + System.nanoTime() - workStart);
+        }
+    }
+
     @Override
     public void markFinished() {
 
@@ -196,35 +225,6 @@ public class MySQLResponseService extends MySQLBasedService {
         connection.close("handle data error:" + e.getMessage());
     }
 
-
-    protected void handleInnerData() {
-        ServiceTask task;
-        //LOGGER.info("LOOP FOR BACKEND " + Thread.currentThread().getName() + " " + taskQueue.size());
-        //threadUsageStat start
-        String threadName = null;
-        ThreadWorkUsage workUsage = null;
-        long workStart = 0;
-        if (SystemConfig.getInstance().getUseThreadUsageStat() == 1) {
-            threadName = Thread.currentThread().getName();
-            workUsage = DbleServer.getInstance().getThreadUsedMap().get(threadName);
-            if (threadName.startsWith("backend")) {
-                if (workUsage == null) {
-                    workUsage = new ThreadWorkUsage();
-                    DbleServer.getInstance().getThreadUsedMap().put(threadName, workUsage);
-                }
-            }
-
-            workStart = System.nanoTime();
-        }
-        //handleData
-        while ((task = taskQueue.poll()) != null) {
-            handleData(task);
-        }
-        //threadUsageStat end
-        if (workUsage != null && threadName.startsWith("backend")) {
-            workUsage.setCurrentSecondUsed(workUsage.getCurrentSecondUsed() + System.nanoTime() - workStart);
-        }
-    }
 
     public void ping() {
         this.writeDirectly(PingPacket.PING);
@@ -538,7 +538,7 @@ public class MySQLResponseService extends MySQLBasedService {
         return "MySQLConnection host=" + connection.getHost() + ", port=" + connection.getPort() + ", schema=" + connection.getSchema();
     }
 
-    public void executeMultiNode(RouteResultsetNode rrn, MySQLShardingService service,
+    public void executeMultiNode(RouteResultsetNode rrn, ShardingService service,
                                  boolean isAutoCommit) {
         String xaTxId = getConnXID(session.getSessionXaID(), rrn.getMultiplexNum().longValue());
         if (!service.isAutocommit() && !service.isTxStart() && rrn.isModifySQL()) {
@@ -548,7 +548,7 @@ public class MySQLResponseService extends MySQLBasedService {
         synAndDoExecuteMultiNode(synSQL, rrn, service.getCharset());
     }
 
-    public void execute(RouteResultsetNode rrn, MySQLShardingService service,
+    public void execute(RouteResultsetNode rrn, ShardingService service,
                         boolean isAutoCommit) {
         String xaTxId = getConnXID(session.getSessionXaID(), rrn.getMultiplexNum().longValue());
         if (!service.isAutocommit() && !service.isTxStart() && rrn.isModifySQL()) {
@@ -687,8 +687,8 @@ public class MySQLResponseService extends MySQLBasedService {
         return isDDL;
     }
 
-    public void setDDL(boolean DDL) {
-        isDDL = DDL;
+    public void setDDL(boolean ddl) {
+        isDDL = ddl;
     }
 
     public boolean isTesting() {

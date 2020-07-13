@@ -9,7 +9,7 @@ import com.actiontech.dble.DbleServer;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.net.mysql.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 
 import java.nio.ByteBuffer;
@@ -27,7 +27,7 @@ public final class SelectUser implements InnerFuncResponse {
     private static final EOFPacket EOF = new EOFPacket();
     private static final ErrorPacket ERROR = PacketUtil.getShutdown();
 
-    public static void response(MySQLShardingService service) {
+    public static void response(ShardingService service) {
         if (DbleServer.getInstance().isOnline()) {
             HEADER.setPacketId(service.nextPacketId());
             FIELDS[0] = PacketUtil.getField("USER()", Fields.FIELD_TYPE_VAR_STRING);
@@ -53,7 +53,7 @@ public final class SelectUser implements InnerFuncResponse {
         }
     }
 
-    private static byte[] getUser(MySQLShardingService service) {
+    private static byte[] getUser(ShardingService service) {
         return StringUtil.encode(service.getUser().toString() + '@' + service.getConnection().getHost(), service.getCharset().getResults());
     }
 
@@ -64,7 +64,7 @@ public final class SelectUser implements InnerFuncResponse {
         return result;
     }
 
-    public List<RowDataPacket> getRows(MySQLShardingService service) {
+    public List<RowDataPacket> getRows(ShardingService service) {
         List<RowDataPacket> result = new ArrayList<>();
         RowDataPacket row = new RowDataPacket(FIELD_COUNT);
         row.add(getUser(service));

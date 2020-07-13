@@ -19,7 +19,7 @@ import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.DDLTraceManager;
 import com.actiontech.dble.util.FormatUtil;
 import com.actiontech.dble.util.StringUtil;
@@ -167,7 +167,7 @@ public class MultiNodeDDLExecuteHandler extends MultiNodeQueryHandler {
             DDLTraceManager.getInstance().updateConnectionStatus(session.getShardingService(), (MySQLResponseService) service,
                     DDLTraceInfo.DDLConnectionStatus.CONN_EXECUTE_SUCCESS);
             session.setBackendResponseEndTime((MySQLResponseService) service);
-            MySQLShardingService source = session.getShardingService();
+            ShardingService source = session.getShardingService();
             OkPacket ok = new OkPacket();
             ok.read(data);
             lock.lock();

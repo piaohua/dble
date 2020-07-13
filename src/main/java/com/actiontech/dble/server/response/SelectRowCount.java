@@ -3,7 +3,7 @@ package com.actiontech.dble.server.response;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.net.mysql.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.LongUtil;
 
 import java.nio.ByteBuffer;
@@ -21,7 +21,7 @@ public class SelectRowCount implements InnerFuncResponse {
     private static final EOFPacket EOF = new EOFPacket();
 
 
-    public static void response(MySQLShardingService service) {
+    public static void response(ShardingService service) {
         HEADER.setPacketId(service.nextPacketId());
         FIELDS[0] = PacketUtil.getField("ROW_COUNT()", Fields.FIELD_TYPE_LONG);
         FIELDS[0].setPacketId(service.nextPacketId());
@@ -53,7 +53,7 @@ public class SelectRowCount implements InnerFuncResponse {
 
 
     @Override
-    public List<RowDataPacket> getRows(MySQLShardingService service) {
+    public List<RowDataPacket> getRows(ShardingService service) {
         List<RowDataPacket> result = new ArrayList<>();
         RowDataPacket row = new RowDataPacket(FIELD_COUNT);
         row.add(LongUtil.toBytes(service.getSession2().getRowCount()));

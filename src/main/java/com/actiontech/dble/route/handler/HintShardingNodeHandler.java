@@ -12,7 +12,7 @@ import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.route.util.RouterUtil;
 
 import com.actiontech.dble.server.parser.ServerParse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,7 @@ public class HintShardingNodeHandler implements HintHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(HintShardingNodeHandler.class);
 
     @Override
-    public RouteResultset route(SchemaConfig schema, int sqlType, String realSQL, MySQLShardingService service,
+    public RouteResultset route(SchemaConfig schema, int sqlType, String realSQL, ShardingService service,
                                 String hintSQLValue, int hintSqlType, Map hintMap)
             throws SQLNonTransientException {
         if (LOGGER.isDebugEnabled()) {

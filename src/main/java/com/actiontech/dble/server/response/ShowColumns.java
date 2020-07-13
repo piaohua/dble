@@ -11,7 +11,7 @@ import com.actiontech.dble.route.factory.RouteStrategyFactory;
 
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.util.SchemaUtil.SchemaInfo;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 import com.alibaba.druid.sql.ast.SQLName;
 import com.alibaba.druid.sql.ast.SQLStatement;
@@ -34,7 +34,7 @@ public final class ShowColumns {
             "|(\\s+(where)\\s+((. *)*)\\s*))?\\s*$";
     public static final Pattern PATTERN = Pattern.compile(COLUMNS_PAT, Pattern.CASE_INSENSITIVE);
 
-    public static void response(MySQLShardingService shardingService, String stmt) {
+    public static void response(ShardingService shardingService, String stmt) {
         try {
             Pattern pattern = ShowColumns.PATTERN;
             Matcher ma = pattern.matcher(stmt);

@@ -8,7 +8,7 @@ package com.actiontech.dble.server.handler;
 import com.actiontech.dble.DbleServer;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.config.model.user.ShardingUserConfig;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 
 /**
@@ -18,7 +18,7 @@ public final class UseHandler {
     private UseHandler() {
     }
 
-    public static void handle(String sql, MySQLShardingService service, int offset) {
+    public static void handle(String sql, ShardingService service, int offset) {
         String schema = sql.substring(offset).trim();
         int length = schema.length();
         if (length > 0) {

@@ -8,7 +8,7 @@ package com.actiontech.dble.server.response;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.net.mysql.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 
 import java.nio.ByteBuffer;
@@ -25,7 +25,7 @@ public final class SelectDatabase implements InnerFuncResponse {
     private static final FieldPacket[] FIELDS = new FieldPacket[FIELD_COUNT];
     private static final EOFPacket EOF = new EOFPacket();
 
-    public static void response(MySQLShardingService shardingService) {
+    public static void response(ShardingService shardingService) {
 
         HEADER.setPacketId(shardingService.nextPacketId());
         FIELDS[0] = PacketUtil.getField("DATABASE()", Fields.FIELD_TYPE_VAR_STRING);
@@ -47,7 +47,7 @@ public final class SelectDatabase implements InnerFuncResponse {
         lastEof.write(buffer, shardingService);
     }
 
-    public static byte setCurrentPacket(MySQLShardingService service) {
+    public static byte setCurrentPacket(ShardingService service) {
         byte packetId = (byte) service.getSession2().getPacketId().get();
         return packetId;
     }
@@ -58,7 +58,7 @@ public final class SelectDatabase implements InnerFuncResponse {
         return result;
     }
 
-    public List<RowDataPacket> getRows(MySQLShardingService service) {
+    public List<RowDataPacket> getRows(ShardingService service) {
         List<RowDataPacket> result = new ArrayList<>();
         RowDataPacket row = new RowDataPacket(FIELD_COUNT);
         row.add(StringUtil.encode(service.getSchema(), service.getCharset().getResults()));

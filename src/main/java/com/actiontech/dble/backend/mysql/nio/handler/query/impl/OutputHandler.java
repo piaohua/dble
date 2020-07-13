@@ -13,7 +13,7 @@ import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.server.parser.ServerParse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.statistic.stat.QueryResult;
 import com.actiontech.dble.statistic.stat.QueryResultDispatcher;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public class OutputHandler extends BaseDMLHandler {
         OkPacket okPacket = new OkPacket();
         okPacket.read(ok);
         okPacket.setPacketId(++packetId);
-        MySQLShardingService sessionShardingService = session.getShardingService();
+        ShardingService sessionShardingService = session.getShardingService();
         lock.lock();
         try {
             HandlerTool.terminateHandlerTree(this);
@@ -99,17 +99,17 @@ public class OutputHandler extends BaseDMLHandler {
             hp.setFieldCount(fieldPackets.size());
             hp.setPacketId(++packetId);
             this.netOutBytes += hp.calcPacketSize();
-            MySQLShardingService mySQLShardingService = session.getShardingService();
-            buffer = hp.write(buffer, mySQLShardingService, true);
+            ShardingService shardingService = session.getShardingService();
+            buffer = hp.write(buffer, shardingService, true);
             for (FieldPacket fp : fieldPackets) {
                 fp.setPacketId(++packetId);
                 this.netOutBytes += fp.calcPacketSize();
-                buffer = fp.write(buffer, mySQLShardingService, true);
+                buffer = fp.write(buffer, shardingService, true);
             }
             EOFPacket ep = new EOFPacket();
             ep.setPacketId(++packetId);
             this.netOutBytes += ep.calcPacketSize();
-            buffer = ep.write(buffer, mySQLShardingService, true);
+            buffer = ep.write(buffer, shardingService, true);
         } finally {
             lock.unlock();
         }
@@ -162,7 +162,7 @@ public class OutputHandler extends BaseDMLHandler {
             return;
         }
         logger.debug("--------sql execute end!");
-        MySQLShardingService mySQLShardingService = session.getShardingService();
+        ShardingService shardingService = session.getShardingService();
         lock.lock();
         try {
             if (terminate.get()) {
@@ -178,7 +178,7 @@ public class OutputHandler extends BaseDMLHandler {
             HandlerTool.terminateHandlerTree(this);
             session.setHandlerEnd(this);
             session.setResponseTime(true);
-            eofPacket.write(buffer,mySQLShardingService);
+            eofPacket.write(buffer, shardingService);
         } finally {
             lock.unlock();
         }

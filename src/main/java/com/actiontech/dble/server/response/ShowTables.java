@@ -27,7 +27,7 @@ import com.actiontech.dble.plan.visitor.MySQLItemVisitor;
 import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.route.util.RouterUtil;
 import com.actiontech.dble.server.parser.ServerParse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.util.StringUtil;
 import com.google.common.base.Strings;
@@ -47,9 +47,9 @@ public final class ShowTables {
     private ShowTables() {
     }
 
-    protected static final Logger LOGGER = LoggerFactory.getLogger(MySQLShardingService.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(ShardingService.class);
 
-    public static void response(MySQLShardingService shardingService, String stmt) {
+    public static void response(ShardingService shardingService, String stmt) {
         ShowTablesStmtInfo info;
         try {
             info = new ShowTablesStmtInfo(stmt);
@@ -94,7 +94,7 @@ public final class ShowTables {
         }
     }
 
-    private static void parserAndExecuteShowTables(MySQLShardingService shardingService, String originSql, String node, ShowTablesStmtInfo info) throws Exception {
+    private static void parserAndExecuteShowTables(ShardingService shardingService, String originSql, String node, ShowTablesStmtInfo info) throws Exception {
         RouteResultset rrs = new RouteResultset(originSql, ServerParse.SHOW);
         if (info.getSchema() != null || info.isAll()) {
             StringBuilder sql = new StringBuilder();
@@ -113,7 +113,7 @@ public final class ShowTables {
         showTablesHandler.execute();
     }
 
-    private static void responseDirect(MySQLShardingService shardingService, String cSchema, ShowTablesStmtInfo info) {
+    private static void responseDirect(ShardingService shardingService, String cSchema, ShowTablesStmtInfo info) {
         ByteBuffer buffer = shardingService.allocate();
         Map<String, String> tableMap = getTableSet(cSchema, info);
         PackageBufINf bufInf;
@@ -140,7 +140,7 @@ public final class ShowTables {
         writeRowEof(bufInf.getBuffer(), shardingService, bufInf.getPacketId());
     }
 
-    public static PackageBufINf writeFullTablesHeader(ByteBuffer buffer, MySQLShardingService shardingService, String cSchema, List<FieldPacket> fieldPackets) {
+    public static PackageBufINf writeFullTablesHeader(ByteBuffer buffer, ShardingService shardingService, String cSchema, List<FieldPacket> fieldPackets) {
         int fieldCount = 2;
         ResultSetHeaderPacket header = PacketUtil.getHeader(fieldCount);
         FieldPacket[] fields = new FieldPacket[fieldCount];
@@ -167,7 +167,7 @@ public final class ShowTables {
         return packBuffInfo;
     }
 
-    public static PackageBufINf writeFullTablesRow(ByteBuffer buffer, MySQLShardingService shardingService, Map<String, String> tableMap, Item whereItem, List<Field> sourceFields) {
+    public static PackageBufINf writeFullTablesRow(ByteBuffer buffer, ShardingService shardingService, Map<String, String> tableMap, Item whereItem, List<Field> sourceFields) {
         for (Map.Entry<String, String> entry : tableMap.entrySet()) {
             RowDataPacket row = new RowDataPacket(2);
             String name = entry.getKey();
@@ -193,7 +193,7 @@ public final class ShowTables {
         return packBuffInfo;
     }
 
-    public static PackageBufINf writeTablesHeaderAndRows(ByteBuffer buffer, MySQLShardingService shardingService, Map<String, String> tableMap, String cSchema) {
+    public static PackageBufINf writeTablesHeaderAndRows(ByteBuffer buffer, ShardingService shardingService, Map<String, String> tableMap, String cSchema) {
         int fieldCount = 1;
         ResultSetHeaderPacket header = PacketUtil.getHeader(fieldCount);
         FieldPacket[] fields = new FieldPacket[fieldCount];
@@ -227,7 +227,7 @@ public final class ShowTables {
         return packBuffInfo;
     }
 
-    private static void writeRowEof(ByteBuffer buffer, MySQLShardingService shardingService, byte packetId) {
+    private static void writeRowEof(ByteBuffer buffer, ShardingService shardingService, byte packetId) {
         // writeDirectly last eof
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);

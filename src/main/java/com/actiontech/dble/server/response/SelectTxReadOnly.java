@@ -8,7 +8,7 @@ package com.actiontech.dble.server.response;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.net.mysql.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.LongUtil;
 
 import java.nio.ByteBuffer;
@@ -25,7 +25,7 @@ public final class SelectTxReadOnly {
     private static final FieldPacket[] FIELDS = new FieldPacket[FIELD_COUNT];
     private static final EOFPacket EOF = new EOFPacket();
 
-    public static void response(MySQLShardingService shardingService, String column) {
+    public static void response(ShardingService shardingService, String column) {
         HEADER.setPacketId(shardingService.nextPacketId());
         FIELDS[0] = PacketUtil.getField(column, Fields.FIELD_TYPE_LONG);
         FIELDS[0].setPacketId(shardingService.nextPacketId());
@@ -49,7 +49,7 @@ public final class SelectTxReadOnly {
     }
 
 
-    public static byte setCurrentPacket(MySQLShardingService service) {
+    public static byte setCurrentPacket(ShardingService service) {
         byte packetId = (byte) service.getSession2().getPacketId().get();
         return packetId;
     }

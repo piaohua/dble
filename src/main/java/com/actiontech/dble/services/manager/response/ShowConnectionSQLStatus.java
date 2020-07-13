@@ -15,7 +15,7 @@ import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.manager.ManagerService;
 
 import com.actiontech.dble.server.status.SlowQueryLog;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 
 import java.nio.ByteBuffer;
@@ -101,7 +101,7 @@ public final class ShowConnectionSQLStatus {
         // write rows
         byte packetId = EOF.getPacketId();
 
-        List<String[]> results = ((MySQLShardingService) target.getService()).getSession2().genRunningSQLStage();
+        List<String[]> results = ((ShardingService) target.getService()).getSession2().genRunningSQLStage();
         if (results != null) {
             for (String[] result : results) {
                 RowDataPacket row = new RowDataPacket(FIELD_COUNT);

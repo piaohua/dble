@@ -8,7 +8,7 @@ package com.actiontech.dble.server.response;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.net.mysql.OkPacket;
 import com.actiontech.dble.server.parser.ScriptPrepareParse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -17,11 +17,11 @@ public final class SptPrepare {
     private SptPrepare() {
     }
 
-    private static boolean checksync(String stmt, MySQLShardingService service) {
+    private static boolean checksync(String stmt, ShardingService service) {
         return true;
     }
 
-    public static void response(MySQLShardingService service) {
+    public static void response(ShardingService service) {
         String stmt = service.getSptPrepare().getExePrepare();
         if (stmt == null) {
             service.writeErrMessage(ErrorCode.ER_PARSE_ERROR, "SQL syntax error");

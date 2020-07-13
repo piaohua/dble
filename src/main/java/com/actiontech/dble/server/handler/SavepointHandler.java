@@ -9,7 +9,7 @@ import com.actiontech.dble.backend.mysql.nio.handler.transaction.savepoint.SaveP
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.route.factory.RouteStrategyFactory;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.alibaba.druid.sql.ast.statement.SQLReleaseSavePointStatement;
 import com.alibaba.druid.sql.ast.statement.SQLRollbackStatement;
 import com.alibaba.druid.sql.ast.statement.SQLSavePointStatement;
@@ -21,7 +21,7 @@ public final class SavepointHandler {
     private SavepointHandler() {
     }
 
-    public static void save(String stmt, MySQLShardingService service) {
+    public static void save(String stmt, ShardingService service) {
         try {
             SQLSavePointStatement statement = (SQLSavePointStatement) RouteStrategyFactory.getRouteStrategy().parserSQL(stmt);
             String spName = statement.getName().toString();
@@ -31,7 +31,7 @@ public final class SavepointHandler {
         }
     }
 
-    public static void rollback(String stmt, MySQLShardingService service) {
+    public static void rollback(String stmt, ShardingService service) {
         try {
             SQLRollbackStatement statement = (SQLRollbackStatement) RouteStrategyFactory.getRouteStrategy().parserSQL(stmt);
             String spName = statement.getTo().toString();
@@ -41,7 +41,7 @@ public final class SavepointHandler {
         }
     }
 
-    public static void release(String stmt, MySQLShardingService service) {
+    public static void release(String stmt, ShardingService service) {
         try {
             SQLReleaseSavePointStatement statement = (SQLReleaseSavePointStatement) RouteStrategyFactory.getRouteStrategy().parserSQL(stmt);
             String spName = statement.getName().toString();

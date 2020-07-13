@@ -6,13 +6,18 @@
 package com.actiontech.dble.net;
 
 
+import com.actiontech.dble.backend.mysql.nio.handler.transaction.xa.stage.XAStage;
+import com.actiontech.dble.backend.mysql.xa.TxState;
 import com.actiontech.dble.buffer.BufferPool;
 import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.net.connection.BackendConnection;
 import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.connection.FrontendConnection;
 import com.actiontech.dble.net.connection.PooledConnection;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
+import com.actiontech.dble.singleton.XASessionCheck;
 import com.actiontech.dble.statistic.CommandCount;
+import com.actiontech.dble.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,27 +143,27 @@ public final class IOProcessor {
                 it.remove();
                 this.frontEndsLength.decrementAndGet();
             } else {
-                // very important ,for some data maybe not sent todo
                 checkConSendQueue(c);
-                /*if (c instanceof ServerConnection && c.isIdleTimeout()) {
-                    ServerConnection s = (ServerConnection) c;
-                    String xaStage = s.getSession2().getTransactionManager().getXAStage();
-                    if (xaStage != null) {
-                        if (!xaStage.equals(XAStage.COMMIT_FAIL_STAGE) && !xaStage.equals(XAStage.ROLLBACK_FAIL_STAGE)) {
-                            // Active/IDLE/PREPARED XA FrontendS will be rollbacked
-                            s.close("Idle Timeout");
-                            XASessionCheck.getInstance().addRollbackSession(s.getSession2());
+                if (c.isIdleTimeout()) {
+                    if (!c.isManager()) {
+                        ShardingService s = (ShardingService) c.getService();
+                        String xaStage = s.getSession2().getTransactionManager().getXAStage();
+                        if (xaStage != null) {
+                            if (!xaStage.equals(XAStage.COMMIT_FAIL_STAGE) && !xaStage.equals(XAStage.ROLLBACK_FAIL_STAGE)) {
+                                // Active/IDLE/PREPARED XA FrontendS will be rollbacked
+                                s.getConnection().close("Idle Timeout");
+                                XASessionCheck.getInstance().addRollbackSession(s.getSession2());
+                            }
+                            return;
                         }
-                        continue;
                     }
+                    c.close("idle timeout");
                 }
-                c.idleCheck();*/
             }
         }
     }
 
     private void checkConSendQueue(AbstractConnection c) {
-        // very important ,for some data maybe not sent
         if (!c.getWriteQueue().isEmpty()) {
             c.getSocketWR().doNextWriteCheck();
         }
@@ -176,34 +181,27 @@ public final class IOProcessor {
                 continue;
             }
 
-            /*//Active/IDLE/PREPARED XA backends will not be checked
-            if (c instanceof MySQLConnection) {
-                MySQLConnection m = (MySQLConnection) c;
-                if (m.isClosed()) {
-                    it.remove();
-                    continue;
-                }
-                if (m.getXaStatus() != null && m.getXaStatus() != TxState.TX_INITIALIZE_STATE) {
-                    continue;
-                }
-            }*/
+            //Active/IDLE/PREPARED XA backends will not be checked
+            if (c.isClosed()) {
+                it.remove();
+                continue;
+            }
+            if (c.getBackendService().getXaStatus() != null && c.getBackendService().getXaStatus() != TxState.TX_INITIALIZE_STATE) {
+                continue;
+            }
 
-            //todo 空闲检查需要重新写一套
-           /* // close the conn which executeTimeOut
-            if (!c.isDDL() && c.isBorrowed() && c.isExecuting() && c.getLastTime() < TimeUtil.currentTimeMillis() - sqlTimeout) {
+            // close the conn which executeTimeOut
+            if (!c.getBackendService().isDDL() && c.getState() == PooledConnection.STATE_IN_USE && c.getBackendService().isExecuting() && c.getLastTime() < TimeUtil.currentTimeMillis() - sqlTimeout) {
                 LOGGER.info("found backend connection SQL timeout ,close it " + c);
                 c.close("sql timeout");
-            }*/
+            }
 
             // clean closed conn or check time out
             if (c.isClosed()) {
                 it.remove();
             } else {
                 // very important ,for some data maybe not sent
-                /*if (c instanceof com.actiontech.dble.net.AbstractConnection) {
-                    checkConSendQueue(c);
-                }
-                c.idleCheck();*/
+                checkConSendQueue(c);
             }
         }
     }

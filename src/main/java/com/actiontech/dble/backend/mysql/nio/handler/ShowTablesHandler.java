@@ -21,7 +21,7 @@ import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.server.response.PackageBufINf;
 import com.actiontech.dble.server.response.ShowTables;
 import com.actiontech.dble.server.response.ShowTablesStmtInfo;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.util.StringUtil;
 
@@ -43,7 +43,7 @@ public class ShowTablesHandler extends SingleNodeHandler {
         super(rrs, session);
         buffer = session.getFrontConnection().allocate();
         this.info = info;
-        MySQLShardingService shardingService = session.getShardingService();
+        ShardingService shardingService = session.getShardingService();
         String showSchema = info.getSchema();
         if (showSchema != null && DbleServer.getInstance().getSystemVariables().isLowerCaseTableNames()) {
             showSchema = showSchema.toLowerCase();
@@ -55,7 +55,7 @@ public class ShowTablesHandler extends SingleNodeHandler {
     @Override
     public void fieldEofResponse(byte[] header, List<byte[]> fields, List<FieldPacket> fieldPacketsNull, byte[] eof,
                                  boolean isLeft, AbstractService service) {
-        MySQLShardingService shardingService = session.getShardingService();
+        ShardingService shardingService = session.getShardingService();
         PackageBufINf bufInf;
         lock.lock();
         try {

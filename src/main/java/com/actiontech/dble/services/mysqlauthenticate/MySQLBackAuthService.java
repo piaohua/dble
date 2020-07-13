@@ -87,6 +87,33 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
         }
     }
 
+    protected void handleInnerData() {
+        ServiceTask task;
+        //LOGGER.info("LOOP FOR BACKEND " + Thread.currentThread().getName() + " " + taskQueue.size());
+        //threadUsageStat start
+        String threadName = null;
+        ThreadWorkUsage workUsage = null;
+        long workStart = 0;
+        if (SystemConfig.getInstance().getUseThreadUsageStat() == 1) {
+            threadName = Thread.currentThread().getName();
+            workUsage = DbleServer.getInstance().getThreadUsedMap().get(threadName);
+            if (threadName.startsWith("backend")) {
+                if (workUsage == null) {
+                    workUsage = new ThreadWorkUsage();
+                    DbleServer.getInstance().getThreadUsedMap().put(threadName, workUsage);
+                }
+            }
+            workStart = System.nanoTime();
+        }
+        //handleData
+        while ((task = taskQueue.poll()) != null) {
+            handleInnerData(task.getOrgData());
+        }
+        //threadUsageStat end
+        if (workUsage != null && threadName.startsWith("backend")) {
+            workUsage.setCurrentSecondUsed(workUsage.getCurrentSecondUsed() + System.nanoTime() - workStart);
+        }
+    }
 
 
     public void checkForResult() {
@@ -135,34 +162,6 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
                     }
                 }
             });
-        }
-    }
-
-    protected void handleInnerData() {
-        ServiceTask task;
-        //LOGGER.info("LOOP FOR BACKEND " + Thread.currentThread().getName() + " " + taskQueue.size());
-        //threadUsageStat start
-        String threadName = null;
-        ThreadWorkUsage workUsage = null;
-        long workStart = 0;
-        if (SystemConfig.getInstance().getUseThreadUsageStat() == 1) {
-            threadName = Thread.currentThread().getName();
-            workUsage = DbleServer.getInstance().getThreadUsedMap().get(threadName);
-            if (threadName.startsWith("backend")) {
-                if (workUsage == null) {
-                    workUsage = new ThreadWorkUsage();
-                    DbleServer.getInstance().getThreadUsedMap().put(threadName, workUsage);
-                }
-            }
-            workStart = System.nanoTime();
-        }
-        //handleData
-        while ((task = taskQueue.poll()) != null) {
-            handleInnerData(task.getOrgData());
-        }
-        //threadUsageStat end
-        if (workUsage != null && threadName.startsWith("backend")) {
-            workUsage.setCurrentSecondUsed(workUsage.getCurrentSecondUsed() + System.nanoTime() - workStart);
         }
     }
 

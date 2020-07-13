@@ -12,7 +12,7 @@ import com.actiontech.dble.route.RouteStrategy;
 import com.actiontech.dble.route.factory.RouteStrategyFactory;
 
 import com.actiontech.dble.server.parser.ServerParse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
@@ -30,7 +30,7 @@ public class HintSQLHandler implements HintHandler {
     }
 
     @Override
-    public RouteResultset route(SchemaConfig schema, int sqlType, String realSQL, MySQLShardingService service,
+    public RouteResultset route(SchemaConfig schema, int sqlType, String realSQL, ShardingService service,
                                 String hintSQLValue, int hintSqlType, Map hintMap)
             throws SQLException {
 

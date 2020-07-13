@@ -5,7 +5,7 @@ import com.actiontech.dble.net.mysql.RowDataPacket;
 import com.actiontech.dble.plan.common.item.Item;
 import com.actiontech.dble.plan.common.time.MySQLTime;
 import com.actiontech.dble.server.response.InnerFuncResponse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -29,7 +29,7 @@ public class ItemFuncInner extends ItemFunc {
         return rspHandler.getField();
     }
 
-    public List<RowDataPacket> getRows(MySQLShardingService service) {
+    public List<RowDataPacket> getRows(ShardingService service) {
         return rspHandler.getRows(service);
     }
 

@@ -23,7 +23,6 @@ public abstract class MySQLAuthPlugin {
 
     public static final PluginName[] MYSQL_DEFAULT_PLUGIN = {mysql_native_password, mysql_native_password, mysql_native_password, caching_sha2_password};
     protected byte[] seed;
-    private boolean authSwitch;
     protected final AbstractConnection connection;
     protected AuthResultInfo info;
     protected AuthPacket authPacket;
@@ -90,10 +89,6 @@ public abstract class MySQLAuthPlugin {
         return seed;
     }
 
-    public void switchNotified() {
-        authSwitch = true;
-    }
-
 
     public HandshakeV10Packet getHandshakePacket() {
         return handshakePacket;
@@ -141,10 +136,10 @@ public abstract class MySQLAuthPlugin {
         packet.bufferWrite(this.connection);
     }
 
-    protected void sendAuthPacket(AuthSwitchResponsePackage packet, byte[] authPluginData, byte packetId) {
-        packet.setAuthPluginData(authPluginData);
+    protected void sendAuthPacket(AuthSwitchResponsePackage packet, byte[] authData, byte packetId) {
+        packet.setAuthPluginData(authData);
         packet.setPacketId(packetId);
-        packet.setPacketLength(authPluginData.length);
+        packet.setPacketLength(authData.length);
         packet.bufferWrite(this.connection);
     }
 
@@ -168,6 +163,8 @@ public abstract class MySQLAuthPlugin {
                             return new NativePwd(connection);
                         case caching_sha2_password:
                             return new CachingSHA2Pwd(connection);
+                        default:
+                            return null;
                     }
                 }
             }

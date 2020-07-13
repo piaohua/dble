@@ -25,9 +25,9 @@ public class MySQLShardingSQLHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MySQLShardingSQLHandler.class);
 
-    private final MySQLShardingService service;
+    private final ShardingService service;
 
-    MySQLShardingSQLHandler(MySQLShardingService service) {
+    MySQLShardingSQLHandler(ShardingService service) {
         this.service = service;
     }
 

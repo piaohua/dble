@@ -3,7 +3,7 @@ package com.actiontech.dble.server.handler;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.log.transaction.TxnLogHelper;
 import com.actiontech.dble.route.parser.util.Pair;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.expr.*;
@@ -21,7 +21,7 @@ public final class SetInnerHandler {
 
     }
 
-    public static boolean handleSingleXA(MySQLShardingService shardingService, SQLExpr valueExpr) {
+    public static boolean handleSingleXA(ShardingService shardingService, SQLExpr valueExpr) {
         List<Pair<SetHandler.KeyType, Pair<String, String>>> innerSetTask = new ArrayList<>();
         if (preHandleSingleXA(shardingService, valueExpr, innerSetTask)) {
             String key = innerSetTask.get(0).getValue().getKey();
@@ -32,7 +32,7 @@ public final class SetInnerHandler {
         return false;
     }
 
-    public static boolean preHandleSingleXA(MySQLShardingService shardingService, SQLExpr valueExpr, List<Pair<SetHandler.KeyType, Pair<String, String>>> innerSetTask) {
+    public static boolean preHandleSingleXA(ShardingService shardingService, SQLExpr valueExpr, List<Pair<SetHandler.KeyType, Pair<String, String>>> innerSetTask) {
         Boolean switchStatus = isSwitchOn(valueExpr);
         if (switchStatus == null) {
             shardingService.writeErrMessage(ErrorCode.ER_WRONG_TYPE_FOR_VAR, "Incorrect argument type to variable 'XA'");
@@ -55,7 +55,7 @@ public final class SetInnerHandler {
     }
 
 
-    public static boolean handleSingleTrace(MySQLShardingService shardingService, SQLExpr valueExpr) {
+    public static boolean handleSingleTrace(ShardingService shardingService, SQLExpr valueExpr) {
         List<Pair<SetHandler.KeyType, Pair<String, String>>> innerSetTask = new ArrayList<>();
         if (preHandleSingleTrace(shardingService, valueExpr, innerSetTask)) {
             String key = innerSetTask.get(0).getValue().getKey();
@@ -67,7 +67,7 @@ public final class SetInnerHandler {
     }
 
 
-    public static boolean preHandleSingleTrace(MySQLShardingService service, SQLExpr valueExpr, List<Pair<SetHandler.KeyType, Pair<String, String>>> innerSetTask) {
+    public static boolean preHandleSingleTrace(ShardingService service, SQLExpr valueExpr, List<Pair<SetHandler.KeyType, Pair<String, String>>> innerSetTask) {
         Boolean switchStatus = isSwitchOn(valueExpr);
         if (switchStatus == null) {
             service.writeErrMessage(ErrorCode.ER_WRONG_TYPE_FOR_VAR, "Incorrect argument type to variable 'TRACE'");
@@ -79,7 +79,7 @@ public final class SetInnerHandler {
     }
 
 
-    public static boolean handleSingleAutocommit(String stmt, MySQLShardingService service, SQLExpr valueExpr) {
+    public static boolean handleSingleAutocommit(String stmt, ShardingService service, SQLExpr valueExpr) {
         List<Pair<SetHandler.KeyType, Pair<String, String>>> innerSetTask = new ArrayList<>();
         if (preHandleAutocommit(service, valueExpr, innerSetTask)) {
             String key = innerSetTask.get(0).getValue().getKey();
@@ -92,7 +92,7 @@ public final class SetInnerHandler {
     }
 
 
-    public static boolean preHandleAutocommit(MySQLShardingService service, SQLExpr valueExpr, List<Pair<SetHandler.KeyType,
+    public static boolean preHandleAutocommit(ShardingService service, SQLExpr valueExpr, List<Pair<SetHandler.KeyType,
             Pair<String, String>>> innerSetTask) {
         Boolean switchStatus = isSwitchOn(valueExpr);
         if (switchStatus == null) {
@@ -104,7 +104,7 @@ public final class SetInnerHandler {
         }
     }
 
-    public static boolean execSetAutoCommit(String stmt, MySQLShardingService shardingService, boolean setValue) {
+    public static boolean execSetAutoCommit(String stmt, ShardingService shardingService, boolean setValue) {
         if (setValue) {
             if (!shardingService.isAutocommit() && shardingService.getSession2().getTargetCount() > 0) {
                 shardingService.getSession2().implicitCommit(() -> {

@@ -74,7 +74,7 @@ public final class ShowDirectMemory {
         buffer = row.write(buffer, service, true);
 
         // write last eof
-         EOFRowPacket lastEof = new EOFRowPacket();
+        EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
 
 

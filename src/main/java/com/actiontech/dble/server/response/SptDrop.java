@@ -7,13 +7,13 @@ package com.actiontech.dble.server.response;
 
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.net.mysql.OkPacket;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 public final class SptDrop {
     private SptDrop() {
     }
 
-    public static void response(MySQLShardingService service) {
+    public static void response(ShardingService service) {
         String name = service.getSptPrepare().getName();
         if (service.getSptPrepare().delPrepare(name)) {
             service.writeDirectly(service.writeToBuffer(OkPacket.OK, service.allocate()));

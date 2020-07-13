@@ -15,7 +15,7 @@ import com.actiontech.dble.config.model.user.UserName;
 import com.actiontech.dble.net.mysql.FieldPacket;
 import com.actiontech.dble.net.mysql.RowDataPacket;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 
 import java.util.Map;
@@ -38,7 +38,7 @@ public final class MysqlInformationSchemaHandler {
      * @param service
      * @param fields
      */
-    public static void handle(MySQLShardingService service, FieldPacket[] fields) {
+    public static void handle(ShardingService service, FieldPacket[] fields) {
         ServerConfig conf = DbleServer.getInstance().getConfig();
         Map<UserName, UserConfig> users = conf.getUsers();
         UserConfig user = users == null ? null : users.get(service.getUser());

@@ -13,7 +13,7 @@ import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.services.manager.handler.ShowProcesslistHandler;
 import com.actiontech.dble.net.ConnectionException;
 import com.actiontech.dble.route.RouteResultsetNode;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.CollectionUtil;
 import com.actiontech.dble.util.LongUtil;
 import com.actiontech.dble.util.StringUtil;
@@ -91,7 +91,7 @@ public final class ShowProcessList {
 
                 Map<RouteResultsetNode, BackendConnection> backendConns = null;
                 if (!fc.isManager()) {
-                    backendConns = ((MySQLShardingService) fc.getService()).getSession2().getTargetMap();
+                    backendConns = ((ShardingService) fc.getService()).getSession2().getTargetMap();
                 }
                 if (!CollectionUtil.isEmpty(backendConns)) {
                     for (Map.Entry<RouteResultsetNode, BackendConnection> entry : backendConns.entrySet()) {

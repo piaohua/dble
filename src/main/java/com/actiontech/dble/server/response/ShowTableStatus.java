@@ -12,7 +12,7 @@ import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.meta.SchemaMeta;
 import com.actiontech.dble.meta.TableMeta;
 import com.actiontech.dble.net.mysql.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.util.StringUtil;
 
@@ -37,7 +37,7 @@ public final class ShowTableStatus {
     private ShowTableStatus() {
     }
 
-    public static void response(MySQLShardingService shardingService, String stmt) {
+    public static void response(ShardingService shardingService, String stmt) {
 
         Matcher ma = PATTERN.matcher(stmt);
         ma.matches(); //always RETURN TRUE
@@ -52,7 +52,7 @@ public final class ShowTableStatus {
     }
 
 
-    private static void responseDirect(MySQLShardingService service, String cSchema, String likeCondition) {
+    private static void responseDirect(ShardingService service, String cSchema, String likeCondition) {
         if (cSchema == null) {
             service.writeErrMessage("3D000", "No database selected", ErrorCode.ER_NO_DB_ERROR);
             return;
@@ -71,14 +71,14 @@ public final class ShowTableStatus {
         writeRowEof(bufInf.getBuffer(), service, bufInf.getPacketId());
     }
 
-    private static void writeRowEof(ByteBuffer buffer, MySQLShardingService shardingService, byte packetId) {
+    private static void writeRowEof(ByteBuffer buffer, ShardingService shardingService, byte packetId) {
         // writeDirectly last eof
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
-        lastEof.write(buffer,shardingService);
+        lastEof.write(buffer, shardingService);
     }
 
-    private static PackageBufINf writeTablesHeaderAndRows(ByteBuffer buffer, MySQLShardingService service, Map<String, TableMeta> tableMap, String likeCondition) {
+    private static PackageBufINf writeTablesHeaderAndRows(ByteBuffer buffer, ShardingService service, Map<String, TableMeta> tableMap, String likeCondition) {
         int fieldCount = 18;
         ResultSetHeaderPacket header = PacketUtil.getHeader(fieldCount);
         FieldPacket[] fields = new FieldPacket[fieldCount];

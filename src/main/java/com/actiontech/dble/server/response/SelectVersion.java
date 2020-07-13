@@ -9,7 +9,7 @@ import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.config.Versions;
 import com.actiontech.dble.net.mysql.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ public final class SelectVersion implements InnerFuncResponse {
     private static final EOFPacket EOF = new EOFPacket();
 
 
-    public static void response(MySQLShardingService service) {
+    public static void response(ShardingService service) {
         HEADER.setPacketId(service.nextPacketId());
         FIELDS[0] = PacketUtil.getField("VERSION()", Fields.FIELD_TYPE_VAR_STRING);
         FIELDS[0].setPacketId(service.nextPacketId());
@@ -56,7 +56,7 @@ public final class SelectVersion implements InnerFuncResponse {
         return result;
     }
 
-    public List<RowDataPacket> getRows(MySQLShardingService service) {
+    public List<RowDataPacket> getRows(ShardingService service) {
         List<RowDataPacket> result = new ArrayList<>();
         RowDataPacket row = new RowDataPacket(FIELD_COUNT);
         row.add(Versions.getServerVersion());

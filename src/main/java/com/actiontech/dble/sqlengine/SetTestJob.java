@@ -18,7 +18,7 @@ import com.actiontech.dble.net.mysql.RowDataPacket;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.server.handler.SetCallBack;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,15 +32,15 @@ public class SetTestJob implements ResponseHandler, Runnable {
     private final String sql;
     private final String databaseName;
     private final SQLJobHandler jobHandler;
-    private final MySQLShardingService service;
+    private final ShardingService shardingService;
     private final AtomicBoolean hasReturn = new AtomicBoolean(false);
 
-    public SetTestJob(String sql, String databaseName, SQLJobHandler jobHandler, MySQLShardingService service) {
+    public SetTestJob(String sql, String databaseName, SQLJobHandler jobHandler, ShardingService service) {
         super();
         this.sql = sql;
         this.databaseName = databaseName;
         this.jobHandler = jobHandler;
-        this.service = service;
+        this.shardingService = service;
     }
 
     public void run() {
@@ -59,14 +59,14 @@ public class SetTestJob implements ResponseHandler, Runnable {
                 String reason = "can't get backend connection for sql :" + sql + " " + e.getMessage();
                 LOGGER.info(reason, e);
                 doFinished(true);
-                service.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, reason);
+                shardingService.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, reason);
             }
         }
         if (!sendTest && hasReturn.compareAndSet(false, true)) {
             String reason = "can't get backend connection for sql :" + sql + " all datasrouce dead";
             LOGGER.info(reason);
             doFinished(true);
-            service.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, reason);
+            shardingService.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, reason);
         }
     }
 
@@ -77,7 +77,7 @@ public class SetTestJob implements ResponseHandler, Runnable {
         }
         conn.getBackendService().setResponseHandler(this);
         conn.getBackendService().setComplexQuery(true);
-        conn.getBackendService().sendQueryCmd(sql, service.getCharset());
+        conn.getBackendService().sendQueryCmd(sql, shardingService.getCharset());
     }
 
     private void doFinished(boolean failed) {
@@ -90,7 +90,7 @@ public class SetTestJob implements ResponseHandler, Runnable {
             String reason = "can't get backend connection for sql :" + sql + " " + e.getMessage();
             LOGGER.info(reason);
             doFinished(true);
-            service.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, reason);
+            shardingService.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, reason);
         }
     }
 
@@ -99,7 +99,7 @@ public class SetTestJob implements ResponseHandler, Runnable {
         if (hasReturn.compareAndSet(false, true)) {
             LOGGER.info("connectionClose sql :" + sql);
             doFinished(true);
-            this.service.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, "connectionClose:" + reason);
+            this.shardingService.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, "connectionClose:" + reason);
         }
     }
 
@@ -110,7 +110,7 @@ public class SetTestJob implements ResponseHandler, Runnable {
             errPg.read(err);
             doFinished(true);
             ((MySQLResponseService) service).release(); //conn context not change
-            this.service.writeErrMessage(errPg.getErrNo(), new String(errPg.getMessage()));
+            this.shardingService.writeErrMessage(errPg.getErrNo(), new String(errPg.getMessage()));
         }
     }
 

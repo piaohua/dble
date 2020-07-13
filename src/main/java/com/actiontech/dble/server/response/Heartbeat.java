@@ -11,7 +11,7 @@ import com.actiontech.dble.net.mysql.ErrorPacket;
 import com.actiontech.dble.net.mysql.HeartbeatPacket;
 import com.actiontech.dble.net.mysql.OkPacket;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ public final class Heartbeat {
 
     private static final Logger HEARTBEAT = LoggerFactory.getLogger("heartbeat");
 
-    public static void response(MySQLShardingService service, byte[] data) {
+    public static void response(ShardingService service, byte[] data) {
         HeartbeatPacket hp = new HeartbeatPacket();
         hp.read(data);
         if (DbleServer.getInstance().isOnline()) {
@@ -49,7 +49,7 @@ public final class Heartbeat {
         }
     }
 
-    private static String responseMessage(String action, MySQLShardingService service, long id) {
+    private static String responseMessage(String action, ShardingService service, long id) {
         return "RESPONSE:" + action + ", id=" + id + ", host=" +
                 service.getConnection().getHost() + ", port=" + service.getConnection().getPort() + ", time=" +
                 TimeUtil.currentTimeMillis();

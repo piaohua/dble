@@ -7,7 +7,7 @@ package com.actiontech.dble.server.parser;
 
 import com.actiontech.dble.route.parser.util.ParseUtil;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import org.apache.commons.lang.StringEscapeUtils;
 
 import java.util.LinkedList;
@@ -22,7 +22,7 @@ public final class ScriptPrepareParse {
     private ScriptPrepareParse() {
     }
 
-    public static int parse(String stmt, int offset, MySQLShardingService service) {
+    public static int parse(String stmt, int offset, ShardingService service) {
         int i = offset;
         for (; i < stmt.length(); ++i) {
             switch (stmt.charAt(i)) {
@@ -81,7 +81,7 @@ public final class ScriptPrepareParse {
         return i - 1;
     }
 
-    private static int prepareParse(String stmt, int offset, MySQLShardingService service) {
+    private static int prepareParse(String stmt, int offset, ShardingService service) {
         String name = null;
 
         offset += "REPARE".length();
@@ -127,7 +127,7 @@ public final class ScriptPrepareParse {
         return OTHER;
     }
 
-    private static int parseStmtFrom(String stmt, int offset, MySQLShardingService service, String name) {
+    private static int parseStmtFrom(String stmt, int offset, ShardingService service, String name) {
         String exestmt = null;
 
         char c1 = stmt.charAt(offset);
@@ -143,7 +143,7 @@ public final class ScriptPrepareParse {
         return PREPARE;
     }
 
-    private static int parseStmtFromUser(String stmt, int offset, MySQLShardingService service, String name) {
+    private static int parseStmtFromUser(String stmt, int offset, ShardingService service, String name) {
         String exestmt = null;
         int i = ++offset;
         for (; i < stmt.length(); i++) {
@@ -184,7 +184,7 @@ public final class ScriptPrepareParse {
         parts.add(stmt.substring(start, stmt.length()));
     }
 
-    private static int executeParse(String stmt, int offset, MySQLShardingService service) {
+    private static int executeParse(String stmt, int offset, ShardingService service) {
         String name = null;
 
         offset += "XECUTE".length();
@@ -261,7 +261,7 @@ public final class ScriptPrepareParse {
         return i;
     }
 
-    private static int dParse(String stmt, int offset, MySQLShardingService service) {
+    private static int dParse(String stmt, int offset, ShardingService service) {
         if (stmt.length() > offset) {
             char c1 = stmt.charAt(++offset);
             switch (c1) {
@@ -278,7 +278,7 @@ public final class ScriptPrepareParse {
         return OTHER;
     }
 
-    private static int dropParse(String stmt, int offset, MySQLShardingService service, boolean isdrop) {
+    private static int dropParse(String stmt, int offset, ShardingService service, boolean isdrop) {
         String name;
         if (isdrop) {
             offset += "OP".length();

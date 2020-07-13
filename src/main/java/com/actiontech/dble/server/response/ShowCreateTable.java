@@ -11,7 +11,7 @@ import com.actiontech.dble.route.util.RouterUtil;
 
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.util.SchemaUtil;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlShowCreateTableStatement;
 
@@ -22,7 +22,7 @@ public final class ShowCreateTable {
     private ShowCreateTable() {
     }
 
-    public static void response(MySQLShardingService shardingService, String stmt) {
+    public static void response(ShardingService shardingService, String stmt) {
         try {
             SQLStatement statement = RouteStrategyFactory.getRouteStrategy().parserSQL(stmt);
             MySqlShowCreateTableStatement showCreateTableStatement = (MySqlShowCreateTableStatement) statement;

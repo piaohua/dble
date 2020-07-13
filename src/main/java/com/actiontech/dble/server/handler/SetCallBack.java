@@ -5,17 +5,17 @@
 
 package com.actiontech.dble.server.handler;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.sqlengine.SQLQueryResult;
 import com.actiontech.dble.sqlengine.SQLQueryResultListener;
 
 import java.util.Map;
 
 public class SetCallBack implements SQLQueryResultListener<SQLQueryResult<Map<String, String>>> {
-    private MySQLShardingService service;
+    private ShardingService service;
     private boolean backToOtherThread;
 
-    SetCallBack(MySQLShardingService service) {
+    SetCallBack(ShardingService service) {
         this.service = service;
     }
 

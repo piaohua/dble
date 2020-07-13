@@ -11,7 +11,7 @@ import com.actiontech.dble.route.factory.RouteStrategyFactory;
 
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.util.SchemaUtil.SchemaInfo;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 import com.alibaba.druid.sql.ast.SQLName;
 import com.alibaba.druid.sql.ast.SQLStatement;
@@ -36,7 +36,7 @@ public final class ShowIndex {
             "\\s*$";
     public static final Pattern PATTERN = Pattern.compile(INDEX_PAT, Pattern.CASE_INSENSITIVE);
 
-    public static void response(MySQLShardingService shardingService, String stmt) {
+    public static void response(ShardingService shardingService, String stmt) {
         try {
             String table;
             String schema;

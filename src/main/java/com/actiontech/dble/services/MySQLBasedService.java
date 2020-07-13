@@ -24,6 +24,8 @@ public abstract class MySQLBasedService extends AbstractService {
 
     protected long clientFlags;
 
+    protected boolean isAuthenticated;
+
     protected volatile Map<String, String> usrVariables = new LinkedHashMap<>();
     protected volatile Map<String, String> sysVariables = new LinkedHashMap<>();
 

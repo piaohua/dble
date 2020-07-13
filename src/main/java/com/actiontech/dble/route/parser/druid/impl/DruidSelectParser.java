@@ -29,7 +29,7 @@ import com.actiontech.dble.route.util.RouterUtil;
 import com.actiontech.dble.server.handler.MysqlSystemSchemaHandler;
 import com.actiontech.dble.server.util.SchemaUtil;
 import com.actiontech.dble.server.util.SchemaUtil.SchemaInfo;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.sqlengine.mpp.ColumnRoute;
 import com.actiontech.dble.util.StringUtil;
@@ -59,7 +59,7 @@ public class DruidSelectParser extends DefaultDruidParser {
 
     @Override
     public SchemaConfig visitorParse(SchemaConfig schema, RouteResultset rrs, SQLStatement stmt,
-                                     ServerSchemaStatVisitor visitor, MySQLShardingService service, boolean isExplain) throws SQLException {
+                                     ServerSchemaStatVisitor visitor, ShardingService service, boolean isExplain) throws SQLException {
         SQLSelectStatement selectStmt = (SQLSelectStatement) stmt;
         SQLSelectQuery sqlSelectQuery = selectStmt.getSelect().getQuery();
         String schemaName = schema == null ? null : schema.getName();
@@ -125,7 +125,7 @@ public class DruidSelectParser extends DefaultDruidParser {
 
 
     private void routeSingleTable(RouteResultset rrs, SchemaInfo schemaInfo, MySqlSelectQueryBlock mysqlSelectQuery,
-                                  SQLSelectStatement selectStmt, MySQLShardingService service) throws SQLException {
+                                  SQLSelectStatement selectStmt, ShardingService service) throws SQLException {
         rrs.setSchema(schemaInfo.getSchema());
         rrs.setTable(schemaInfo.getTable());
         rrs.setTableAlias(schemaInfo.getTableAlias());
@@ -190,7 +190,7 @@ public class DruidSelectParser extends DefaultDruidParser {
      * check the sql subquery first
      * route for a NoNameTable
      */
-    private void routeForNoFrom(SchemaConfig schema, RouteResultset rrs, ServerSchemaStatVisitor visitor, boolean isExplain, MySQLShardingService service,
+    private void routeForNoFrom(SchemaConfig schema, RouteResultset rrs, ServerSchemaStatVisitor visitor, boolean isExplain, ShardingService service,
                                 SQLSelectStatement selectStmt) throws SQLException {
         super.visitorParse(schema, rrs, selectStmt, visitor, service, isExplain);
         if (visitor.getSubQueryList().size() > 0) {
@@ -480,7 +480,7 @@ public class DruidSelectParser extends DefaultDruidParser {
         return groupByCols;
     }
 
-    private SchemaConfig executeComplexSQL(String schemaName, SchemaConfig schema, RouteResultset rrs, SQLSelectStatement selectStmt, MySQLShardingService service, int tableSize, boolean ontainsInnerFunction)
+    private SchemaConfig executeComplexSQL(String schemaName, SchemaConfig schema, RouteResultset rrs, SQLSelectStatement selectStmt, ShardingService service, int tableSize, boolean ontainsInnerFunction)
             throws SQLException {
         StringPtr noShardingNode = new StringPtr(null);
         Set<String> schemas = new HashSet<>();

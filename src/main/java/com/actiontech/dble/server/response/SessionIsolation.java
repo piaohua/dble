@@ -9,7 +9,7 @@ import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.config.Isolations;
 import com.actiontech.dble.net.mysql.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 
 import java.nio.ByteBuffer;
@@ -27,7 +27,7 @@ public final class SessionIsolation {
     private static final EOFPacket EOF = new EOFPacket();
 
 
-    public static void response(MySQLShardingService service, String column) {
+    public static void response(ShardingService service, String column) {
         HEADER.setPacketId(service.nextPacketId());
         FIELDS[0] = PacketUtil.getField(column, Fields.FIELD_TYPE_STRING);
         FIELDS[0].setPacketId(service.nextPacketId());

@@ -22,7 +22,7 @@ import com.actiontech.dble.server.NonBlockingSession;
 
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.DDLTraceManager;
 import com.actiontech.dble.util.StringUtil;
 import org.slf4j.Logger;
@@ -157,7 +157,7 @@ public class MultiNodeDdlPrepareHandler extends MultiNodeHandler implements Exec
                 closedConnSet = new HashSet<>(1);
                 closedConnSet.add(conn.getBackendService());
             } else {
-                if (closedConnSet.contains(conn)) {
+                if (closedConnSet.contains(conn.getBackendService())) {
                     return true;
                 }
                 closedConnSet.add(conn.getBackendService());
@@ -247,7 +247,7 @@ public class MultiNodeDdlPrepareHandler extends MultiNodeHandler implements Exec
         MySQLResponseService responseService = (MySQLResponseService) service;
         DDLTraceManager.getInstance().updateConnectionStatus(session.getShardingService(),
                 responseService, DDLTraceInfo.DDLConnectionStatus.CONN_TEST_SUCCESS);
-        final MySQLShardingService shardingService = session.getShardingService();
+        final ShardingService shardingService = session.getShardingService();
         if (clearIfSessionClosed()) {
             return;
         }
@@ -315,7 +315,7 @@ public class MultiNodeDdlPrepareHandler extends MultiNodeHandler implements Exec
     }
 
     private void handleRollbackPacket(byte[] data, String reason) {
-        MySQLShardingService source = session.getShardingService();
+        ShardingService source = session.getShardingService();
         boolean inTransaction = !source.isAutocommit() || source.isTxStart();
         if (!inTransaction) {
             // normal query

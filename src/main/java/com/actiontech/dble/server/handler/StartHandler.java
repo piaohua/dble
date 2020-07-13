@@ -9,7 +9,7 @@ import com.actiontech.dble.config.ErrorCode;
 
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.parser.ServerParseStart;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 /**
  * @author mycat
@@ -18,7 +18,7 @@ public final class StartHandler {
     private StartHandler() {
     }
 
-    public static void handle(String stmt, MySQLShardingService service, int offset) {
+    public static void handle(String stmt, ShardingService service, int offset) {
         switch (ServerParseStart.parse(stmt, offset)) {
             case ServerParseStart.TRANSACTION:
                 BeginHandler.handle(stmt, service);

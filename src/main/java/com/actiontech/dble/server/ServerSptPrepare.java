@@ -5,21 +5,21 @@
 */
 package com.actiontech.dble.server;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class ServerSptPrepare {
-    private MySQLShardingService service;
+    private ShardingService service;
     private Map<String, List<String>> sptPrepares;
     private List<String> sptArguments;
     private String sptStmt;
     private boolean isUserVar;
     private String name;
 
-    public ServerSptPrepare(MySQLShardingService service) {
+    public ServerSptPrepare(ShardingService service) {
         this.service = service;
         this.sptPrepares = new HashMap<>();
         this.sptArguments = null;

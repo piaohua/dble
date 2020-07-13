@@ -15,7 +15,7 @@ import com.actiontech.dble.plan.common.item.function.ItemCreate;
 import com.actiontech.dble.plan.common.ptr.StringPtr;
 import com.actiontech.dble.route.parser.druid.ServerSchemaStatVisitor;
 import com.actiontech.dble.route.util.RouterUtil;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 import com.alibaba.druid.sql.ast.SQLExpr;
 import com.alibaba.druid.sql.ast.SQLStatement;
@@ -144,7 +144,7 @@ public final class SchemaUtil {
         return getSchemaInfo(user, schema, tableSource.getExpr(), tableSource.getAlias());
     }
 
-    public static boolean isNoSharding(MySQLShardingService service, SQLSelectQuery sqlSelectQuery, SQLStatement selectStmt, SQLStatement childSelectStmt, String contextSchema, Set<String> schemas, StringPtr shardingNode)
+    public static boolean isNoSharding(ShardingService service, SQLSelectQuery sqlSelectQuery, SQLStatement selectStmt, SQLStatement childSelectStmt, String contextSchema, Set<String> schemas, StringPtr shardingNode)
             throws SQLException {
         if (sqlSelectQuery instanceof MySqlSelectQueryBlock) {
             MySqlSelectQueryBlock mySqlSelectQueryBlock = (MySqlSelectQueryBlock) sqlSelectQuery;
@@ -164,14 +164,14 @@ public final class SchemaUtil {
         }
     }
 
-    private static boolean isNoSharding(MySQLShardingService service, SQLUnionQuery sqlSelectQuery, SQLStatement stmt, String contextSchema, Set<String> schemas, StringPtr shardingNode)
+    private static boolean isNoSharding(ShardingService service, SQLUnionQuery sqlSelectQuery, SQLStatement stmt, String contextSchema, Set<String> schemas, StringPtr shardingNode)
             throws SQLException {
         SQLSelectQuery left = sqlSelectQuery.getLeft();
         SQLSelectQuery right = sqlSelectQuery.getRight();
         return isNoSharding(service, left, stmt, new SQLSelectStatement(new SQLSelect(left)), contextSchema, schemas, shardingNode) && isNoSharding(service, right, stmt, new SQLSelectStatement(new SQLSelect(right)), contextSchema, schemas, shardingNode);
     }
 
-    public static boolean isNoSharding(MySQLShardingService service, SQLTableSource tables, SQLStatement stmt, SQLStatement childSelectStmt, String contextSchema, Set<String> schemas, StringPtr shardingNode)
+    public static boolean isNoSharding(ShardingService service, SQLTableSource tables, SQLStatement stmt, SQLStatement childSelectStmt, String contextSchema, Set<String> schemas, StringPtr shardingNode)
             throws SQLException {
         if (tables != null) {
             if (tables instanceof SQLExprTableSource) {
@@ -205,7 +205,7 @@ public final class SchemaUtil {
         return true;
     }
 
-    private static boolean isNoSharding(MySQLShardingService service, SQLExprTableSource table, SQLStatement stmt, SQLStatement childSelectStmt, String contextSchema, Set<String> schemas, StringPtr shardingNode)
+    private static boolean isNoSharding(ShardingService service, SQLExprTableSource table, SQLStatement stmt, SQLStatement childSelectStmt, String contextSchema, Set<String> schemas, StringPtr shardingNode)
             throws SQLException {
         SchemaInfo schemaInfo = SchemaUtil.getSchemaInfo(service.getUser(), contextSchema, table);
         String currentSchema = schemaInfo.schema.toUpperCase();
@@ -239,7 +239,7 @@ public final class SchemaUtil {
         }
     }
 
-    public static boolean isNoSharding(MySQLShardingService service, SQLJoinTableSource tables, SQLStatement stmt, SQLStatement childSelectStmt, String contextSchema, Set<String> schemas, StringPtr shardingNode)
+    public static boolean isNoSharding(ShardingService service, SQLJoinTableSource tables, SQLStatement stmt, SQLStatement childSelectStmt, String contextSchema, Set<String> schemas, StringPtr shardingNode)
             throws SQLException {
         SQLTableSource left = tables.getLeft();
         SQLTableSource right = tables.getRight();

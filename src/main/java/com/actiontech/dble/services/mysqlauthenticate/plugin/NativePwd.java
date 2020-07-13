@@ -22,7 +22,7 @@ import static com.actiontech.dble.services.mysqlauthenticate.PluginName.mysql_na
  */
 public class NativePwd extends MySQLAuthPlugin {
 
-    private final PluginName PLUGIN_NAME = mysql_native_password;
+    private final PluginName pluginName = mysql_native_password;
 
     public NativePwd(AbstractConnection connection) {
         super(connection);
@@ -42,7 +42,7 @@ public class NativePwd extends MySQLAuthPlugin {
         packet.setUser(user);
         try {
             if (authPluginData == null) {
-                sendAuthPacket(packet, PasswordAuthPlugin.passwd(password, handshakePacket), PLUGIN_NAME.name(), schema);
+                sendAuthPacket(packet, PasswordAuthPlugin.passwd(password, handshakePacket), pluginName.name(), schema);
             } else {
                 sendAuthPacket(new AuthSwitchResponsePackage(), PasswordAuthPlugin.passwd(password, handshakePacket), packetId);
             }
@@ -87,8 +87,8 @@ public class NativePwd extends MySQLAuthPlugin {
         authPacket = auth;
         try {
             PluginName name = PluginName.valueOf(auth.getAuthPlugin());
-            if (PLUGIN_NAME == name) {
-                String errMsg = AuthUtil.auhth(new UserName(authPacket.getUser(), authPacket.getTenant()), connection, seed, authPacket.getPassword(), authPacket.getDatabase(), PLUGIN_NAME);
+            if (pluginName == name) {
+                String errMsg = AuthUtil.auhth(new UserName(authPacket.getUser(), authPacket.getTenant()), connection, seed, authPacket.getPassword(), authPacket.getDatabase(), pluginName);
                 UserConfig userConfig = DbleServer.getInstance().getConfig().getUsers().get(new UserName(authPacket.getUser(), authPacket.getTenant()));
                 info = new AuthResultInfo(errMsg, authPacket, userConfig);
                 return PluginName.plugin_same_with_default;
@@ -106,7 +106,7 @@ public class NativePwd extends MySQLAuthPlugin {
         authSwitchResponse.read(data);
         authPacket.setPassword(authSwitchResponse.getAuthPluginData());
 
-        String errMsg = AuthUtil.auhth(new UserName(authPacket.getUser(), authPacket.getTenant()), connection, seed, authPacket.getPassword(), authPacket.getDatabase(), PLUGIN_NAME);
+        String errMsg = AuthUtil.auhth(new UserName(authPacket.getUser(), authPacket.getTenant()), connection, seed, authPacket.getPassword(), authPacket.getDatabase(), pluginName);
 
         UserConfig userConfig = DbleServer.getInstance().getConfig().getUsers().get(new UserName(authPacket.getUser(), authPacket.getTenant()));
         info = new AuthResultInfo(errMsg, authPacket, userConfig);

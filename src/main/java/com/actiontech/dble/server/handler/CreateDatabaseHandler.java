@@ -11,7 +11,7 @@ import com.actiontech.dble.config.model.sharding.SchemaConfig;
 import com.actiontech.dble.net.mysql.OkPacket;
 import com.actiontech.dble.route.factory.RouteStrategyFactory;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 import com.alibaba.druid.sql.ast.statement.SQLCreateDatabaseStatement;
 
@@ -23,7 +23,7 @@ public final class CreateDatabaseHandler {
     private CreateDatabaseHandler() {
     }
 
-    public static void handle(String stmt, MySQLShardingService service) {
+    public static void handle(String stmt, ShardingService service) {
         try {
             stmt = stmt.replace("/*!", "/*#");
             SQLCreateDatabaseStatement statement = (SQLCreateDatabaseStatement) RouteStrategyFactory.getRouteStrategy().parserSQL(stmt);

@@ -41,7 +41,7 @@ import com.actiontech.dble.server.status.SlowQueryLog;
 import com.actiontech.dble.server.trace.TraceRecord;
 import com.actiontech.dble.server.trace.TraceResult;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.DDLTraceManager;
 import com.actiontech.dble.singleton.PauseShardingNodeManager;
 import com.actiontech.dble.singleton.ProxyMeta;
@@ -76,7 +76,7 @@ public class NonBlockingSession implements Session {
     public static final Logger LOGGER = LoggerFactory.getLogger(NonBlockingSession.class);
 
     private long queryStartTime = 0;
-    private final MySQLShardingService service;
+    private final ShardingService shardingService;
     private final ConcurrentMap<RouteResultsetNode, BackendConnection> target;
     private final AtomicLong queriesCounter = new AtomicLong(0);
     private final AtomicLong transactionsCounter = new AtomicLong(0);
@@ -116,8 +116,8 @@ public class NonBlockingSession implements Session {
 
     private final HashSet<BackendConnection> flowControlledBackendConnections = new HashSet<>();
 
-    public NonBlockingSession(MySQLShardingService service) {
-        this.service = service;
+    public NonBlockingSession(ShardingService service) {
+        this.shardingService = service;
         this.target = new ConcurrentHashMap<>(2, 1f);
         this.joinBufferMC = new MemSizeController(1024L * 1024L * SystemConfig.getInstance().getJoinMemSize());
         this.orderBufferMC = new MemSizeController(1024L * 1024L * SystemConfig.getInstance().getOrderMemSize());
@@ -155,7 +155,7 @@ public class NonBlockingSession implements Session {
         queryTimeCost = new QueryTimeCost();
         provider = new CostTimeProvider();
         xprovider = new ComplexQueryProvider();
-        provider.beginRequest(service.getConnection().getId());
+        provider.beginRequest(shardingService.getConnection().getId());
         if (requestTime == 0) {
             requestTime = System.nanoTime();
         }
@@ -173,7 +173,7 @@ public class NonBlockingSession implements Session {
         if (!timeCost) {
             return;
         }
-        provider.startProcess(service.getConnection().getId());
+        provider.startProcess(shardingService.getConnection().getId());
     }
 
     public void endParse() {
@@ -185,7 +185,7 @@ public class NonBlockingSession implements Session {
         if (!timeCost) {
             return;
         }
-        provider.endParse(service.getConnection().getId());
+        provider.endParse(shardingService.getConnection().getId());
     }
 
 
@@ -197,7 +197,7 @@ public class NonBlockingSession implements Session {
         if (!timeCost) {
             return;
         }
-        provider.endRoute(service.getConnection().getId());
+        provider.endRoute(shardingService.getConnection().getId());
         queryTimeCost.setCount(rrs.getNodes() == null ? 0 : rrs.getNodes().length);
     }
 
@@ -205,21 +205,21 @@ public class NonBlockingSession implements Session {
         if (!timeCost) {
             return;
         }
-        xprovider.endRoute(service.getConnection().getId());
+        xprovider.endRoute(shardingService.getConnection().getId());
     }
 
     public void endComplexExecute() {
         if (!timeCost) {
             return;
         }
-        xprovider.endComplexExecute(service.getConnection().getId());
+        xprovider.endComplexExecute(shardingService.getConnection().getId());
     }
 
     public void readyToDeliver() {
         if (!timeCost) {
             return;
         }
-        provider.readyToDeliver(service.getConnection().getId());
+        provider.readyToDeliver(shardingService.getConnection().getId());
     }
 
     public void setPreExecuteEnd(boolean isComplexQuery) {
@@ -283,12 +283,12 @@ public class NonBlockingSession implements Session {
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("backend connection[" + service.getConnection().getId() + "] setResponseTime:" + responseTime);
                 }
-                provider.resFromBack(this.service.getConnection().getId());
+                provider.resFromBack(this.shardingService.getConnection().getId());
                 firstBackConRes.set(false);
             }
             long index = queryTimeCost.getBackendReserveCount().decrementAndGet();
             if (index >= 0 && ((index % 10 == 0) || index < 10)) {
-                provider.resLastBack(this.service.getConnection().getId(), queryTimeCost.getBackendSize() - index);
+                provider.resLastBack(this.shardingService.getConnection().getId(), queryTimeCost.getBackendSize() - index);
             }
         }
     }
@@ -298,11 +298,11 @@ public class NonBlockingSession implements Session {
             return;
         }
         if (firstBackConRes.compareAndSet(false, true)) {
-            provider.startExecuteBackend(service.getConnection().getId());
+            provider.startExecuteBackend(shardingService.getConnection().getId());
         }
         long index = queryTimeCost.getBackendExecuteCount().decrementAndGet();
         if (index >= 0 && ((index % 10 == 0) || index < 10)) {
-            provider.execLastBack(service.getConnection().getId(), queryTimeCost.getBackendSize() - index);
+            provider.execLastBack(shardingService.getConnection().getId(), queryTimeCost.getBackendSize() - index);
         }
     }
 
@@ -310,7 +310,7 @@ public class NonBlockingSession implements Session {
         if (!timeCost) {
             return;
         }
-        provider.allBackendConnReceive(service.getConnection().getId());
+        provider.allBackendConnReceive(shardingService.getConnection().getId());
     }
 
     public void setResponseTime(boolean isSuccess) {
@@ -320,7 +320,7 @@ public class NonBlockingSession implements Session {
             responseTime = System.nanoTime();
             traceResult.setVeryEnd(responseTime);
             if (isSuccess) {
-                SlowQueryLog.getInstance().putSlowQueryLog(this.service, (TraceResult) traceResult.clone());
+                SlowQueryLog.getInstance().putSlowQueryLog(this.shardingService, (TraceResult) traceResult.clone());
             }
         }
         if (!timeCost) {
@@ -333,7 +333,7 @@ public class NonBlockingSession implements Session {
             LOGGER.debug("setResponseTime:" + responseTime);
         }
         queryTimeCost.getResponseTime().set(responseTime);
-        provider.beginResponse(service.getConnection().getId());
+        provider.beginResponse(shardingService.getConnection().getId());
         QueryTimeCostContainer.getInstance().add(queryTimeCost);
     }
 
@@ -356,7 +356,7 @@ public class NonBlockingSession implements Session {
             return;
         }
         if (queryTimeCost.getFirstBackConEof().compareAndSet(false, true)) {
-            xprovider.firstComplexEof(this.service.getConnection().getId());
+            xprovider.firstComplexEof(this.shardingService.getConnection().getId());
         }
     }
 
@@ -408,7 +408,7 @@ public class NonBlockingSession implements Session {
 
     @Override
     public FrontendConnection getFrontConnection() {
-        return (FrontendConnection) service.getConnection();
+        return (FrontendConnection) shardingService.getConnection();
     }
 
     @Override
@@ -439,19 +439,19 @@ public class NonBlockingSession implements Session {
     @Override
     public void execute(RouteResultset rrs) {
         if (killed) {
-            service.writeErrMessage(ErrorCode.ER_QUERY_INTERRUPTED, "The query is interrupted.");
+            shardingService.writeErrMessage(ErrorCode.ER_QUERY_INTERRUPTED, "The query is interrupted.");
             return;
         }
 
         if (LOGGER.isDebugEnabled()) {
             StringBuilder s = new StringBuilder();
-            LOGGER.debug(s.append(service).append(rrs).toString() + " rrs ");
+            LOGGER.debug(s.append(shardingService).append(rrs).toString() + " rrs ");
         }
 
         if (PauseShardingNodeManager.getInstance().getIsPausing().get() &&
                 !PauseShardingNodeManager.getInstance().checkTarget(target) &&
                 PauseShardingNodeManager.getInstance().checkRRS(rrs)) {
-            if (PauseShardingNodeManager.getInstance().waitForResume(rrs, service, CONTINUE_TYPE_SINGLE)) {
+            if (PauseShardingNodeManager.getInstance().waitForResume(rrs, shardingService, CONTINUE_TYPE_SINGLE)) {
                 return;
             }
         }
@@ -464,11 +464,11 @@ public class NonBlockingSession implements Session {
                     this.complexRrs = rrs;
                     executeMultiSelect(rrs);
                 } catch (MySQLOutPutException e) {
-                    service.writeErrMessage(e.getSqlState(), e.getMessage(), e.getErrorCode());
+                    shardingService.writeErrMessage(e.getSqlState(), e.getMessage(), e.getErrorCode());
                 }
             } else {
-                service.writeErrMessage(ErrorCode.ER_NO_DB_ERROR,
-                        "No shardingNode found ,please check tables defined in schema:" + service.getSchema());
+                shardingService.writeErrMessage(ErrorCode.ER_NO_DB_ERROR,
+                        "No shardingNode found ,please check tables defined in schema:" + shardingService.getSchema());
             }
             return;
         }
@@ -492,11 +492,11 @@ public class NonBlockingSession implements Session {
     private void executeDDL(RouteResultset rrs) {
         ExecutableHandler executableHandler;
         try {
-            DDLTraceManager.getInstance().startDDL(service);
+            DDLTraceManager.getInstance().startDDL(shardingService);
             // not hint and not online ddl
             if (rrs.getSchema() != null && !rrs.isOnline()) {
                 addTableMetaLock(rrs);
-                DDLTraceManager.getInstance().updateDDLStatus(DDLTraceInfo.DDLStage.LOCK_END, service);
+                DDLTraceManager.getInstance().updateDDLStatus(DDLTraceInfo.DDLStage.LOCK_END, shardingService);
             }
 
             if (rrs.getNodes().length == 1) {
@@ -514,9 +514,9 @@ public class NonBlockingSession implements Session {
             executableHandler.execute();
             discard = true;
         } catch (Exception e) {
-            LOGGER.info(String.valueOf(service) + rrs, e);
+            LOGGER.info(String.valueOf(shardingService) + rrs, e);
             handleSpecial(rrs, false, null);
-            service.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, e.toString());
+            shardingService.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, e.toString());
         }
     }
 
@@ -538,10 +538,10 @@ public class NonBlockingSession implements Session {
             executableHandler.execute();
             discard = true;
         } catch (Exception e) {
-            LOGGER.info(String.valueOf(service) + rrs, e);
+            LOGGER.info(String.valueOf(shardingService) + rrs, e);
             executableHandler.clearAfterFailExecute();
             setResponseTime(false);
-            service.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, e.toString());
+            shardingService.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, e.toString());
         }
     }
 
@@ -555,26 +555,26 @@ public class NonBlockingSession implements Session {
             }
             discard = true;
         } catch (SQLSyntaxErrorException e) {
-            LOGGER.info(service + " execute plan is : " + node, e);
-            service.writeErrMessage(ErrorCode.ER_YES, "optimizer build error");
+            LOGGER.info(shardingService + " execute plan is : " + node, e);
+            shardingService.writeErrMessage(ErrorCode.ER_YES, "optimizer build error");
         } catch (NoSuchElementException e) {
-            LOGGER.info(service + " execute plan is : " + node, e);
+            LOGGER.info(shardingService + " execute plan is : " + node, e);
             this.closeAndClearResources("Exception");
-            service.writeErrMessage(ErrorCode.ER_NO_VALID_CONNECTION, "no valid connection");
+            shardingService.writeErrMessage(ErrorCode.ER_NO_VALID_CONNECTION, "no valid connection");
         } catch (MySQLOutPutException e) {
-            LOGGER.info(service + " execute plan is : " + node, e);
+            LOGGER.info(shardingService + " execute plan is : " + node, e);
             this.closeAndClearResources("Exception");
-            service.writeErrMessage(e.getSqlState(), e.getMessage(), e.getErrorCode());
+            shardingService.writeErrMessage(e.getSqlState(), e.getMessage(), e.getErrorCode());
         } catch (Exception e) {
-            LOGGER.info(service + " execute plan is : " + node, e);
+            LOGGER.info(shardingService + " execute plan is : " + node, e);
             this.closeAndClearResources("Exception");
-            service.writeErrMessage(ErrorCode.ER_HANDLE_DATA, e.toString());
+            shardingService.writeErrMessage(ErrorCode.ER_HANDLE_DATA, e.toString());
         }
     }
 
     public void executeMultiSelect(RouteResultset rrs) {
         SQLSelectStatement ast = (SQLSelectStatement) rrs.getSqlStatement();
-        MySQLPlanNodeVisitor visitor = new MySQLPlanNodeVisitor(service.getSchema(), service.getCharset().getResultsIndex(), ProxyMeta.getInstance().getTmManager(), false, service.getUsrVariables());
+        MySQLPlanNodeVisitor visitor = new MySQLPlanNodeVisitor(shardingService.getSchema(), shardingService.getCharset().getResultsIndex(), ProxyMeta.getInstance().getTmManager(), false, shardingService.getUsrVariables());
         visitor.visit(ast);
         PlanNode node = visitor.getTableNode();
         if (node.isCorrelatedSubQuery()) {
@@ -582,13 +582,13 @@ public class NonBlockingSession implements Session {
         }
         node.setSql(rrs.getStatement());
         node.setUpFields();
-        PlanUtil.checkTablesPrivilege(service, node, ast);
+        PlanUtil.checkTablesPrivilege(shardingService, node, ast);
         node = MyOptimizer.optimize(node);
 
         if (PauseShardingNodeManager.getInstance().getIsPausing().get() &&
                 !PauseShardingNodeManager.getInstance().checkTarget(target) &&
                 PauseShardingNodeManager.getInstance().checkReferredTableNodes(node.getReferedTableNodes())) {
-            if (PauseShardingNodeManager.getInstance().waitForResume(rrs, this.service, CONTINUE_TYPE_MULTIPLE)) {
+            if (PauseShardingNodeManager.getInstance().waitForResume(rrs, this.shardingService, CONTINUE_TYPE_MULTIPLE)) {
                 return;
             }
         }
@@ -631,7 +631,7 @@ public class NonBlockingSession implements Session {
         } else {
             String error = new String(message);
             this.closeAndClearResources(error);
-            service.writeErrMessage(ErrorCode.ER_UNKNOWN_ERROR, error);
+            shardingService.writeErrMessage(ErrorCode.ER_UNKNOWN_ERROR, error);
         }
     }
 
@@ -683,19 +683,19 @@ public class NonBlockingSession implements Session {
         RouteResultsetNode[] nodes = rrs.getNodes();
         if (nodes == null || nodes.length == 0 || nodes[0].getName() == null ||
                 nodes[0].getName().equals("")) {
-            service.writeErrMessage(ErrorCode.ER_NO_DB_ERROR,
-                    "No shardingNode found ,please check tables defined in schema:" + service.getSchema());
+            shardingService.writeErrMessage(ErrorCode.ER_NO_DB_ERROR,
+                    "No shardingNode found ,please check tables defined in schema:" + shardingService.getSchema());
             return;
         }
         LockTablesHandler handler = new LockTablesHandler(this, rrs);
-        service.setLocked(true);
-        transactionManager.setXaTxEnabled(false, service);
+        shardingService.setLocked(true);
+        transactionManager.setXaTxEnabled(false, shardingService);
         try {
             handler.execute();
         } catch (Exception e) {
-            service.setLocked(false);
-            LOGGER.info(String.valueOf(service) + rrs, e);
-            service.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, e.toString());
+            shardingService.setLocked(false);
+            LOGGER.info(String.valueOf(shardingService) + rrs, e);
+            shardingService.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, e.toString());
         }
     }
 
@@ -707,7 +707,7 @@ public class NonBlockingSession implements Session {
      * @date 2016-7-9
      */
     public void unLockTable(String sql) {
-        UnLockTablesHandler handler = new UnLockTablesHandler(this, this.service.isAutocommit(), sql);
+        UnLockTablesHandler handler = new UnLockTablesHandler(this, this.shardingService.isAutocommit(), sql);
         handler.execute();
     }
 
@@ -717,7 +717,7 @@ public class NonBlockingSession implements Session {
      */
     public void terminate() {
         // XA MUST BE FINISHED
-        if ((service.isTxStart() && transactionManager.getXAStage() != null) ||
+        if ((shardingService.isTxStart() && transactionManager.getXAStage() != null) ||
                 needWaitFinished) {
             return;
         }
@@ -729,7 +729,7 @@ public class NonBlockingSession implements Session {
 
     public void closeAndClearResources(String reason) {
         // XA MUST BE FINISHED
-        if (service.isTxStart() && transactionManager.getXAStage() != null) {
+        if (shardingService.isTxStart() && transactionManager.getXAStage() != null) {
             return;
         }
         for (BackendConnection node : target.values()) {
@@ -748,7 +748,7 @@ public class NonBlockingSession implements Session {
     public void releaseConnectionIfSafe(MySQLResponseService service, boolean needClosed) {
         RouteResultsetNode node = (RouteResultsetNode) service.getAttachment();
         if (node != null) {
-            if ((this.service.isAutocommit() || service.getConnection().isFromSlaveDB()) && !this.service.isTxStart() && !this.service.isLocked()) {
+            if ((this.shardingService.isAutocommit() || service.getConnection().isFromSlaveDB()) && !this.shardingService.isTxStart() && !this.shardingService.isLocked()) {
                 releaseConnection((RouteResultsetNode) service.getAttachment(), LOGGER.isDebugEnabled(), needClosed);
             }
         }
@@ -758,7 +758,7 @@ public class NonBlockingSession implements Session {
         if (rrn != null) {
             BackendConnection c = target.remove(rrn);
             if (c != null && !c.isClosed()) {
-                if (service.isFlowControlled()) {
+                if (shardingService.isFlowControlled()) {
                     releaseConnectionFromFlowCntrolled(c);
                 }
                 if (((MySQLResponseService) c.getService()).isAutocommit()) {
@@ -814,7 +814,7 @@ public class NonBlockingSession implements Session {
         }
 
         boolean canReUse = false;
-        if (conn.isFromSlaveDB() && (node.canRunINReadDB(service.isAutocommit()) &&
+        if (conn.isFromSlaveDB() && (node.canRunINReadDB(shardingService.isAutocommit()) &&
                 (node.getRunOnSlave() == null || node.getRunOnSlave()))) {
             canReUse = true;
         }
@@ -868,23 +868,23 @@ public class NonBlockingSession implements Session {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("clear session resources " + this);
         }
-        if (!service.isLocked()) {
+        if (!shardingService.isLocked()) {
             this.releaseConnections(needClosed);
         }
         if (!transactionManager.isRetryXa()) {
             transactionManager.setRetryXa(true);
         }
         needWaitFinished = false;
-        service.setTxStarted(false);
-        service.getAndIncrementXid();
+        shardingService.setTxStarted(false);
+        shardingService.getAndIncrementXid();
     }
 
     public boolean closed() {
-        return service.getConnection().isClosed();
+        return shardingService.getConnection().isClosed();
     }
 
-    public MySQLShardingService getShardingService() {
-        return service;
+    public ShardingService getShardingService() {
+        return shardingService;
     }
 
     public String getSessionXaID() {
@@ -924,9 +924,9 @@ public class NonBlockingSession implements Session {
     public boolean handleSpecial(RouteResultset rrs, boolean isSuccess, String errInfo) {
         if (rrs.getSchema() != null) {
             String sql = rrs.getSrcStatement();
-            if (service.isTxStart()) {
-                service.setTxStarted(false);
-                service.getAndIncrementXid();
+            if (shardingService.isTxStart()) {
+                shardingService.setTxStarted(false);
+                shardingService.getAndIncrementXid();
             }
             if (!isSuccess) {
                 LOGGER.warn("DDL execute failed or Session closed, " +
@@ -937,7 +937,7 @@ public class NonBlockingSession implements Session {
                 LOGGER.info("online ddl skip updating meta and cluster notify, Schema[" + rrs.getSchema() + "],SQL[" + sql + "]" + (errInfo != null ? "errorInfo:" + errInfo : ""));
                 return true;
             }
-            DDLTraceManager.getInstance().updateDDLStatus(DDLTraceInfo.DDLStage.META_UPDATE, service);
+            DDLTraceManager.getInstance().updateDDLStatus(DDLTraceInfo.DDLStage.META_UPDATE, shardingService);
             return ProxyMeta.getInstance().getTmManager().updateMetaData(rrs.getSchema(), rrs.getTable(), sql, isSuccess, rrs.getDdlType());
         } else {
             LOGGER.info("Hint ddl do not update the meta");
@@ -995,7 +995,7 @@ public class NonBlockingSession implements Session {
         /*if (flag) {
             this.setRequestTime();
             this.setQueryStartTime(System.currentTimeMillis());
-            DbleServer.getInstance().getFrontHandlerQueue().offer((FrontendCommandHandler) service.getHandler());
+            DbleServer.getInstance().getFrontHandlerQueue().offer((FrontendCommandHandler) shardingService.getHandler());
         }*/
     }
 
@@ -1017,7 +1017,7 @@ public class NonBlockingSession implements Session {
     }
 
     public void singleTransactionsCount() {
-        if (!service.isTxStart()) {
+        if (!shardingService.isTxStart()) {
             transactionsCounter.incrementAndGet();
         }
     }
@@ -1076,7 +1076,7 @@ public class NonBlockingSession implements Session {
     }
 
     public AtomicInteger getPacketId() {
-        return service.getPacketId();
+        return shardingService.getPacketId();
     }
 
 
@@ -1147,7 +1147,7 @@ public class NonBlockingSession implements Session {
     public void stopFlowControl() {
         LOGGER.info("Session stop flow control " + this.getFrontConnection());
         synchronized (flowControlledBackendConnections) {
-            service.getConnection().setFlowControlled(false);
+            shardingService.getConnection().setFlowControlled(false);
             for (BackendConnection entry : flowControlledBackendConnections) {
                 entry.getSocketWR().enableRead();
             }
@@ -1157,10 +1157,10 @@ public class NonBlockingSession implements Session {
 
     public void startFlowControl() {
         synchronized (flowControlledBackendConnections) {
-            if (!service.isFlowControlled()) {
+            if (!shardingService.isFlowControlled()) {
                 LOGGER.info("Session start flow control " + this.getFrontConnection());
             }
-            service.getConnection().setFlowControlled(true);
+            shardingService.getConnection().setFlowControlled(true);
             for (BackendConnection backendConnection : target.values()) {
                 backendConnection.getSocketWR().disableRead();
                 flowControlledBackendConnections.add(backendConnection);
@@ -1173,7 +1173,7 @@ public class NonBlockingSession implements Session {
             if (flowControlledBackendConnections.remove(con)) {
                 con.enableRead();
                 if (flowControlledBackendConnections.size() == 0) {
-                    service.setFlowControlled(false);
+                    shardingService.setFlowControlled(false);
                 }
             }
         }*/

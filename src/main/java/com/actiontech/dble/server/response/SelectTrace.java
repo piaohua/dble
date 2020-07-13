@@ -7,7 +7,7 @@ package com.actiontech.dble.server.response;
 import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.net.mysql.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 import java.nio.ByteBuffer;
 
@@ -21,7 +21,7 @@ public final class SelectTrace {
     private static final EOFPacket EOF = new EOFPacket();
 
 
-    public static void response(MySQLShardingService service) {
+    public static void response(ShardingService service) {
         HEADER.setPacketId(service.nextPacketId());
         FIELDS[0] = PacketUtil.getField("@@trace", Fields.FIELD_TYPE_VAR_STRING);
         FIELDS[0].setPacketId(service.nextPacketId());

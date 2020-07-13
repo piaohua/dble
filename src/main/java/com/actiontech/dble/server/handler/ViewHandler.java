@@ -19,7 +19,7 @@ import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.route.util.RouterUtil;
 
 import com.actiontech.dble.server.parser.ServerParse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.util.StringUtil;
 import com.alibaba.druid.sql.ast.statement.SQLDropViewStatement;
@@ -39,7 +39,7 @@ public final class ViewHandler {
     private ViewHandler() {
     }
 
-    public static void handle(int type, String sql, MySQLShardingService service) {
+    public static void handle(int type, String sql, ShardingService service) {
         String schema = service.getSchema();
         if (StringUtil.isEmpty(schema)) {
             service.writeErrMessage("3D000", "No database selected", ErrorCode.ER_NO_DB_ERROR);
@@ -55,7 +55,7 @@ public final class ViewHandler {
         }
     }
 
-    public static void handleView(int sqlType, String schema, String sql, MySQLShardingService service) throws Exception {
+    public static void handleView(int sqlType, String schema, String sql, ShardingService service) throws Exception {
         switch (sqlType) {
             case ServerParse.CREATE_VIEW:
                 createView(schema, sql, sqlType, service);
@@ -74,7 +74,7 @@ public final class ViewHandler {
         }
     }
 
-    private static void createView(String schema, String sql, int sqlType, MySQLShardingService service) throws Exception {
+    private static void createView(String schema, String sql, int sqlType, ShardingService service) throws Exception {
         //create a new object of the view
         ViewMeta vm = new ViewMeta(schema, sql, ProxyMeta.getInstance().getTmManager());
         vm.init();
@@ -91,7 +91,7 @@ public final class ViewHandler {
         writeOkPackage(service);
     }
 
-    private static void replaceView(String schema, String sql, int sqlType, MySQLShardingService service) throws Exception {
+    private static void replaceView(String schema, String sql, int sqlType, ShardingService service) throws Exception {
         //create a new object of the view
         ViewMeta vm = new ViewMeta(schema, sql, ProxyMeta.getInstance().getTmManager());
         vm.init();
@@ -119,7 +119,7 @@ public final class ViewHandler {
         writeOkPackage(service);
     }
 
-    private static void deleteView(String currentSchema, String sql, MySQLShardingService service) throws Exception {
+    private static void deleteView(String currentSchema, String sql, ShardingService service) throws Exception {
         SQLStatementParser parser = new MySqlStatementParser(sql);
         SQLDropViewStatement viewStatement = (SQLDropViewStatement) parser.parseStatement(true);
         if (viewStatement.getTableSources() == null || viewStatement.getTableSources().size() == 0) {
@@ -171,7 +171,7 @@ public final class ViewHandler {
         writeOkPackage(service);
     }
 
-    private static void writeOkPackage(MySQLShardingService service) {
+    private static void writeOkPackage(ShardingService service) {
         // if the create success with no error send back OK
         byte packetId = (byte) service.getSession2().getPacketId().get();
         OkPacket ok = new OkPacket();

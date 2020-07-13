@@ -22,7 +22,7 @@ import com.actiontech.dble.net.connection.FrontendConnection;
 import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.server.NonBlockingSession;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.sqlengine.OneRawSQLQueryResultHandler;
 import com.actiontech.dble.sqlengine.SQLJob;
 import com.actiontech.dble.sqlengine.SQLQueryResult;
@@ -225,7 +225,7 @@ public final class ShowBinlogStatus {
                 if (front.isManager()) {
                     continue;
                 }
-                NonBlockingSession session = ((MySQLShardingService) front.getService()).getSession2();
+                NonBlockingSession session = ((ShardingService) front.getService()).getSession2();
                 if (session.isNeedWaitFinished()) {
                     fcList.add(session);
                 }

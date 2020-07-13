@@ -14,13 +14,13 @@ import com.actiontech.dble.route.util.RouterUtil;
 
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.util.SchemaUtil;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 public final class ShowVariables {
     private ShowVariables() {
     }
 
-    public static void response(MySQLShardingService shardingService, String stmt) {
+    public static void response(ShardingService shardingService, String stmt) {
         String db = shardingService.getSchema() != null ? shardingService.getSchema() : SchemaUtil.getRandomDb();
 
         SchemaConfig schema = DbleServer.getInstance().getConfig().getSchemas().get(db);

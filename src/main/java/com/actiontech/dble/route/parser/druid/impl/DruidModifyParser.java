@@ -17,7 +17,7 @@ import com.actiontech.dble.route.util.ConditionUtil;
 import com.actiontech.dble.route.util.RouterUtil;
 
 import com.actiontech.dble.server.util.SchemaUtil;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.sqlengine.SQLJob;
 import com.actiontech.dble.sqlengine.mpp.ColumnRoute;
@@ -237,8 +237,8 @@ abstract class DruidModifyParser extends DefaultDruidParser {
      * + the select can be ER route to all the dataNodes
      *
      */
-    Collection<String> checkForShardingTable(ServerSchemaStatVisitor visitor, SQLSelect select, MySQLShardingService service, RouteResultset rrs,
-                                                       ShardingTableConfig tc, SchemaUtil.SchemaInfo schemaInfo, SQLStatement stmt, SchemaConfig schema) throws SQLException {
+    Collection<String> checkForShardingTable(ServerSchemaStatVisitor visitor, SQLSelect select, ShardingService service, RouteResultset rrs,
+                                             ShardingTableConfig tc, SchemaUtil.SchemaInfo schemaInfo, SQLStatement stmt, SchemaConfig schema) throws SQLException {
         //the insert table is a sharding table
         String tableName = schemaInfo.getTable();
         String schemaName = schema == null ? null : schema.getName();
@@ -504,7 +504,7 @@ abstract class DruidModifyParser extends DefaultDruidParser {
         rrs.setStatement(sql);
     }
 
-    List<SchemaUtil.SchemaInfo> checkPrivilegeForModifyTable(MySQLShardingService service, String schemaName, SQLStatement stmt, List<SQLExprTableSource> tableList) throws SQLException {
+    List<SchemaUtil.SchemaInfo> checkPrivilegeForModifyTable(ShardingService service, String schemaName, SQLStatement stmt, List<SQLExprTableSource> tableList) throws SQLException {
         List<SchemaUtil.SchemaInfo> schemaInfos = new ArrayList<>();
         for (SQLExprTableSource x : tableList) {
             SchemaUtil.SchemaInfo schemaInfo = SchemaUtil.getSchemaInfo(service.getUser(), schemaName, x);

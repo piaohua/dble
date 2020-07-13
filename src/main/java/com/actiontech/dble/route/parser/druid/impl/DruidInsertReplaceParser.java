@@ -19,7 +19,7 @@ import com.actiontech.dble.route.util.ConditionUtil;
 import com.actiontech.dble.route.util.RouterUtil;
 import com.actiontech.dble.server.handler.ExplainHandler;
 import com.actiontech.dble.server.util.SchemaUtil;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.util.StringUtil;
 import com.alibaba.druid.sql.ast.SQLExpr;
@@ -55,7 +55,7 @@ abstract class DruidInsertReplaceParser extends DruidModifyParser {
      * @param schemaInfo
      * @throws SQLException
      */
-    protected void tryRouteInsertQuery(MySQLShardingService service, RouteResultset rrs, SQLStatement stmt, ServerSchemaStatVisitor visitor, SchemaUtil.SchemaInfo schemaInfo) throws SQLException {
+    protected void tryRouteInsertQuery(ShardingService service, RouteResultset rrs, SQLStatement stmt, ServerSchemaStatVisitor visitor, SchemaUtil.SchemaInfo schemaInfo) throws SQLException {
         // insert into .... select ....
         SQLSelect select = acceptVisitor(stmt, visitor);
         String tableName = schemaInfo.getTable();
@@ -164,7 +164,7 @@ abstract class DruidInsertReplaceParser extends DruidModifyParser {
     }
 
 
-    void fetchChildTableToRoute(ChildTableConfig tc, String joinColumnVal, MySQLShardingService service, SchemaConfig schema, String sql, RouteResultset rrs, boolean isExplain) {
+    void fetchChildTableToRoute(ChildTableConfig tc, String joinColumnVal, ShardingService service, SchemaConfig schema, String sql, RouteResultset rrs, boolean isExplain) {
         DbleServer.getInstance().getComplexQueryExecutor().execute(new Runnable() {
             //get child result will be blocked, so use ComplexQueryExecutor
             @Override

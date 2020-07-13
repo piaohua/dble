@@ -39,7 +39,7 @@ import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.services.manager.response.ReloadConfig;
 import com.actiontech.dble.services.manager.response.RollbackConfig;
 import com.actiontech.dble.services.manager.response.ShowBinlogStatus;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.HaConfigManager;
 import com.actiontech.dble.singleton.PauseShardingNodeManager;
 import com.actiontech.dble.singleton.ProxyMeta;
@@ -331,7 +331,7 @@ public final class ClusterLogic {
                             for (IOProcessor processor : DbleServer.getInstance().getFrontProcessors()) {
                                 for (Map.Entry<Long, FrontendConnection> entry : processor.getFrontends().entrySet()) {
                                     if (!entry.getValue().isManager()) {
-                                        MySQLShardingService shardingService = (MySQLShardingService) entry.getValue().getService();
+                                        ShardingService shardingService = (ShardingService) entry.getValue().getService();
                                         for (Map.Entry<RouteResultsetNode, BackendConnection> conEntry : shardingService.getSession2().getTargetMap().entrySet()) {
                                             if (shardingNodeSet.contains(conEntry.getKey().getName())) {
                                                 nextTurn = true;

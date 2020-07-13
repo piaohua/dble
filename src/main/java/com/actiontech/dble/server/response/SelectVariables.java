@@ -9,7 +9,7 @@ import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.backend.mysql.VersionUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.net.mysql.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.google.common.base.Splitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ public final class SelectVariables {
     private static final Logger LOGGER = LoggerFactory.getLogger(SelectVariables.class);
 
 
-    public static void execute(MySQLShardingService service, String sql) {
+    public static void execute(ShardingService service, String sql) {
         String subSql = sql.substring(sql.indexOf("SELECT") + 6);
         List<String> splitVar = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(subSql);
         splitVar = convert(splitVar);
@@ -159,7 +159,7 @@ public final class SelectVariables {
     }
 
 
-    public static byte setCurrentPacket(MySQLShardingService service) {
+    public static byte setCurrentPacket(ShardingService service) {
         byte packetId = (byte) service.getSession2().getPacketId().get();
         return packetId;
     }

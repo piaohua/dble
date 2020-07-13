@@ -17,7 +17,7 @@ import com.actiontech.dble.net.mysql.LongDataPacket;
 import com.actiontech.dble.net.mysql.OkPacket;
 import com.actiontech.dble.net.mysql.ResetPacket;
 import com.actiontech.dble.server.response.PreparedStmtResponse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.HexFormatUtil;
 import com.google.common.escape.Escaper;
 import com.google.common.escape.Escapers;
@@ -46,11 +46,11 @@ public class ServerPrepareHandler implements FrontendPrepareHandler {
         varcharEscape = escapeBuilder.build();
     }
 
-    private MySQLShardingService service;
+    private ShardingService service;
     private volatile long pStmtId;
     private Map<Long, PreparedStatement> pStmtForId;
 
-    public ServerPrepareHandler(MySQLShardingService service) {
+    public ServerPrepareHandler(ShardingService service) {
         this.service = service;
         this.pStmtId = 0L;
         this.pStmtForId = new HashMap<>();

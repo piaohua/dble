@@ -31,10 +31,10 @@ public class AIOSocketWR extends SocketWR {
 
     }
 
-    public void initFromConnection(AbstractConnection con) {
-        this.con = con;
-        this.channel = (AsynchronousSocketChannel) con.getChannel();
-        this.writeQueue = con.getWriteQueue();
+    public void initFromConnection(AbstractConnection connection) {
+        this.con = connection;
+        this.channel = (AsynchronousSocketChannel) connection.getChannel();
+        this.writeQueue = connection.getWriteQueue();
     }
 
     @Override

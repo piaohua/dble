@@ -28,21 +28,21 @@ public class WriteToBackendTask {
         }
     }
 
-    private void writeCommonPackage(MySQLResponseService service) {
-        ByteBuffer buffer = service.allocate();
+    private void writeCommonPackage(MySQLResponseService responseService) {
+        ByteBuffer buffer = responseService.allocate();
         try {
             BufferUtil.writeUB3(buffer, packet.calcPacketSize());
             buffer.put(packet.packetId);
             buffer.put(packet.getCommand());
-            buffer = service.writeToBuffer(packet.getArg(), buffer);
-            service.writeDirectly(buffer);
+            buffer = responseService.writeToBuffer(packet.getArg(), buffer);
+            responseService.writeDirectly(buffer);
         } catch (java.nio.BufferOverflowException e1) {
-            buffer = service.checkWriteBuffer(buffer, MySQLPacket.PACKET_HEADER_SIZE + packet.calcPacketSize(), false);
+            buffer = responseService.checkWriteBuffer(buffer, MySQLPacket.PACKET_HEADER_SIZE + packet.calcPacketSize(), false);
             BufferUtil.writeUB3(buffer, packet.calcPacketSize());
             buffer.put(packet.packetId);
             buffer.put(packet.getCommand());
-            buffer = service.writeToBuffer(packet.getArg(), buffer);
-            service.writeDirectly(buffer);
+            buffer = responseService.writeToBuffer(packet.getArg(), buffer);
+            responseService.writeDirectly(buffer);
         }
     }
 }

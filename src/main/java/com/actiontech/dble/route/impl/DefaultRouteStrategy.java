@@ -12,7 +12,7 @@ import com.actiontech.dble.route.parser.druid.DruidParserFactory;
 import com.actiontech.dble.route.parser.druid.ServerSchemaStatVisitor;
 import com.actiontech.dble.route.util.RouterUtil;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 import com.alibaba.druid.sql.parser.SQLStatementParser;
@@ -28,7 +28,7 @@ public class DefaultRouteStrategy extends AbstractRouteStrategy {
     public static final Logger LOGGER = LoggerFactory.getLogger(DefaultRouteStrategy.class);
 
 
-    public SQLStatement parserSQL(String originSql, MySQLShardingService service) throws SQLSyntaxErrorException {
+    public SQLStatement parserSQL(String originSql, ShardingService service) throws SQLSyntaxErrorException {
         SQLStatementParser parser;
         parser = new MySqlStatementParser(originSql);
         try {
@@ -67,7 +67,7 @@ public class DefaultRouteStrategy extends AbstractRouteStrategy {
     }
 
     @Override
-    public RouteResultset route(SchemaConfig schema, int sqlType, String origSQL, MySQLShardingService service) throws SQLException {
+    public RouteResultset route(SchemaConfig schema, int sqlType, String origSQL, ShardingService service) throws SQLException {
         return this.route(schema, sqlType, origSQL, service, false);
     }
 
@@ -75,7 +75,7 @@ public class DefaultRouteStrategy extends AbstractRouteStrategy {
     @Override
     public RouteResultset routeNormalSqlWithAST(SchemaConfig schema,
                                                 String originSql, RouteResultset rrs,
-                                                MySQLShardingService service, boolean isExplain) throws SQLException {
+                                                ShardingService service, boolean isExplain) throws SQLException {
         SQLStatement statement = parserSQL(originSql, service);
         if (service.getSession2().getIsMultiStatement().get()) {
             originSql = statement.toString();

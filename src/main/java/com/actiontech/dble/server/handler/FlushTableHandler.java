@@ -9,7 +9,7 @@ import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.net.mysql.OkPacket;
 import com.actiontech.dble.route.factory.RouteStrategyFactory;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlFlushStatement;
 
 /**
@@ -20,7 +20,7 @@ public final class FlushTableHandler {
     private FlushTableHandler() {
     }
 
-    public static void handle(String stmt, MySQLShardingService service) {
+    public static void handle(String stmt, ShardingService service) {
         try {
             stmt = stmt.replace("/*!", "/*#");
             MySqlFlushStatement statement = (MySqlFlushStatement) RouteStrategyFactory.getRouteStrategy().parserSQL(stmt);

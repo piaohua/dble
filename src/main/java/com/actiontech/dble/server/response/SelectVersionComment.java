@@ -10,7 +10,7 @@ import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.config.Versions;
 import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.net.service.AbstractService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 import java.nio.ByteBuffer;
 
@@ -62,8 +62,8 @@ public final class SelectVersionComment {
 
 
     public static byte setCurrentPacket(AbstractService service) {
-        if (service instanceof MySQLShardingService) {
-            return (byte) ((MySQLShardingService) service).getSession2().getPacketId().get();
+        if (service instanceof ShardingService) {
+            return (byte) ((ShardingService) service).getSession2().getPacketId().get();
         }
         return 0;
     }

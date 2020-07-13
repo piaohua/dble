@@ -9,7 +9,7 @@ import com.actiontech.dble.net.connection.FrontendConnection;
 import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.WriteQueueFlowController;
 import com.actiontech.dble.util.LongUtil;
 import com.actiontech.dble.util.StringUtil;
@@ -90,7 +90,7 @@ public final class FlowControlList {
                     RowDataPacket row = new RowDataPacket(FIELD_COUNT);
                     row.add(StringUtil.encode("ServerConnection", c.getCharset().getResults()));
                     row.add(LongUtil.toBytes(fc.getId()));
-                    row.add(StringUtil.encode(fc.getHost() + ":" + fc.getLocalPort() + "/" + ((MySQLShardingService) fc.getService()).getSchema() + " user = " + ((MySQLShardingService) fc.getService()).getUser(), c.getCharset().getResults()));
+                    row.add(StringUtil.encode(fc.getHost() + ":" + fc.getLocalPort() + "/" + ((ShardingService) fc.getService()).getSchema() + " user = " + ((ShardingService) fc.getService()).getUser(), c.getCharset().getResults()));
                     row.add(LongUtil.toBytes(fc.getWriteQueue().size()));
                     row.setPacketId(++packetId);
                     buffer = row.write(buffer, c, true);

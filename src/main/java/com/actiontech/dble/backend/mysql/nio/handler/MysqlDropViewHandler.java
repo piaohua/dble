@@ -22,7 +22,7 @@ import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,7 +131,7 @@ public class MysqlDropViewHandler implements ResponseHandler {
     }
 
     private void backConnectionErr(ErrorPacket errPkg, MySQLResponseService service, boolean syncFinished) {
-        MySQLShardingService shardingService = session.getShardingService();
+        ShardingService shardingService = session.getShardingService();
         UserName errUser = shardingService.getUser();
         String errHost = shardingService.getConnection().getHost();
         int errPort = shardingService.getConnection().getLocalPort();

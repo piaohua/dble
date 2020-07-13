@@ -12,7 +12,7 @@ import com.actiontech.dble.meta.SchemaMeta;
 import com.actiontech.dble.meta.ViewMeta;
 import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.route.factory.RouteStrategyFactory;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.util.StringUtil;
 import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
@@ -55,7 +55,7 @@ public final class ShowCreateView {
     private ShowCreateView() {
     }
 
-    public static void response(MySQLShardingService service, String stmt) {
+    public static void response(ShardingService service, String stmt) {
         try {
             MySqlShowCreateViewStatement statement = (MySqlShowCreateViewStatement) RouteStrategyFactory.getRouteStrategy().parserSQL(stmt);
             String schema = null;
@@ -76,7 +76,7 @@ public final class ShowCreateView {
         }
     }
 
-    public static void response(MySQLShardingService service, String schema, String viewName) {
+    public static void response(ShardingService service, String schema, String viewName) {
         try {
             sendOutTheViewInfo(service, schema, viewName);
         } catch (SQLException e) {
@@ -84,7 +84,7 @@ public final class ShowCreateView {
         }
     }
 
-    public static void sendOutTheViewInfo(MySQLShardingService service, String schema, String viewName) throws SQLException {
+    public static void sendOutTheViewInfo(ShardingService service, String schema, String viewName) throws SQLException {
         //check if the view or sharding doesn't exist
         if (schema == null || "".equals(schema)) {
             throw new SQLException("No database selected", "3D000", ErrorCode.ER_NO_DB_ERROR);

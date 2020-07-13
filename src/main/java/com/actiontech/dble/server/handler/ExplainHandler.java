@@ -26,7 +26,7 @@ import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.util.SchemaUtil;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.singleton.RouteService;
 import com.actiontech.dble.util.StringUtil;
@@ -61,7 +61,7 @@ public final class ExplainHandler {
         FIELDS[2] = PacketUtil.getField("SQL/REF", Fields.FIELD_TYPE_VAR_STRING);
     }
 
-    public static void handle(String stmt, MySQLShardingService service, int offset) {
+    public static void handle(String stmt, ShardingService service, int offset) {
         stmt = stmt.substring(offset).trim();
 
         //try to parse the sql again ,stop the inner command
@@ -78,7 +78,7 @@ public final class ExplainHandler {
         writeOutHeadAndEof(service, rrs);
     }
 
-    private static BaseHandlerBuilder buildNodes(RouteResultset rrs, MySQLShardingService service) {
+    private static BaseHandlerBuilder buildNodes(RouteResultset rrs, ShardingService service) {
         SQLSelectStatement ast = (SQLSelectStatement) rrs.getSqlStatement();
         MySQLPlanNodeVisitor visitor = new MySQLPlanNodeVisitor(service.getSchema(), service.getCharset().getResultsIndex(), ProxyMeta.getInstance().getTmManager(), false, service.getUsrVariables());
         visitor.visit(ast);
@@ -134,7 +134,7 @@ public final class ExplainHandler {
         return row;
     }
 
-    private static RouteResultset getRouteResultset(MySQLShardingService service,
+    private static RouteResultset getRouteResultset(ShardingService service,
                                                     String stmt) {
         String db = service.getSchema();
         int sqlType = ServerParse.parse(stmt) & 0xff;
@@ -176,7 +176,7 @@ public final class ExplainHandler {
         }
     }
 
-    private static boolean isInsertSeq(MySQLShardingService service, String stmt, SchemaConfig schema) throws SQLException {
+    private static boolean isInsertSeq(ShardingService service, String stmt, SchemaConfig schema) throws SQLException {
         SQLStatementParser parser = new MySqlStatementParser(stmt);
         MySqlInsertStatement statement = (MySqlInsertStatement) parser.parseStatement();
         String schemaName = schema == null ? null : schema.getName();
@@ -196,7 +196,7 @@ public final class ExplainHandler {
         return false;
     }
 
-    public static void writeOutHeadAndEof(MySQLShardingService service, RouteResultset rrs) {
+    public static void writeOutHeadAndEof(ShardingService service, RouteResultset rrs) {
         ByteBuffer buffer = service.allocate();
         // writeDirectly header
         ResultSetHeaderPacket header = PacketUtil.getHeader(FIELD_COUNT);

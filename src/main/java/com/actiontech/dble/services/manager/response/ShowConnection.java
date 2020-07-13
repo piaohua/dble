@@ -16,7 +16,7 @@ import com.actiontech.dble.services.MySQLBasedService;
 import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.route.factory.RouteStrategyFactory;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.IntegerUtil;
 import com.actiontech.dble.util.LongUtil;
 import com.actiontech.dble.util.StringUtil;
@@ -224,7 +224,7 @@ public final class ShowConnection {
         row.add(IntegerUtil.toBytes(c.getLocalPort()));
         row.add(StringUtil.encode(c.getFrontEndService().getUser().toString(), charset));
         if (!c.isManager()) {
-            row.add(StringUtil.encode(((MySQLShardingService) c.getService()).getSchema(), charset));
+            row.add(StringUtil.encode(((ShardingService) c.getService()).getSchema(), charset));
         } else {
             row.add(StringUtil.encode("", charset));
         }
@@ -241,9 +241,9 @@ public final class ShowConnection {
         String txLevel = "";
         String autocommit = "";
         if (!c.isManager()) {
-            MySQLShardingService mySQLShardingService = (MySQLShardingService) c.getService();
-            txLevel = mySQLShardingService.getTxIsolation() + "";
-            autocommit = mySQLShardingService.isAutocommit() + "";
+            ShardingService shardingService = (ShardingService) c.getService();
+            txLevel = shardingService.getTxIsolation() + "";
+            autocommit = shardingService.isAutocommit() + "";
         }
         row.add(txLevel.getBytes());
         row.add(autocommit.getBytes());

@@ -23,7 +23,7 @@ import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.WriteQueueFlowController;
 import com.actiontech.dble.statistic.stat.QueryResult;
 import com.actiontech.dble.statistic.stat.QueryResultDispatcher;
@@ -259,7 +259,7 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
             pauseTime((MySQLResponseService) service);
             this.resultSize += data.length;
             session.setBackendResponseEndTime((MySQLResponseService) service);
-            MySQLShardingService shardingService = session.getShardingService();
+            ShardingService shardingService = session.getShardingService();
             OkPacket ok = new OkPacket();
             ok.read(data);
             lock.lock();
@@ -349,7 +349,7 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
             return;
         }
         RouteResultsetNode rNode = (RouteResultsetNode) ((MySQLResponseService) service).getAttachment();
-        final MySQLShardingService source = session.getShardingService();
+        final ShardingService source = session.getShardingService();
         if (!rrs.isCallStatement()) {
             if (clearIfSessionClosed(session)) {
                 cleanBuffer();
@@ -490,7 +490,7 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
         }
     }
 
-    private void writeEofResult(byte[] eof, MySQLShardingService source) {
+    private void writeEofResult(byte[] eof, ShardingService source) {
         EOFRowPacket eofRowPacket = new EOFRowPacket();
         eofRowPacket.read(eof);
         eofRowPacket.setPacketId((byte) session.getShardingService().nextPacketId());
@@ -519,7 +519,7 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
     }
 
     private void executeFieldEof(byte[] header, List<byte[]> fields, byte[] eof) {
-        MySQLShardingService service = session.getShardingService();
+        ShardingService service = session.getShardingService();
         fieldCount = fields.size();
         header[3] = (byte) session.getShardingService().nextPacketId();
         byteBuffer = service.writeToBuffer(header, byteBuffer);
@@ -577,7 +577,7 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
     }
 
     void handleEndPacket(MySQLPacket packet, AutoTxOperation txOperation, boolean isSuccess) {
-        MySQLShardingService service = session.getShardingService();
+        ShardingService service = session.getShardingService();
         if (rrs.isLoadData()) {
             service.getLoadDataInfileHandler().clear();
         }

@@ -11,7 +11,7 @@ import com.actiontech.dble.route.RouteStrategy;
 import com.actiontech.dble.route.util.RouterUtil;
 
 import com.actiontech.dble.server.parser.ServerParse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.sqlengine.mpp.LoadData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +24,7 @@ public abstract class AbstractRouteStrategy implements RouteStrategy {
 
     @Override
     public RouteResultset route(SchemaConfig schema, int sqlType, String origSQL,
-                                MySQLShardingService service, boolean isExplain) throws SQLException {
+                                ShardingService service, boolean isExplain) throws SQLException {
 
         RouteResultset rrs = new RouteResultset(origSQL, sqlType);
 
@@ -59,7 +59,7 @@ public abstract class AbstractRouteStrategy implements RouteStrategy {
      * routeNormalSqlWithAST
      */
     public abstract RouteResultset routeNormalSqlWithAST(SchemaConfig schema, String stmt, RouteResultset rrs,
-                                                         MySQLShardingService service, boolean isExplain) throws SQLException;
+                                                         ShardingService service, boolean isExplain) throws SQLException;
 
 
 }

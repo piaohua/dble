@@ -94,7 +94,7 @@ public final class ShowHeartbeatDetail {
         }
 
         // write last eof
-         EOFRowPacket lastEof = new EOFRowPacket();
+        EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
 
 

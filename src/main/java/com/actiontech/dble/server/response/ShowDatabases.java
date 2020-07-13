@@ -13,7 +13,7 @@ import com.actiontech.dble.config.model.user.ShardingUserConfig;
 import com.actiontech.dble.config.model.user.UserConfig;
 import com.actiontech.dble.config.model.user.UserName;
 import com.actiontech.dble.net.mysql.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 
 import java.nio.ByteBuffer;
@@ -34,7 +34,7 @@ public final class ShowDatabases {
     private static final EOFPacket EOF = new EOFPacket();
 
 
-    public static void response(MySQLShardingService shardingService) {
+    public static void response(ShardingService shardingService) {
 
         HEADER.setPacketId(shardingService.nextPacketId());
         FIELDS[0] = PacketUtil.getField("DATABASE", Fields.FIELD_TYPE_VAR_STRING);

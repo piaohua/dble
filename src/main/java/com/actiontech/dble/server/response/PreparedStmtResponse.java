@@ -9,7 +9,7 @@ import com.actiontech.dble.backend.mysql.PreparedStatement;
 import com.actiontech.dble.net.mysql.EOFPacket;
 import com.actiontech.dble.net.mysql.FieldPacket;
 import com.actiontech.dble.net.mysql.PreparedOkPacket;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 import java.nio.ByteBuffer;
 
@@ -20,7 +20,7 @@ public final class PreparedStmtResponse {
     private PreparedStmtResponse() {
     }
 
-    public static void response(PreparedStatement pStmt, MySQLShardingService service) {
+    public static void response(PreparedStatement pStmt, ShardingService service) {
         byte packetId = 0;
 
         // writeDirectly preparedOk packet

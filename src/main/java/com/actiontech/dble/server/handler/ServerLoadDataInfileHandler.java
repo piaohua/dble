@@ -26,7 +26,7 @@ import com.actiontech.dble.route.parser.util.Pair;
 import com.actiontech.dble.route.util.RouterUtil;
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.util.SchemaUtil;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.singleton.SequenceManager;
 import com.actiontech.dble.sqlengine.mpp.LoadData;
@@ -60,7 +60,7 @@ import java.util.regex.Pattern;
 public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler {
     //innodb limit of columns per table, https://dev.mysql.com/doc/refman/8.0/en/column-count-limit.html
     private static final int DEFAULT_MAX_COLUMNS = 1017;
-    private MySQLShardingService service;
+    private ShardingService service;
     private String sql;
     private String fileName;
     private byte packID = 0;
@@ -85,7 +85,7 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
     private boolean isStartLoadData = false;
 
 
-    public ServerLoadDataInfileHandler(MySQLShardingService service) {
+    public ServerLoadDataInfileHandler(ShardingService service) {
         this.service = service;
     }
 

@@ -89,7 +89,6 @@ public class FieldPacket extends MySQLPacket {
 
     @Override
     public void bufferWrite(AbstractConnection connection) {
-        
     }
 
     @Override

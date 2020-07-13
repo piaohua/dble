@@ -9,7 +9,7 @@ import com.actiontech.dble.route.parser.util.ParseUtil;
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.parser.ServerParseSelect;
 import com.actiontech.dble.server.response.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 
 /**
@@ -19,7 +19,7 @@ public final class SelectHandler {
     private SelectHandler() {
     }
 
-    public static void handle(String stmt, MySQLShardingService service, int offs) {
+    public static void handle(String stmt, ShardingService service, int offs) {
         int offset = offs;
         switch (ServerParseSelect.parse(stmt, offs)) {
             case ServerParseSelect.VERSION_COMMENT:

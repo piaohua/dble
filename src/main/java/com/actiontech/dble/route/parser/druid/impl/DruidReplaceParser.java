@@ -23,7 +23,7 @@ import com.actiontech.dble.route.util.RouterUtil;
 
 import com.actiontech.dble.server.util.SchemaUtil;
 import com.actiontech.dble.server.util.SchemaUtil.SchemaInfo;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.singleton.SequenceManager;
 import com.actiontech.dble.util.StringUtil;
@@ -45,7 +45,7 @@ import java.util.*;
 public class DruidReplaceParser extends DruidInsertReplaceParser {
 
     @Override
-    public SchemaConfig visitorParse(SchemaConfig schema, RouteResultset rrs, SQLStatement stmt, ServerSchemaStatVisitor visitor, MySQLShardingService service, boolean isExplain)
+    public SchemaConfig visitorParse(SchemaConfig schema, RouteResultset rrs, SQLStatement stmt, ServerSchemaStatVisitor visitor, ShardingService service, boolean isExplain)
             throws SQLException {
         //data & object prepare
         SQLReplaceStatement replace = (SQLReplaceStatement) stmt;
@@ -148,7 +148,7 @@ public class DruidReplaceParser extends DruidInsertReplaceParser {
     /**
      * check if the nosharding tables are Involved
      */
-    private boolean parserNoSharding(MySQLShardingService service, String contextSchema, SchemaInfo schemaInfo, RouteResultset rrs, SQLReplaceStatement replace) throws SQLException {
+    private boolean parserNoSharding(ShardingService service, String contextSchema, SchemaInfo schemaInfo, RouteResultset rrs, SQLReplaceStatement replace) throws SQLException {
         String noShardingNode = RouterUtil.isNoSharding(schemaInfo.getSchemaConfig(), schemaInfo.getTable());
         if (noShardingNode != null) {
             StringPtr noShardingNodePr = new StringPtr(noShardingNode);
@@ -275,7 +275,7 @@ public class DruidReplaceParser extends DruidInsertReplaceParser {
     }
 
 
-    private void parserChildTable(SchemaInfo schemaInfo, final RouteResultset rrs, SQLReplaceStatement replace, final MySQLShardingService service, boolean isExplain) throws SQLNonTransientException {
+    private void parserChildTable(SchemaInfo schemaInfo, final RouteResultset rrs, SQLReplaceStatement replace, final ShardingService service, boolean isExplain) throws SQLNonTransientException {
         final SchemaConfig schema = schemaInfo.getSchemaConfig();
         String tableName = schemaInfo.getTable();
         final ChildTableConfig tc = (ChildTableConfig) (schema.getTables().get(tableName));

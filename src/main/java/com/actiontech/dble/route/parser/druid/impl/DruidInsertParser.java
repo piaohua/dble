@@ -22,7 +22,7 @@ import com.actiontech.dble.route.util.RouterUtil;
 
 import com.actiontech.dble.server.util.SchemaUtil;
 import com.actiontech.dble.server.util.SchemaUtil.SchemaInfo;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.singleton.SequenceManager;
 import com.actiontech.dble.util.StringUtil;
@@ -45,7 +45,7 @@ import java.util.*;
 
 public class DruidInsertParser extends DruidInsertReplaceParser {
     @Override
-    public SchemaConfig visitorParse(SchemaConfig schema, RouteResultset rrs, SQLStatement stmt, ServerSchemaStatVisitor visitor, MySQLShardingService service, boolean isExplain)
+    public SchemaConfig visitorParse(SchemaConfig schema, RouteResultset rrs, SQLStatement stmt, ServerSchemaStatVisitor visitor, ShardingService service, boolean isExplain)
             throws SQLException {
 
         MySqlInsertStatement insert = (MySqlInsertStatement) stmt;
@@ -146,7 +146,7 @@ public class DruidInsertParser extends DruidInsertReplaceParser {
         throw new SQLNonTransientException("bad insert sql, sharding column/joinKey:" + partitionColumn + " not provided," + insertStmt);
     }
 
-    private boolean parserNoSharding(MySQLShardingService service, String contextSchema, SchemaInfo schemaInfo, RouteResultset rrs,
+    private boolean parserNoSharding(ShardingService service, String contextSchema, SchemaInfo schemaInfo, RouteResultset rrs,
                                      MySqlInsertStatement insert) throws SQLException {
         String noShardingNode = RouterUtil.isNoSharding(schemaInfo.getSchemaConfig(), schemaInfo.getTable());
         if (noShardingNode != null) {
@@ -175,7 +175,7 @@ public class DruidInsertParser extends DruidInsertReplaceParser {
     }
 
     private void parserChildTable(SchemaInfo schemaInfo, final RouteResultset rrs, MySqlInsertStatement insertStmt,
-                                  final MySQLShardingService service, boolean isExplain) throws SQLNonTransientException {
+                                  final ShardingService service, boolean isExplain) throws SQLNonTransientException {
 
         final SchemaConfig schema = schemaInfo.getSchemaConfig();
         String tableName = schemaInfo.getTable();

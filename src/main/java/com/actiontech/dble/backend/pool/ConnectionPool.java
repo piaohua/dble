@@ -1,8 +1,10 @@
 package com.actiontech.dble.backend.pool;
 
+import com.actiontech.dble.backend.mysql.nio.handler.ConnectionHeartBeatHandler;
 import com.actiontech.dble.config.model.db.DbInstanceConfig;
 import com.actiontech.dble.config.model.db.PoolConfig;
 import com.actiontech.dble.net.IOProcessor;
+import com.actiontech.dble.net.connection.BackendConnection;
 import com.actiontech.dble.net.connection.PooledConnection;
 import com.actiontech.dble.net.factory.PooledConnectionFactory;
 import org.slf4j.Logger;
@@ -229,16 +231,16 @@ public class ConnectionPool extends PoolBase implements PooledConnectionListener
         }
     }
 
-    private boolean remove(final PooledConnection PooledConnection) {
-        if (!PooledConnection.compareAndSet(STATE_IN_USE, STATE_REMOVED) && !PooledConnection.compareAndSet(STATE_RESERVED, STATE_REMOVED) &&
-                !PooledConnection.compareAndSet(STATE_HEARTBEAT, STATE_REMOVED) && !isClosed.get()) {
-            LOGGER.warn("Attempt to remove an object that was not borrowed or reserved: {}", PooledConnection);
+    private boolean remove(final PooledConnection pooledConnection) {
+        if (!pooledConnection.compareAndSet(STATE_IN_USE, STATE_REMOVED) && !pooledConnection.compareAndSet(STATE_RESERVED, STATE_REMOVED) &&
+                !pooledConnection.compareAndSet(STATE_HEARTBEAT, STATE_REMOVED) && !isClosed.get()) {
+            LOGGER.warn("Attempt to remove an object that was not borrowed or reserved: {}", pooledConnection);
             return false;
         }
 
-        final boolean removed = allConnections.remove(PooledConnection);
+        final boolean removed = allConnections.remove(pooledConnection);
         if (!removed) {
-            LOGGER.warn("Attempt to remove an object from the bag that does not exist: {}", PooledConnection);
+            LOGGER.warn("Attempt to remove an object from the bag that does not exist: {}", pooledConnection);
         }
 
         // synchronizer.signal();
@@ -314,8 +316,8 @@ public class ConnectionPool extends PoolBase implements PooledConnectionListener
                 conn.close("connection has passed idleTimeout");
                 removable--;
             } else if (poolConfig.getTestWhileIdle() && conn.compareAndSet(STATE_NOT_IN_USE, STATE_HEARTBEAT)) {
-               /* ConnectionHeartBeatHandler heartBeatHandler = new ConnectionHeartBeatHandler(conn, false, this);
-                heartBeatHandler.ping(poolConfig.getConnectionHeartbeatTimeout());*/
+                ConnectionHeartBeatHandler heartBeatHandler = new ConnectionHeartBeatHandler((BackendConnection) conn, false, this);
+                heartBeatHandler.ping(poolConfig.getConnectionHeartbeatTimeout());
                 conn.asynchronousTest();
             }
         }

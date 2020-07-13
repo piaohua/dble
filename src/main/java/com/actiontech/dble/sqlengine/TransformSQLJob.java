@@ -30,14 +30,14 @@ public class TransformSQLJob implements ResponseHandler, Runnable {
     private final String sql;
     private final String databaseName;
     private final PhysicalDbInstance ds;
-    private final ManagerService service;
+    private final ManagerService managerService;
     private BackendConnection connection;
 
     public TransformSQLJob(String sql, String databaseName, PhysicalDbInstance ds, ManagerService managerService) {
         this.sql = sql;
         this.databaseName = databaseName;
         this.ds = ds;
-        this.service = managerService;
+        this.managerService = managerService;
     }
 
     @Override
@@ -79,7 +79,7 @@ public class TransformSQLJob implements ResponseHandler, Runnable {
         conn.getBackendService().setResponseHandler(this);
         connection = conn;
         try {
-            conn.getBackendService().sendQueryCmd(sql, service.getCharset());
+            conn.getBackendService().sendQueryCmd(sql, managerService.getCharset());
         } catch (Exception e) { // (UnsupportedEncodingException e) {
             ErrorPacket errPacket = new ErrorPacket();
             errPacket.setPacketId(1);
@@ -96,7 +96,7 @@ public class TransformSQLJob implements ResponseHandler, Runnable {
 
     @Override
     public void okResponse(byte[] ok, AbstractService service) {
-        this.service.writeDirectly(ok);
+        this.managerService.writeDirectly(ok);
         connection.release();
     }
 
@@ -131,7 +131,7 @@ public class TransformSQLJob implements ResponseHandler, Runnable {
     }
 
     private void writeError(byte[] err) {
-        service.writeDirectly(err);
+        managerService.writeDirectly(err);
         if (connection != null) {
             connection.release();
         }

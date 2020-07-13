@@ -21,7 +21,7 @@ import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.WriteQueueFlowController;
 import com.actiontech.dble.statistic.stat.QueryResult;
 import com.actiontech.dble.statistic.stat.QueryResultDispatcher;
@@ -165,7 +165,7 @@ public class SingleNodeHandler implements ResponseHandler, LoadDataResponseHandl
     }
 
     protected void backConnectionErr(ErrorPacket errPkg, MySQLResponseService service, boolean syncFinished) {
-        MySQLShardingService shardingService = session.getShardingService();
+        ShardingService shardingService = session.getShardingService();
         UserName errUser = shardingService.getUser();
         String errHost = shardingService.getConnection().getHost();
         int errPort = shardingService.getConnection().getLocalPort();
@@ -226,7 +226,7 @@ public class SingleNodeHandler implements ResponseHandler, LoadDataResponseHandl
         boolean executeResponse = ((MySQLResponseService) service).syncAndExecute();
         if (executeResponse) {
             this.resultSize += data.length;
-            MySQLShardingService shardingService = session.getShardingService();
+            ShardingService shardingService = session.getShardingService();
             OkPacket ok = new OkPacket();
             ok.read(data);
             if (rrs.isLoadData()) {
@@ -271,7 +271,7 @@ public class SingleNodeHandler implements ResponseHandler, LoadDataResponseHandl
         EOFRowPacket eofRowPacket = new EOFRowPacket();
         eofRowPacket.read(eof);
 
-        MySQLShardingService shardingService = session.getShardingService();
+        ShardingService shardingService = session.getShardingService();
         session.setResponseTime(true);
         doSqlStat();
         lock.lock();
@@ -313,7 +313,7 @@ public class SingleNodeHandler implements ResponseHandler, LoadDataResponseHandl
 
         header[3] = (byte) session.getShardingService().nextPacketId();
 
-        MySQLShardingService shardingService = session.getShardingService();
+        ShardingService shardingService = session.getShardingService();
         lock.lock();
         try {
             if (!writeToClient.get()) {

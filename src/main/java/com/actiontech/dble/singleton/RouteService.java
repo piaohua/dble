@@ -14,7 +14,7 @@ import com.actiontech.dble.route.handler.HintHandlerFactory;
 import com.actiontech.dble.route.handler.HintSQLHandler;
 
 import com.actiontech.dble.server.parser.ServerParse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +32,12 @@ public final class RouteService {
     }
 
     public RouteResultset route(SchemaConfig schema,
-                                int sqlType, String stmt, MySQLShardingService service) throws SQLException {
+                                int sqlType, String stmt, ShardingService service) throws SQLException {
         return this.route(schema, sqlType, stmt, service, false);
     }
 
     public RouteResultset route(SchemaConfig schema,
-                                int sqlType, String stmt, MySQLShardingService service, boolean isExplain)
+                                int sqlType, String stmt, ShardingService service, boolean isExplain)
             throws SQLException {
         RouteResultset rrs;
         String cacheKey = null;

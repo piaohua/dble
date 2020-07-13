@@ -13,7 +13,7 @@ import com.actiontech.dble.config.Isolations;
 import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.route.parser.util.Pair;
 import com.actiontech.dble.route.parser.util.ParseUtil;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.sqlengine.OneRawSQLQueryResultHandler;
 import com.actiontech.dble.sqlengine.SetTestJob;
 import com.actiontech.dble.util.StringUtil;
@@ -66,7 +66,7 @@ public final class SetHandler {
         TRACE
     }
 
-    public static void handle(String stmt, MySQLShardingService shardingService, int offset) {
+    public static void handle(String stmt, ShardingService shardingService, int offset) {
         if (!ParseUtil.isSpace(stmt.charAt(offset))) {
             shardingService.writeErrMessage(ErrorCode.ERR_WRONG_USED, stmt + " is not supported");
         }
@@ -101,7 +101,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleSetStatement(String stmt, MySQLShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask,
+    private static boolean handleSetStatement(String stmt, ShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask,
                                               List<Pair<KeyType, Pair<String, String>>> innerSetTask, StringBuilder contextSetSQL) throws SQLSyntaxErrorException {
         SQLStatement statement = parseSQL(stmt);
         if (statement instanceof SQLSetStatement) {
@@ -122,7 +122,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleSetNamesInMultiStmt(MySQLShardingService service, String stmt, String charset, String collate, List<Pair<KeyType, Pair<String, String>>> contextTask) {
+    private static boolean handleSetNamesInMultiStmt(ShardingService service, String stmt, String charset, String collate, List<Pair<KeyType, Pair<String, String>>> contextTask) {
         NamesInfo charsetInfo = checkSetNames(stmt, charset, collate);
         if (charsetInfo != null) {
             if (charsetInfo.charset == null) {
@@ -144,7 +144,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleSingleSetNames(String stmt, MySQLShardingService shardingService, SQLExpr valueExpr) {
+    private static boolean handleSingleSetNames(String stmt, ShardingService shardingService, SQLExpr valueExpr) {
         String[] charsetAndCollate = parseNamesValue(valueExpr);
         NamesInfo charsetInfo = checkSetNames(stmt, charsetAndCollate[0], charsetAndCollate[1]);
         if (charsetInfo != null) {
@@ -168,7 +168,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleSingleSetCharset(String stmt, MySQLShardingService shardingService, SQLExpr valueExpr) {
+    private static boolean handleSingleSetCharset(String stmt, ShardingService shardingService, SQLExpr valueExpr) {
         String charsetValue = SetInnerHandler.parseStringValue(valueExpr);
         if (charsetValue == null || charsetValue.equalsIgnoreCase("null")) {
             shardingService.writeErrMessage(ErrorCode.ER_UNKNOWN_CHARACTER_SET, "Unknown character set null");
@@ -190,7 +190,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleSetMultiStatement(List<SQLAssignItem> assignItems, MySQLShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, List<Pair<KeyType, Pair<String, String>>> innerSetTask) {
+    private static boolean handleSetMultiStatement(List<SQLAssignItem> assignItems, ShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, List<Pair<KeyType, Pair<String, String>>> innerSetTask) {
         Set<SQLAssignItem> objSet = new HashSet<>();
         for (SQLAssignItem assignItem : assignItems) {
             if (!handleVariableInMultiStmt(assignItem, service, contextTask, innerSetTask, objSet)) {
@@ -204,7 +204,7 @@ public final class SetHandler {
     }
 
     //execute multiStmt and callback to reset conn
-    private static void setStmtCallback(String multiStmt, MySQLShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, List<Pair<KeyType, Pair<String, String>>> innerSetTask) {
+    private static void setStmtCallback(String multiStmt, ShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, List<Pair<KeyType, Pair<String, String>>> innerSetTask) {
         service.setContextTask(contextTask);
         service.setInnerSetTask(innerSetTask);
         OneRawSQLQueryResultHandler resultHandler = new OneRawSQLQueryResultHandler(new String[0], new SetCallBack(service));
@@ -212,7 +212,7 @@ public final class SetHandler {
         sqlJob.run();
     }
 
-    private static boolean handleVariableInMultiStmt(SQLAssignItem assignItem, MySQLShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, List<Pair<KeyType, Pair<String, String>>> innerSetTask, Set<SQLAssignItem> objSet) {
+    private static boolean handleVariableInMultiStmt(SQLAssignItem assignItem, ShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, List<Pair<KeyType, Pair<String, String>>> innerSetTask, Set<SQLAssignItem> objSet) {
         String key = handleSetKey(assignItem, service);
         if (key == null) {
             return false;
@@ -291,7 +291,7 @@ public final class SetHandler {
         return true;
     }
 
-    private static boolean handleCharsetInMultiStmt(MySQLShardingService service, String charset, List<Pair<KeyType, Pair<String, String>>> contextTask) {
+    private static boolean handleCharsetInMultiStmt(ShardingService service, String charset, List<Pair<KeyType, Pair<String, String>>> contextTask) {
         String charsetInfo = getCharset(charset);
         if (charsetInfo != null) {
             if (!CharsetUtil.checkCharsetClient(charsetInfo)) {
@@ -307,7 +307,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleTxIsolationInMultiStmt(MySQLShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
+    private static boolean handleTxIsolationInMultiStmt(ShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
         String value = SetInnerHandler.parseStringValue(valueExpr);
         Integer txIsolation = getIsolationLevel(value);
         if (txIsolation == null) {
@@ -318,7 +318,7 @@ public final class SetHandler {
         return true;
     }
 
-    private static boolean handleReadOnlyInMultiStmt(MySQLShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
+    private static boolean handleReadOnlyInMultiStmt(ShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
         Boolean switchStatus = SetInnerHandler.isSwitchOn(valueExpr);
         if (switchStatus == null) {
             service.writeErrMessage(ErrorCode.ER_WRONG_TYPE_FOR_VAR, "Incorrect argument type to variable 'tx_read_only|transaction_read_only'");
@@ -331,7 +331,7 @@ public final class SetHandler {
         return true;
     }
 
-    private static boolean handleCollationConnInMultiStmt(MySQLShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
+    private static boolean handleCollationConnInMultiStmt(ShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
         String collation = SetInnerHandler.parseStringValue(valueExpr);
         if (checkCollation(collation)) {
             contextTask.add(new Pair<>(KeyType.COLLATION_CONNECTION, new Pair<String, String>(collation, null)));
@@ -342,7 +342,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleCharsetResultsInMultiStmt(MySQLShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
+    private static boolean handleCharsetResultsInMultiStmt(ShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
         String charsetResult = SetInnerHandler.parseStringValue(valueExpr);
         if (charsetResult.equalsIgnoreCase("NULL") || checkCharset(charsetResult)) {
             contextTask.add(new Pair<>(KeyType.CHARACTER_SET_RESULTS, new Pair<String, String>(charsetResult, null)));
@@ -353,7 +353,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleCharsetConnInMultiStmt(MySQLShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
+    private static boolean handleCharsetConnInMultiStmt(ShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
         String charsetConnection = SetInnerHandler.parseStringValue(valueExpr);
         if (charsetConnection.equals("null")) {
             service.writeErrMessage(ErrorCode.ER_WRONG_VALUE_FOR_VAR, "Variable 'character_set_connection' can't be set to the value of 'NULL'");
@@ -369,7 +369,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleCharsetClientInMultiStmt(MySQLShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
+    private static boolean handleCharsetClientInMultiStmt(ShardingService service, List<Pair<KeyType, Pair<String, String>>> contextTask, SQLExpr valueExpr) {
         String charsetClient = SetInnerHandler.parseStringValue(valueExpr);
         if (charsetClient.equalsIgnoreCase("null")) {
             service.writeErrMessage(ErrorCode.ER_WRONG_VALUE_FOR_VAR, "Variable 'character_set_client' can't be set to the value of 'NULL'");
@@ -388,7 +388,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleSingleVariable(String stmt, SQLAssignItem assignItem, MySQLShardingService shardingService, List<Pair<KeyType, Pair<String, String>>> contextTask) {
+    private static boolean handleSingleVariable(String stmt, SQLAssignItem assignItem, ShardingService shardingService, List<Pair<KeyType, Pair<String, String>>> contextTask) {
         String key = handleSetKey(assignItem, shardingService);
         if (key == null) return false;
         SQLExpr valueExpr = assignItem.getValue();
@@ -447,7 +447,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleTxReadOnly(MySQLShardingService shardingService, SQLExpr valueExpr) {
+    private static boolean handleTxReadOnly(ShardingService shardingService, SQLExpr valueExpr) {
         Boolean switchStatus = SetInnerHandler.isSwitchOn(valueExpr);
         if (switchStatus == null) {
             shardingService.writeErrMessage(ErrorCode.ER_WRONG_TYPE_FOR_VAR, "Incorrect argument type to variable 'tx_read_only|transaction_read_only'");
@@ -462,7 +462,7 @@ public final class SetHandler {
         return true;
     }
 
-    private static boolean handleTxIsolation(MySQLShardingService service, SQLExpr valueExpr) {
+    private static boolean handleTxIsolation(ShardingService service, SQLExpr valueExpr) {
         String value = SetInnerHandler.parseStringValue(valueExpr);
         Integer txIsolation = getIsolationLevel(value);
         if (txIsolation == null) {
@@ -489,7 +489,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleCollationConnection(MySQLShardingService service, SQLExpr valueExpr) {
+    private static boolean handleCollationConnection(ShardingService service, SQLExpr valueExpr) {
         String collation = SetInnerHandler.parseStringValue(valueExpr);
         if (checkCollation(collation)) {
             service.setCollationConnection(collation);
@@ -501,7 +501,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleSingleCharsetResults(MySQLShardingService shardingService, SQLExpr valueExpr) {
+    private static boolean handleSingleCharsetResults(ShardingService shardingService, SQLExpr valueExpr) {
         String charsetResult = SetInnerHandler.parseStringValue(valueExpr);
         if (charsetResult.equalsIgnoreCase("NULL") || checkCharset(charsetResult)) {
             shardingService.setCharacterResults(charsetResult);
@@ -513,7 +513,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleSingleCharsetConnection(MySQLShardingService shardingService, SQLExpr valueExpr) {
+    private static boolean handleSingleCharsetConnection(ShardingService shardingService, SQLExpr valueExpr) {
         String charsetConnection = SetInnerHandler.parseStringValue(valueExpr);
         if (charsetConnection.equals("null")) {
             shardingService.writeErrMessage(ErrorCode.ER_WRONG_VALUE_FOR_VAR, "Variable 'character_set_connection' can't be set to the value of 'NULL'");
@@ -530,7 +530,7 @@ public final class SetHandler {
         }
     }
 
-    private static boolean handleSingleCharsetClient(MySQLShardingService service, SQLExpr valueExpr) {
+    private static boolean handleSingleCharsetClient(ShardingService service, SQLExpr valueExpr) {
         String charsetClient = SetInnerHandler.parseStringValue(valueExpr);
         if (charsetClient.equalsIgnoreCase("null")) {
             service.writeErrMessage(ErrorCode.ER_WRONG_VALUE_FOR_VAR, "Variable 'character_set_client' can't be set to the value of 'NULL'");
@@ -575,7 +575,7 @@ public final class SetHandler {
         return stmt;
     }
 
-    private static String handleSetKey(SQLAssignItem assignItem, MySQLShardingService service) {
+    private static String handleSetKey(SQLAssignItem assignItem, ShardingService service) {
         if (assignItem.getTarget() instanceof SQLPropertyExpr) {
             SQLPropertyExpr target = (SQLPropertyExpr) assignItem.getTarget();
             if (!(target.getOwner() instanceof SQLVariantRefExpr)) {
@@ -690,7 +690,7 @@ public final class SetHandler {
     }
 
 
-    private static boolean handleTransaction(MySQLShardingService service, MySqlSetTransactionStatement setStatement) {
+    private static boolean handleTransaction(ShardingService service, MySqlSetTransactionStatement setStatement) {
         //always single
         if (setStatement.getGlobal() == null) {
             service.writeErrMessage(ErrorCode.ERR_NOT_SUPPORTED, "setting transaction without any SESSION or GLOBAL keyword is not supported now");

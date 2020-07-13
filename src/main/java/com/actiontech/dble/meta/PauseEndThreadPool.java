@@ -6,7 +6,7 @@
 package com.actiontech.dble.meta;
 
 import com.actiontech.dble.route.RouteResultset;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.ExecutorUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +66,7 @@ public class PauseEndThreadPool {
 
 
     //to put new task for this thread pool
-    public boolean offer(MySQLShardingService service, String nextStep, RouteResultset rrs) {
+    public boolean offer(ShardingService service, String nextStep, RouteResultset rrs) {
         PauseTask task = new PauseTask(rrs, nextStep, service);
         queueLock.lock();
         try {
@@ -175,11 +175,11 @@ public class PauseEndThreadPool {
 
         RouteResultset rrs = null;
         String nextStep = null;
-        MySQLShardingService service = null;
+        ShardingService service = null;
         long timestamp;
 
 
-        PauseTask(RouteResultset rrs, String nextStep, MySQLShardingService service) {
+        PauseTask(RouteResultset rrs, String nextStep, ShardingService service) {
             this.nextStep = nextStep;
             this.rrs = rrs;
             this.service = service;
@@ -222,11 +222,11 @@ public class PauseEndThreadPool {
         }
 
 
-        public MySQLShardingService getService() {
+        public ShardingService getService() {
             return service;
         }
 
-        public void setService(MySQLShardingService service) {
+        public void setService(ShardingService service) {
             this.service = service;
         }
 

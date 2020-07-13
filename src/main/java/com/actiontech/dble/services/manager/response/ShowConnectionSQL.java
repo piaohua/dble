@@ -12,7 +12,7 @@ import com.actiontech.dble.net.IOProcessor;
 import com.actiontech.dble.net.connection.FrontendConnection;
 import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.manager.ManagerService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.FormatUtil;
 import com.actiontech.dble.util.LongUtil;
 import com.actiontech.dble.util.StringUtil;
@@ -106,7 +106,7 @@ public final class ShowConnectionSQL {
         row.add(StringUtil.encode(c.getFrontEndService().getUser().toString(), charset));
 
         if (!c.isManager()) {
-            row.add(StringUtil.encode(((MySQLShardingService) c.getService()).getSchema(), charset));
+            row.add(StringUtil.encode(((ShardingService) c.getService()).getSchema(), charset));
         } else {
             row.add(StringUtil.encode("", charset));
         }
@@ -122,7 +122,7 @@ public final class ShowConnectionSQL {
                 executeSql = "";
             }
             row.add(StringUtil.encode(executeSql, charset));
-            row.add(StringUtil.encode(((MySQLShardingService) c.getService()).getSession2().getSessionStage().toString(), charset));
+            row.add(StringUtil.encode(((ShardingService) c.getService()).getSession2().getSessionStage().toString(), charset));
         } else {
 
             String executeSql = c.getFrontEndService().getExecuteSql();

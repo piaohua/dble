@@ -53,9 +53,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by szf on 2020/6/18.
  */
-public class MySQLShardingService extends MySQLBasedService implements FrontEndService {
+public class ShardingService extends MySQLBasedService implements FrontEndService {
 
-    protected static final Logger LOGGER = LoggerFactory.getLogger(MySQLShardingService.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(ShardingService.class);
 
     private Queue<byte[]> blobDataQueue = new ConcurrentLinkedQueue<byte[]>();
 
@@ -85,8 +85,6 @@ public class MySQLShardingService extends MySQLBasedService implements FrontEndS
 
     private volatile int txIsolation;
 
-    protected boolean isAuthenticated;
-
     private AtomicLong txID = new AtomicLong(1);
 
     private volatile boolean isLocked = false;
@@ -106,9 +104,9 @@ public class MySQLShardingService extends MySQLBasedService implements FrontEndS
 
     private ServerSptPrepare sptprepare;
 
-    public MySQLShardingService(AbstractConnection connection) {
+    public ShardingService(AbstractConnection connection) {
         super(connection);
-
+        this.sptprepare = new ServerSptPrepare(this);
         this.handler = new ServerQueryHandler(this);
         this.loadDataInfileHandler = new ServerLoadDataInfileHandler(this);
         this.prepareHandler = new ServerPrepareHandler(this);
@@ -145,7 +143,7 @@ public class MySQLShardingService extends MySQLBasedService implements FrontEndS
     @Override
     protected void handleInnerData(byte[] data) {
         getSession2().startProcess();
-       /* if (isAuthSwitch.compareAndSet(true, false)) {
+        /*if (isAuthSwitch.compareAndSet(true, false)) {
             commands.doOther();
             sc.changeUserAuthSwitch(data, changeUserPacket);
             return;
@@ -770,10 +768,6 @@ public class MySQLShardingService extends MySQLBasedService implements FrontEndS
 
     public ServerSptPrepare getSptPrepare() {
         return sptprepare;
-    }
-
-    public void setSptPrepare(ServerSptPrepare sptprepare) {
-        this.sptprepare = sptprepare;
     }
 
     @Override

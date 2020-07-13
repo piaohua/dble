@@ -87,7 +87,7 @@ public class OneTimeConnJob extends SQLJob {
 
     @Override
     public void okResponse(byte[] ok, AbstractService service) {
-        if (((MySQLResponseService)service).syncAndExecute()) {
+        if (((MySQLResponseService) service).syncAndExecute()) {
             service.getConnection().businessClose("conn used for once");
             doFinished(false);
         }

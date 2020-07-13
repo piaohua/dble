@@ -103,6 +103,8 @@ public final class AuthUtil {
                 case caching_sha2_password:
                     encryptPass = SecurityUtil.scramble256(pass.getBytes(), seed);
                     break;
+                default:
+                    throw new NoSuchAlgorithmException();
             }
         } catch (NoSuchAlgorithmException e) {
             return false;

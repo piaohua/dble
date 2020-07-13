@@ -14,7 +14,7 @@ import com.actiontech.dble.net.connection.FrontendConnection;
 import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.server.NonBlockingSession;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 
 import java.nio.ByteBuffer;
@@ -71,7 +71,7 @@ public final class ShowSession {
                 if (front.isManager()) {
                     continue;
                 }
-                RowDataPacket row = getRow((MySQLShardingService) front.getService(), service.getCharset().getResults());
+                RowDataPacket row = getRow((ShardingService) front.getService(), service.getCharset().getResults());
                 if (row != null) {
                     row.setPacketId(++packetId);
                     buffer = row.write(buffer, service, true);
@@ -87,7 +87,7 @@ public final class ShowSession {
         lastEof.write(buffer, service);
     }
 
-    private static RowDataPacket getRow(MySQLShardingService sc, String charset) {
+    private static RowDataPacket getRow(ShardingService sc, String charset) {
         StringBuilder sb = new StringBuilder();
         NonBlockingSession session = sc.getSession2();
         Collection<BackendConnection> backConnections = session.getTargetMap().values();

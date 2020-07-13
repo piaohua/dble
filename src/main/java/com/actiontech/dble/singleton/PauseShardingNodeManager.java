@@ -22,7 +22,7 @@ import com.actiontech.dble.plan.node.TableNode;
 import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.services.manager.ManagerService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +121,7 @@ public final class PauseShardingNodeManager {
         }
     }
 
-    public boolean waitForResume(RouteResultset rrs, MySQLShardingService service, String stepNext) {
+    public boolean waitForResume(RouteResultset rrs, ShardingService service, String stepNext) {
         pauseLock.lock();
         try {
             return pauseThreadPool.offer(service, stepNext, rrs);

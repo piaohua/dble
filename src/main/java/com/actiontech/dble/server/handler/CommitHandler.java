@@ -5,13 +5,13 @@
 
 package com.actiontech.dble.server.handler;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 public final class CommitHandler {
     private CommitHandler() {
     }
 
-    public static void handle(String stmt, MySQLShardingService service) {
+    public static void handle(String stmt, ShardingService service) {
         service.getSession2().transactionsCount();
         service.commit(stmt);
     }

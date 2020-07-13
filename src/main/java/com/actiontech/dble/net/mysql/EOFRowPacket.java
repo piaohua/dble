@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 /**
  * Created by szf on 2020/7/8.
  */
-public class EOFRowPacket extends EOFPacket{
+public class EOFRowPacket extends EOFPacket {
 
 
     public void write(ByteBuffer buffer, AbstractService service) {

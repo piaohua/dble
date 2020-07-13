@@ -12,7 +12,7 @@ import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.config.model.sharding.SchemaConfig;
 import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.route.factory.RouteStrategyFactory;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlShowCreateDatabaseStatement;
 
@@ -44,7 +44,7 @@ public final class ShowCreateDatabase {
     private ShowCreateDatabase() {
     }
 
-    public static void response(MySQLShardingService shardingService, String stmt) {
+    public static void response(ShardingService shardingService, String stmt) {
         try {
             stmt = stmt.replaceAll("IF\\s+NOT\\s+EXISTS", "");
             MySqlShowCreateDatabaseStatement statement = (MySqlShowCreateDatabaseStatement) RouteStrategyFactory.getRouteStrategy().parserSQL(stmt);

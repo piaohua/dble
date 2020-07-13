@@ -9,7 +9,7 @@ import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.server.util.SchemaUtil;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
 import com.alibaba.druid.sql.ast.statement.SQLSelectQuery;
@@ -26,7 +26,7 @@ public final class MysqlSystemSchemaHandler {
     public static final String SCHEMATA_TABLE = "SCHEMATA";
     public static final String INFORMATION_SCHEMA = "INFORMATION_SCHEMA";
 
-    public static void handle(MySQLShardingService service, SchemaUtil.SchemaInfo schemaInfo, SQLSelectQuery sqlSelectQuery) {
+    public static void handle(ShardingService service, SchemaUtil.SchemaInfo schemaInfo, SQLSelectQuery sqlSelectQuery) {
         MySqlSelectQueryBlock mySqlSelectQueryBlock = null;
         if (sqlSelectQuery instanceof MySqlSelectQueryBlock) {
             mySqlSelectQueryBlock = (MySqlSelectQueryBlock) sqlSelectQuery;
@@ -69,7 +69,7 @@ public final class MysqlSystemSchemaHandler {
      * @param fields
      * @param service
      */
-    public static void doWrite(int fieldCount, FieldPacket[] fields, RowDataPacket[] rows, MySQLShardingService service) {
+    public static void doWrite(int fieldCount, FieldPacket[] fields, RowDataPacket[] rows, ShardingService service) {
 
         ByteBuffer buffer = service.allocate();
 

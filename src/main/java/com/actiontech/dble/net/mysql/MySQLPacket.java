@@ -191,7 +191,7 @@ public abstract class MySQLPacket {
      * writeDirectly to backend connection
      */
     public void write(MySQLResponseService service) {
-         this.write(service.getConnection());
+        this.write(service.getConnection());
     }
 
     /**

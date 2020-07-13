@@ -11,7 +11,7 @@ import com.actiontech.dble.server.parser.ScriptPrepareParse;
 import com.actiontech.dble.server.response.SptDrop;
 import com.actiontech.dble.server.response.SptExecute;
 import com.actiontech.dble.server.response.SptPrepare;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +20,7 @@ public final class ScriptPrepareHandler {
     private ScriptPrepareHandler() {
     }
 
-    public static void handle(String stmt, MySQLShardingService service) {
+    public static void handle(String stmt, ShardingService service) {
         switch (ScriptPrepareParse.parse(stmt, 0, service)) {
             case ScriptPrepareParse.PREPARE:
                 SptPrepare.response(service);

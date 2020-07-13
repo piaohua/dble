@@ -9,7 +9,7 @@ import com.actiontech.dble.backend.mysql.PacketUtil;
 import com.actiontech.dble.config.Fields;
 import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.route.parser.util.ParseUtil;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.LongUtil;
 
 import java.nio.ByteBuffer;
@@ -25,7 +25,7 @@ public final class SelectIdentity {
     private static final ResultSetHeaderPacket HEADER = PacketUtil.getHeader(FIELD_COUNT);
 
 
-    public static void response(MySQLShardingService service, String stmt, int aliasIndex, final String orgName) {
+    public static void response(ShardingService service, String stmt, int aliasIndex, final String orgName) {
         String alias = ParseUtil.parseAlias(stmt, aliasIndex);
         if (alias == null) {
             alias = orgName;

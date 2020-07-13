@@ -12,7 +12,7 @@ import com.actiontech.dble.net.connection.FrontendConnection;
 import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.net.mysql.OkPacket;
 import com.actiontech.dble.route.RouteResultsetNode;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.PauseShardingNodeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,8 +124,8 @@ public final class PauseStart {
             for (IOProcessor processor : DbleServer.getInstance().getFrontProcessors()) {
                 for (Map.Entry<Long, FrontendConnection> entry : processor.getFrontends().entrySet()) {
                     if (!entry.getValue().isManager()) {
-                        MySQLShardingService mySQLShardingService = (MySQLShardingService) entry.getValue().getService();
-                        for (Map.Entry<RouteResultsetNode, BackendConnection> conEntry : mySQLShardingService.getSession2().getTargetMap().entrySet()) {
+                        ShardingService shardingService = (ShardingService) entry.getValue().getService();
+                        for (Map.Entry<RouteResultsetNode, BackendConnection> conEntry : shardingService.getSession2().getTargetMap().entrySet()) {
                             if (shardingNodes.contains(conEntry.getKey().getName())) {
                                 nextTurn = true;
                                 break;

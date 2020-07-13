@@ -106,7 +106,7 @@ public class BackendConnection extends PooledConnection {
         if (!isClosed) {
             if (isAuthed && channel.isOpen() && closeReason != null) {
                 try {
-                    GracefulClose(reason);
+                    gracefulClose(reason);
                 } catch (Throwable e) {
                     LOGGER.info("error when try to quit the connection ,drop the error and close it anyway", e);
                     super.close(reason);
@@ -130,7 +130,7 @@ public class BackendConnection extends PooledConnection {
     }
 
 
-    private void GracefulClose(String reason) {
+    private void gracefulClose(String reason) {
         this.closeReason = reason;
         writeClose(writeToBuffer(QuitPacket.QUIT, allocate()));
     }

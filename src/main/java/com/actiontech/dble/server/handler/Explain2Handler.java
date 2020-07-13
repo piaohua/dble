@@ -12,7 +12,7 @@ import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.parser.ServerParse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,7 @@ public final class Explain2Handler {
                 Fields.FIELD_TYPE_VAR_STRING);
     }
 
-    public static void handle(String stmt, MySQLShardingService service, int offset) {
+    public static void handle(String stmt, ShardingService service, int offset) {
 
         try {
             stmt = stmt.substring(offset);
@@ -66,7 +66,7 @@ public final class Explain2Handler {
         }
     }
 
-    private static void showError(String stmt, MySQLShardingService service, String msg) {
+    private static void showError(String stmt, ShardingService service, String msg) {
         ByteBuffer buffer = service.allocate();
         // writeDirectly header
         ResultSetHeaderPacket header = PacketUtil.getHeader(FIELD_COUNT);

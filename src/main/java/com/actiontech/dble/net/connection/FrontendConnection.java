@@ -1,9 +1,12 @@
 package com.actiontech.dble.net.connection;
 
+import com.actiontech.dble.config.model.db.PoolConfig;
 import com.actiontech.dble.net.SocketWR;
 import com.actiontech.dble.net.service.AuthResultInfo;
+import com.actiontech.dble.net.service.AuthService;
 import com.actiontech.dble.net.service.FrontEndService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
+import com.actiontech.dble.util.TimeUtil;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -16,8 +19,10 @@ import java.nio.channels.SocketChannel;
  */
 public class FrontendConnection extends AbstractConnection {
 
-
+    private static final long AUTH_TIMEOUT = 15 * 1000L;
     private final boolean isManager;
+
+    protected final long idleTimeout = PoolConfig.DEFAULT_IDLE_TIMEOUT;
 
     public FrontendConnection(NetworkChannel channel, SocketWR socketWR, boolean isManager) throws IOException {
         super(channel, socketWR);
@@ -48,18 +53,26 @@ public class FrontendConnection extends AbstractConnection {
 
     @Override
     public void startFlowControl() {
-        ((MySQLShardingService) this.getService()).getSession2().startFlowControl();
+        ((ShardingService) this.getService()).getSession2().startFlowControl();
     }
 
     @Override
     public void stopFlowControl() {
-        ((MySQLShardingService) this.getService()).getSession2().stopFlowControl();
+        ((ShardingService) this.getService()).getSession2().stopFlowControl();
     }
 
     public synchronized void cleanup() {
         super.cleanup();
         if (getService() instanceof FrontEndService) {
             ((FrontEndService) getService()).userConnectionCount();
+        }
+    }
+
+    public boolean isIdleTimeout() {
+        if (!(getService() instanceof AuthService)) {
+            return TimeUtil.currentTimeMillis() > Math.max(lastWriteTime, lastReadTime) + idleTimeout;
+        } else {
+            return TimeUtil.currentTimeMillis() > Math.max(lastWriteTime, lastReadTime) + AUTH_TIMEOUT;
         }
     }
 

@@ -27,7 +27,7 @@ public class XAEndStage extends XAStage {
     }
 
     @Override
-    public TransactionStage next(boolean isFail, String errMsg,MySQLPacket errPacket) {
+    public TransactionStage next(boolean isFail, String errMsg, MySQLPacket errPacket) {
         if (isRollback) {
             return new XARollbackStage(session, xaHandler, true);
         }

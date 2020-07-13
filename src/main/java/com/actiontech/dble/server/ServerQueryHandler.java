@@ -11,7 +11,7 @@ import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.route.parser.util.ParseUtil;
 import com.actiontech.dble.server.handler.*;
 import com.actiontech.dble.server.parser.ServerParse;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 public class ServerQueryHandler implements FrontendQueryHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerQueryHandler.class);
 
-    private final MySQLShardingService service;
+    private final ShardingService service;
     private Boolean readOnly = true;
     private boolean sessionReadOnly = true;
 
@@ -36,7 +36,7 @@ public class ServerQueryHandler implements FrontendQueryHandler {
     }
 
     public ServerQueryHandler(AbstractService service) {
-        this.service = (MySQLShardingService) service;
+        this.service = (ShardingService) service;
     }
 
     @Override

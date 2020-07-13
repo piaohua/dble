@@ -19,11 +19,11 @@ public class MySQLProtoLogicHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MySQLProtoLogicHandler.class);
 
-    private final MySQLShardingService service;
+    private final ShardingService service;
 
     private volatile byte[] multiQueryData = null;
 
-    MySQLProtoLogicHandler(MySQLShardingService service) {
+    MySQLProtoLogicHandler(ShardingService service) {
         this.service = service;
     }
 

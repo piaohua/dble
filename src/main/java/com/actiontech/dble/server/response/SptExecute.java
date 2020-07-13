@@ -7,7 +7,7 @@ package com.actiontech.dble.server.response;
 
 import com.actiontech.dble.config.ErrorCode;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 import java.util.List;
 
@@ -15,12 +15,12 @@ public final class SptExecute {
     private SptExecute() {
     }
 
-    public static String queryUserVar(String name, MySQLShardingService service) {
+    public static String queryUserVar(String name, ShardingService service) {
         String key = "@" + name;
         return service.getUsrVariables().get(key);
     }
 
-    public static void response(MySQLShardingService service) {
+    public static void response(ShardingService service) {
         String name = service.getSptPrepare().getName();
         List<String> parts = service.getSptPrepare().getPrepare(name);
         if (parts == null) {

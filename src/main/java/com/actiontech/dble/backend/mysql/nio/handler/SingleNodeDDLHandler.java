@@ -9,7 +9,7 @@ import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.DDLTraceManager;
 import com.actiontech.dble.util.StringUtil;
 
@@ -76,7 +76,7 @@ public class SingleNodeDDLHandler extends SingleNodeHandler {
             } else {
                 DDLTraceManager.getInstance().endDDL(session.getShardingService(), null);
                 session.setRowCount(0);
-                MySQLShardingService sessionShardingService = session.getShardingService();
+                ShardingService sessionShardingService = session.getShardingService();
                 OkPacket ok = new OkPacket();
                 ok.read(data);
                 ok.setPacketId(sessionShardingService.nextPacketId()); // OK_PACKET
@@ -114,7 +114,7 @@ public class SingleNodeDDLHandler extends SingleNodeHandler {
 
     @Override
     protected void backConnectionErr(ErrorPacket errPkg, MySQLResponseService service, boolean syncFinished) {
-        MySQLShardingService sessionShardingService = session.getShardingService();
+        ShardingService sessionShardingService = session.getShardingService();
         if (service.getConnection().isClosed()) {
             if (service.getAttachment() != null) {
                 RouteResultsetNode rNode = (RouteResultsetNode) service.getAttachment();

@@ -9,7 +9,7 @@ package com.actiontech.dble.server.handler;
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.parser.ServerParseShow;
 import com.actiontech.dble.server.response.*;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 
 
 /**
@@ -19,7 +19,7 @@ public final class ShowHandler {
     private ShowHandler() {
     }
 
-    public static void handle(String stmt, MySQLShardingService service, int offset) {
+    public static void handle(String stmt, ShardingService service, int offset) {
 
         int type = ServerParseShow.parse(stmt, offset);
         switch (type) {

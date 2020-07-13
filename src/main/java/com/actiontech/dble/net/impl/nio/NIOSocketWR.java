@@ -33,10 +33,10 @@ public class NIOSocketWR extends SocketWR {
 
     private volatile WriteOutTask leftoverWriteTask;
 
-    public void initFromConnection(AbstractConnection con) {
-        this.con = con;
-        this.channel = (SocketChannel) con.getChannel();
-        this.writeQueue = con.getWriteQueue();
+    public void initFromConnection(AbstractConnection connection) {
+        this.con = connection;
+        this.channel = (SocketChannel) connection.getChannel();
+        this.writeQueue = connection.getWriteQueue();
     }
 
     public void register(Selector selector) throws IOException {

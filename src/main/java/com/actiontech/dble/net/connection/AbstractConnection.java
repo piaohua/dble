@@ -392,9 +392,9 @@ public abstract class AbstractConnection implements Connection {
         }
     }
 
-    public void writeStatistics(int netOutBytes) {
-        this.netOutBytes += netOutBytes;
-        processor.addNetOutBytes(netOutBytes);
+    public void writeStatistics(int outBytes) {
+        this.netOutBytes += outBytes;
+        processor.addNetOutBytes(outBytes);
         lastWriteTime = TimeUtil.currentTimeMillis();
     }
 

@@ -15,7 +15,7 @@ import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 
 import com.actiontech.dble.server.SessionStage;
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.StringUtil;
 
 import java.util.Map;
@@ -32,7 +32,7 @@ public final class KillHandler {
         KILL_QUERY, KILL_CONNECTION
     }
 
-    public static void handle(Type type, String id, MySQLShardingService service) {
+    public static void handle(Type type, String id, ShardingService service) {
         if (StringUtil.isEmpty(id)) {
             service.writeErrMessage(ErrorCode.ER_NO_SUCH_THREAD, "NULL connection id");
             return;
@@ -59,7 +59,7 @@ public final class KillHandler {
      * @param id      connection id
      * @param service serverConnection
      */
-    private static void killQuery(long id, MySQLShardingService service) {
+    private static void killQuery(long id, ShardingService service) {
         FrontendConnection killConn;
         if (id == service.getConnection().getId()) {
             service.writeErrMessage(ErrorCode.ER_QUERY_INTERRUPTED, "Query was interrupted.");
@@ -70,12 +70,12 @@ public final class KillHandler {
         if (killConn == null) {
             service.writeErrMessage(ErrorCode.ER_NO_SUCH_THREAD, "Unknown connection id:" + id);
             return;
-        } else if (!killConn.isManager() && !((MySQLShardingService) killConn.getService()).getUser().equals(service.getUser())) {
+        } else if (!killConn.isManager() && !((ShardingService) killConn.getService()).getUser().equals(service.getUser())) {
             service.writeErrMessage(ErrorCode.ER_NO_SUCH_THREAD, "can't kill other user's connection" + id);
             return;
         }
 
-        NonBlockingSession killSession = ((MySQLShardingService) killConn.getService()).getSession2();
+        NonBlockingSession killSession = ((ShardingService) killConn.getService()).getSession2();
         if (killSession.getTransactionManager().getXAStage() != null ||
                 killSession.getSessionStage() == SessionStage.Init || killSession.getSessionStage() == SessionStage.Finished) {
             boolean multiStatementFlag = service.getSession2().getIsMultiStatement().get();
@@ -118,7 +118,7 @@ public final class KillHandler {
      * @param id      connection id
      * @param service serverConnection
      */
-    private static void killConnection(long id, MySQLShardingService service) {
+    private static void killConnection(long id, ShardingService service) {
         // kill myself
         if (id == service.getConnection().getId()) {
             OkPacket packet = getOkPacket(service);
@@ -152,7 +152,7 @@ public final class KillHandler {
         return fc;
     }
 
-    private static OkPacket getOkPacket(MySQLShardingService service) {
+    private static OkPacket getOkPacket(ShardingService service) {
         byte packetId = (byte) service.getSession2().getPacketId().get();
         OkPacket packet = new OkPacket();
         packet.setPacketId(++packetId);

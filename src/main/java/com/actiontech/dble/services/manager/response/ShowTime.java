@@ -63,7 +63,7 @@ public final class ShowTime {
         lastEof.setPacketId(++packetId);
 
 
-        lastEof.write(buffer,service);
+        lastEof.write(buffer, service);
     }
 
 }

@@ -8,7 +8,7 @@ package com.actiontech.dble.log.transaction;
 import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.log.DailyRotateLogStore;
 
-import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
+import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.util.TimeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +75,7 @@ public class TxnLogProcessor extends Thread {
         store.write(buffer);
     }
 
-    public void putTxnLog(MySQLShardingService service, String sql) {
+    public void putTxnLog(ShardingService service, String sql) {
         TxnBinaryLog log = new TxnBinaryLog();
         log.setUser(service.getUser());
         log.setHost(service.getConnection().getHost());
