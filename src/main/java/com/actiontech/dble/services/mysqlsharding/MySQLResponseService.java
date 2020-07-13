@@ -155,7 +155,7 @@ public class MySQLResponseService extends MySQLBasedService {
     }
 
     @Override
-    public void TaskToTotalQueue(ServiceTask task) {
+    public void taskToTotalQueue(ServiceTask task) {
         //LOGGER.info("count of the xxxxxxxxxxxxxxxxxxxxxx " + taskCommand++);
         Executor executor;
         if (this.isComplexQuery()) {
@@ -175,7 +175,7 @@ public class MySQLResponseService extends MySQLBasedService {
                     } finally {
                         isHandling.set(false);
                         if (taskQueue.size() > 0) {
-                            TaskToTotalQueue(null);
+                            taskToTotalQueue(null);
                         } else {
                             //LOGGER.info("taskQueue size  == " + taskQueue.size());
                         }

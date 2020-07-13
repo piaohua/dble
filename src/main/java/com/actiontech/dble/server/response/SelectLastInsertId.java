@@ -56,7 +56,7 @@ public final class SelectLastInsertId implements InnerFuncResponse {
         // writeDirectly last eof
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(service.nextPacketId());
-        lastEof.write(buffer,service);
+        lastEof.write(buffer, service);
     }
 
 

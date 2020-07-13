@@ -108,7 +108,7 @@ public final class CheckFullMetaData {
                         String table = StringUtil.removeAllApostrophe(ma.group(10));
                         if (DbleServer.getInstance().getConfig().getSchemas().get(schema).getTables().get(table) == null &&
                                 (ProxyMeta.getInstance().getTmManager().getCatalogs().get(schema) == null ||
-                                ProxyMeta.getInstance().getTmManager().getCatalogs().get(schema).getTableMeta(table) == null)) {
+                                        ProxyMeta.getInstance().getTmManager().getCatalogs().get(schema).getTableMeta(table) == null)) {
                             service.writeErrMessage(ErrorCode.ER_UNKNOWN_ERROR, "The table [" + schema + "." + table + "] doesn't exist");
                             return;
                         }
@@ -169,8 +169,7 @@ public final class CheckFullMetaData {
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
 
-
-        lastEof.write(buffer,service);
+        lastEof.write(buffer, service);
     }
 
     private static List<RowDataPacket> getCmpRows(String cmpOperator, long toCmp, String charset) {

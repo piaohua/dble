@@ -11,7 +11,6 @@ import com.actiontech.dble.backend.datasource.PhysicalDbGroup;
 import com.actiontech.dble.backend.datasource.PhysicalDbInstance;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.services.manager.ManagerService;
-import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.services.manager.response.SelectMaxAllowedPacket;
 import com.actiontech.dble.services.manager.response.SelectSessionTxReadOnly;
 import com.actiontech.dble.services.manager.response.ShowSingleString;

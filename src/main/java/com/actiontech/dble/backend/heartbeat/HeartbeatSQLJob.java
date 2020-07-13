@@ -94,7 +94,7 @@ public class HeartbeatSQLJob implements ResponseHandler {
                 " from of sql :" + sql + " at con:" + service;
 
         LOGGER.info(errMsg);
-        if (!((MySQLResponseService)service).syncAndExecute()) {
+        if (!((MySQLResponseService) service).syncAndExecute()) {
             service.getConnection().businessClose("unfinished sync");
             doFinished(true);
             return;
@@ -104,7 +104,7 @@ public class HeartbeatSQLJob implements ResponseHandler {
 
     @Override
     public void okResponse(byte[] ok, AbstractService service) {
-        if (((MySQLResponseService)service).syncAndExecute()) {
+        if (((MySQLResponseService) service).syncAndExecute()) {
             doFinished(false);
         }
     }

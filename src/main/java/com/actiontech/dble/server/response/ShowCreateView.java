@@ -118,7 +118,7 @@ public final class ShowCreateView {
         // writeDirectly last eof
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
-        lastEof.write(buffer,service);
+        lastEof.write(buffer, service);
     }
 
     public static RowDataPacket getRow(ViewMeta view, String charset, String collationConnection) {

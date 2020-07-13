@@ -65,7 +65,7 @@ public abstract class PhysicalDbInstance implements ReadTimeStatusInstance {
         this.heartbeat = new MySQLHeartbeat(this);
         this.readInstance = isReadNode;
         this.disabled = new AtomicBoolean(config.isDisabled());
-        this.connectionPool = new ConnectionPool(config, this,new MySQLConnectionFactory());
+        this.connectionPool = new ConnectionPool(config, this, new MySQLConnectionFactory());
     }
 
     public PhysicalDbInstance(PhysicalDbInstance org) {
@@ -135,7 +135,7 @@ public abstract class PhysicalDbInstance implements ReadTimeStatusInstance {
     // execute in complex executor guard by business executor
     public BackendConnection getConnection(String schema, final Object attachment) throws IOException {
         BackendConnection con = getConnection(schema, config.getPoolConfig().getConnectionTimeout());
-        ((MySQLResponseService)con.getService()).setAttachment(attachment);
+        ((MySQLResponseService) con.getService()).setAttachment(attachment);
         return con;
     }
 
@@ -153,7 +153,7 @@ public abstract class PhysicalDbInstance implements ReadTimeStatusInstance {
         try {
             long timeout = hardTimeout;
             do {
-                final BackendConnection conn = (BackendConnection)this.connectionPool.borrow(schema, timeout, MILLISECONDS);
+                final BackendConnection conn = (BackendConnection) this.connectionPool.borrow(schema, timeout, MILLISECONDS);
                 if (conn == null) {
                     break; // We timed out... break and throw exception
                 }

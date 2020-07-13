@@ -15,11 +15,9 @@ import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.connection.BackendConnection;
 import com.actiontech.dble.net.handler.FrontendPrepareHandler;
 import com.actiontech.dble.net.mysql.AuthPacket;
-import com.actiontech.dble.net.mysql.ErrorPacket;
 import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.net.service.AuthResultInfo;
 import com.actiontech.dble.net.service.FrontEndService;
-import com.actiontech.dble.net.service.ServiceTask;
 import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.route.parser.util.Pair;
 import com.actiontech.dble.server.NonBlockingSession;
@@ -411,7 +409,7 @@ public class MySQLShardingService extends MySQLBasedService implements FrontEndS
         for (Pair<SetHandler.KeyType, Pair<String, String>> task : innerSetTask) {
             switch (task.getKey()) {
                 case XA:
-                    //session.getTransactionManager().setXaTxEnabled(Boolean.valueOf(task.getValue().getKey()), this);
+                    session.getTransactionManager().setXaTxEnabled(Boolean.valueOf(task.getValue().getKey()), this);
                     break;
                 case AUTOCOMMIT:
                     autoCommitTask = task;

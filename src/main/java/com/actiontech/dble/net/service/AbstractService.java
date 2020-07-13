@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -70,6 +69,8 @@ public abstract class AbstractService implements Service {
                     taskCreate(result.getPacketData());
                     offset = result.getOffset();
                     continue;
+                default:
+                    throw new RuntimeException("unknow error when read data");
             }
             //LOGGER.info("the read end of the result is +++++++++++++++++++++ " + totalsize);
         }
@@ -78,16 +79,16 @@ public abstract class AbstractService implements Service {
     private void taskCreate(byte[] packetData) {
         ServiceTask task = new ServiceTask(packetData, this);
         taskQueue.offer(task);
-        TaskToTotalQueue(task);
+        taskToTotalQueue(task);
     }
 
     protected void taskMultiQueryCreate(byte[] packetData) {
         ServiceTask task = new ServiceTask(packetData, this, true);
         taskQueue.offer(task);
-        TaskToTotalQueue(task);
+        taskToTotalQueue(task);
     }
 
-    protected abstract void TaskToTotalQueue(ServiceTask task);
+    protected abstract void taskToTotalQueue(ServiceTask task);
 
 
     @Override

@@ -10,7 +10,6 @@ import com.actiontech.dble.net.ConnectionException;
 import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.connection.BackendConnection;
 import com.actiontech.dble.net.connection.PooledConnection;
-import com.actiontech.dble.net.service.AuthResultInfo;
 import com.actiontech.dble.net.service.AuthService;
 import com.actiontech.dble.net.service.ServiceTask;
 import com.actiontech.dble.services.MySQLBasedService;
@@ -118,7 +117,7 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
     }
 
     @Override
-    public void TaskToTotalQueue(ServiceTask task) {
+    public void taskToTotalQueue(ServiceTask task) {
         Executor executor = DbleServer.getInstance().getBackendBusinessExecutor();
         if (isHandling.compareAndSet(false, true)) {
             executor.execute(new Runnable() {
@@ -131,7 +130,7 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
                     } finally {
                         isHandling.set(false);
                         if (taskQueue.size() > 0) {
-                            TaskToTotalQueue(null);
+                            taskToTotalQueue(null);
                         }
                     }
                 }

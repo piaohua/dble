@@ -11,8 +11,6 @@ import com.actiontech.dble.config.model.user.ShardingUserConfig;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import com.actiontech.dble.util.StringUtil;
 
-import java.nio.ByteBuffer;
-
 /**
  * @author mycat
  */

@@ -77,22 +77,22 @@ public class FetchMySQLSequenceHandler implements ResponseHandler {
         String errMsg = new String(err.getMessage());
 
         LOGGER.warn("errorResponse " + err.getErrNo() + " " + errMsg);
-        handleError(((MySQLResponseService)service).getAttachment(), errMsg);
+        handleError(((MySQLResponseService) service).getAttachment(), errMsg);
 
-        boolean executeResponse = ((MySQLResponseService)service).syncAndExecute();
+        boolean executeResponse = ((MySQLResponseService) service).syncAndExecute();
         if (executeResponse) {
-            ((MySQLResponseService)service).release();
+            ((MySQLResponseService) service).release();
         } else {
-            ((MySQLResponseService)service).getConnection().businessClose("unfinished sync");
+            ((MySQLResponseService) service).getConnection().businessClose("unfinished sync");
         }
     }
 
     @Override
     public void okResponse(byte[] ok, AbstractService service) {
-        boolean executeResponse = ((MySQLResponseService)service).syncAndExecute();
+        boolean executeResponse = ((MySQLResponseService) service).syncAndExecute();
         if (executeResponse) {
-            ((SequenceVal) ((MySQLResponseService)service).getAttachment()).dbfinished = true;
-            ((MySQLResponseService)service).release();
+            ((SequenceVal) ((MySQLResponseService) service).getAttachment()).dbfinished = true;
+            ((MySQLResponseService) service).release();
         }
 
     }
@@ -103,7 +103,7 @@ public class FetchMySQLSequenceHandler implements ResponseHandler {
         rowDataPkg.read(row);
         byte[] columnData = rowDataPkg.fieldValues.get(0);
         String columnVal = new String(columnData);
-        SequenceVal seqVal = (SequenceVal) ((MySQLResponseService)service).getAttachment();
+        SequenceVal seqVal = (SequenceVal) ((MySQLResponseService) service).getAttachment();
         if (IncrSequenceMySQLHandler.ERR_SEQ_RESULT.equals(columnVal)) {
             seqVal.dbretVal = IncrSequenceMySQLHandler.ERR_SEQ_RESULT;
             String errMsg = "sequence sql returned err value, sequence:" +
@@ -118,8 +118,8 @@ public class FetchMySQLSequenceHandler implements ResponseHandler {
 
     @Override
     public void rowEofResponse(byte[] eof, boolean isLeft, AbstractService service) {
-        ((SequenceVal) ((MySQLResponseService)service).getAttachment()).dbfinished = true;
-        ((MySQLResponseService)service).release();
+        ((SequenceVal) ((MySQLResponseService) service).getAttachment()).dbfinished = true;
+        ((MySQLResponseService) service).release();
     }
 
     private void handleError(Object attachment, String errMsg) {
@@ -132,7 +132,7 @@ public class FetchMySQLSequenceHandler implements ResponseHandler {
     @Override
     public void connectionClose(AbstractService service, String reason) {
         LOGGER.warn("connection " + service + " closed, reason:" + reason);
-        handleError(((MySQLResponseService)service).getAttachment(), "connection " + service + " closed, reason:" + reason);
+        handleError(((MySQLResponseService) service).getAttachment(), "connection " + service + " closed, reason:" + reason);
     }
 
     @Override

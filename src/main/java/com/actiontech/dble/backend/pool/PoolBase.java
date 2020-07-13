@@ -4,7 +4,6 @@ import com.actiontech.dble.backend.mysql.nio.handler.ResponseHandler;
 import com.actiontech.dble.config.model.db.DbInstanceConfig;
 import com.actiontech.dble.net.connection.PooledConnection;
 import com.actiontech.dble.net.factory.PooledConnectionFactory;
-import com.actiontech.dble.net.service.AbstractService;
 
 import java.io.IOException;
 

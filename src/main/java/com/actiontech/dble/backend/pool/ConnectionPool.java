@@ -322,7 +322,7 @@ public class ConnectionPool extends PoolBase implements PooledConnectionListener
 
     }
 
-    public ReadTimeStatusInstance getInstance(){
+    public ReadTimeStatusInstance getInstance() {
         return instance;
     }
 

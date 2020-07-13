@@ -4,7 +4,6 @@ import com.actiontech.dble.DbleServer;
 import com.actiontech.dble.backend.mysql.nio.handler.transaction.normal.handler.NormalTransactionHandler;
 import com.actiontech.dble.backend.mysql.nio.handler.transaction.xa.handler.AbstractXAHandler;
 import com.actiontech.dble.backend.mysql.nio.handler.transaction.xa.handler.XAHandler;
-import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
 import org.slf4j.Logger;

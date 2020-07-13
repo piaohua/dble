@@ -25,7 +25,6 @@ public final class SelectIdentity {
     private static final ResultSetHeaderPacket HEADER = PacketUtil.getHeader(FIELD_COUNT);
 
 
-
     public static void response(MySQLShardingService service, String stmt, int aliasIndex, final String orgName) {
         String alias = ParseUtil.parseAlias(stmt, aliasIndex);
         if (alias == null) {
@@ -58,7 +57,7 @@ public final class SelectIdentity {
         // writeDirectly last eof
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(service.nextPacketId());
-        lastEof.write(buffer,service);
+        lastEof.write(buffer, service);
 
     }
 

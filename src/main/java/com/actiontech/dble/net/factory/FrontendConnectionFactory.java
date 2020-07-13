@@ -6,7 +6,6 @@
 package com.actiontech.dble.net.factory;
 
 
-
 import com.actiontech.dble.net.SocketWR;
 import com.actiontech.dble.net.connection.FrontendConnection;
 
@@ -21,10 +20,10 @@ public abstract class FrontendConnectionFactory {
     protected abstract FrontendConnection getConnection(NetworkChannel channel, SocketWR socketWR)
             throws IOException;
 
-    public FrontendConnection make(NetworkChannel channel,SocketWR socketWR) throws IOException {
+    public FrontendConnection make(NetworkChannel channel, SocketWR socketWR) throws IOException {
         channel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
         channel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
-        FrontendConnection c = getConnection(channel,socketWR);
+        FrontendConnection c = getConnection(channel, socketWR);
         c.setSocketParams(true);
         return c;
     }

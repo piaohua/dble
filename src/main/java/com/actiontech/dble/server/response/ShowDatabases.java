@@ -35,7 +35,7 @@ public final class ShowDatabases {
 
 
     public static void response(MySQLShardingService shardingService) {
-        
+
         HEADER.setPacketId(shardingService.nextPacketId());
         FIELDS[0] = PacketUtil.getField("DATABASE", Fields.FIELD_TYPE_VAR_STRING);
         FIELDS[0].setPacketId(shardingService.nextPacketId());
@@ -78,7 +78,7 @@ public final class ShowDatabases {
         // writeDirectly last eof
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(shardingService.nextPacketId());
-        lastEof.write(buffer,shardingService);
+        lastEof.write(buffer, shardingService);
     }
 
 }

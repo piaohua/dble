@@ -16,7 +16,7 @@ public class ServiceTask {
         this.reuse = false;
     }
 
-    public ServiceTask(byte[] orgData, Service service,boolean reuse){
+    public ServiceTask(byte[] orgData, Service service, boolean reuse) {
         this.orgData = orgData;
         this.service = service;
         this.reuse = reuse;
@@ -39,7 +39,7 @@ public class ServiceTask {
         highPriority = true;
     }
 
-    public boolean isReuse(){
+    public boolean isReuse() {
         return reuse;
     }
 

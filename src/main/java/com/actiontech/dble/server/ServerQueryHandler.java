@@ -36,7 +36,7 @@ public class ServerQueryHandler implements FrontendQueryHandler {
     }
 
     public ServerQueryHandler(AbstractService service) {
-        this.service = (MySQLShardingService)service;
+        this.service = (MySQLShardingService) service;
     }
 
     @Override
@@ -49,7 +49,6 @@ public class ServerQueryHandler implements FrontendQueryHandler {
             service.writeErrMessage(ErrorCode.ER_QUERY_INTERRUPTED, "The query is interrupted.");
             return;
         }
-
         this.service.getSession2().queryCount();
         this.service.getSession2().rowCountRolling();
 

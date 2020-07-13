@@ -44,7 +44,7 @@ public final class SelectDatabase implements InnerFuncResponse {
         buffer = row.write(buffer, shardingService, true);
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(shardingService.nextPacketId());
-        lastEof.write(buffer,shardingService);
+        lastEof.write(buffer, shardingService);
     }
 
     public static byte setCurrentPacket(MySQLShardingService service) {

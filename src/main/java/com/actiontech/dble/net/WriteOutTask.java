@@ -15,11 +15,11 @@ public class WriteOutTask {
         this.closeFlag = closeFlag;
     }
 
-    public ByteBuffer getBuffer(){
+    public ByteBuffer getBuffer() {
         return buffer;
     }
 
-    public boolean closeFlag(){
+    public boolean closeFlag() {
         return closeFlag;
     }
 }

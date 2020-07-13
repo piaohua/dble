@@ -73,7 +73,7 @@ public final class ShowDdlState {
 
 
         // write buffer
-        lastEof.write(buffer,service);
+        lastEof.write(buffer, service);
 
     }
 

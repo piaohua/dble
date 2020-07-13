@@ -7,7 +7,6 @@ package com.actiontech.dble;
 
 
 import com.actiontech.dble.cluster.ClusterController;
-import com.actiontech.dble.config.Versions;
 import com.actiontech.dble.config.loader.SystemConfigLoader;
 import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.config.util.StartProblemReporter;

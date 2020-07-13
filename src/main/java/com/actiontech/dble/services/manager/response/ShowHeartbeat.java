@@ -101,7 +101,6 @@ public final class ShowHeartbeat {
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
 
-
         lastEof.write(buffer, service);
     }
 

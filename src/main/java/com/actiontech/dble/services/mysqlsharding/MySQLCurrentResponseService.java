@@ -4,8 +4,6 @@ import com.actiontech.dble.DbleServer;
 import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.service.ServiceTask;
 
-import java.util.concurrent.Executor;
-
 /**
  * Created by szf on 2020/7/9.
  */
@@ -17,9 +15,9 @@ public class MySQLCurrentResponseService extends MySQLResponseService {
 
 
     @Override
-    public void TaskToTotalQueue(ServiceTask task) {
+    public void taskToTotalQueue(ServiceTask task) {
         if (isComplexQuery()) {
-            super.TaskToTotalQueue(task);
+            super.taskToTotalQueue(task);
         } else {
             if (isHandling.compareAndSet(false, true)) {
                 DbleServer.getInstance().getConcurrentBackHandlerQueue().offer(task);

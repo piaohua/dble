@@ -51,7 +51,7 @@ public class LongDataPacket extends MySQLPacket {
 
     @Override
     public void bufferWrite(AbstractConnection connection) {
-        
+
     }
 
     @Override

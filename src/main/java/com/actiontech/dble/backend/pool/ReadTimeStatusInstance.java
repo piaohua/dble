@@ -7,16 +7,16 @@ import com.actiontech.dble.config.model.db.DbInstanceConfig;
  */
 public interface ReadTimeStatusInstance {
 
-    public boolean isReadInstance();
+    boolean isReadInstance();
 
-    public boolean isDisabled();
+    boolean isDisabled();
 
-    public boolean isAutocommitSynced();
+    boolean isAutocommitSynced();
 
-    public boolean isIsolationSynced();
+    boolean isIsolationSynced();
 
-    public boolean isAlive();
+    boolean isAlive();
 
-    public DbInstanceConfig getConfig();
+    DbInstanceConfig getConfig();
 
 }

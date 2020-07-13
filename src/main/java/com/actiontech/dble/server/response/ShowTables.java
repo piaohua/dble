@@ -231,7 +231,7 @@ public final class ShowTables {
         // writeDirectly last eof
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
-        lastEof.write(buffer,shardingService);
+        lastEof.write(buffer, shardingService);
     }
 
     public static Map<String, String> getTableSet(String cSchema, ShowTablesStmtInfo info) {

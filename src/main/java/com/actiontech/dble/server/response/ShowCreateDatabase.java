@@ -70,7 +70,7 @@ public final class ShowCreateDatabase {
             // writeDirectly last eof
             EOFRowPacket lastEof = new EOFRowPacket();
             lastEof.setPacketId(++packetId);
-            lastEof.write(buffer,shardingService);
+            lastEof.write(buffer, shardingService);
         } catch (Exception e) {
             shardingService.writeErrMessage(ErrorCode.ER_PARSE_ERROR, e.getMessage());
         }

@@ -11,7 +11,6 @@ import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.net.mysql.PingPacket;
 import com.actiontech.dble.net.service.AuthResultInfo;
 import com.actiontech.dble.net.service.FrontEndService;
-import com.actiontech.dble.route.parser.util.Pair;
 import com.actiontech.dble.services.MySQLBasedService;
 import com.actiontech.dble.singleton.FrontendUserManager;
 

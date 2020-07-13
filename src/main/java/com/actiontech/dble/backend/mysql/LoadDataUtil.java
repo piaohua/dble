@@ -70,9 +70,9 @@ public final class LoadDataUtil {
 
             while ((len = inputStream.read(buffer)) != -1) {
 
-                 if (WriteQueueFlowController.isEnableFlowControl() &&
-                         service.getConnection().getWriteQueue().size() > WriteQueueFlowController.getFlowStart()) {
-                     service.getConnection().startFlowControl();
+                if (WriteQueueFlowController.isEnableFlowControl() &&
+                        service.getConnection().getWriteQueue().size() > WriteQueueFlowController.getFlowStart()) {
+                    service.getConnection().startFlowControl();
                 }
                 while (service.getConnection().isFlowControlled()) {
                     try {

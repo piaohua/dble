@@ -17,6 +17,7 @@ import java.util.List;
 public final class ShowTrace {
     private ShowTrace() {
     }
+
     private static final int FIELD_COUNT = 6;
     private static final FieldPacket[] FIELDS = new FieldPacket[FIELD_COUNT];
 
@@ -28,6 +29,7 @@ public final class ShowTrace {
         FIELDS[4] = PacketUtil.getField("SHARDING_NODE", Fields.FIELD_TYPE_VAR_STRING);
         FIELDS[5] = PacketUtil.getField("SQL/REF", Fields.FIELD_TYPE_VAR_STRING);
     }
+
     public static void response(MySQLShardingService shardingService) {
         ByteBuffer buffer = shardingService.allocate();
 
@@ -61,6 +63,6 @@ public final class ShowTrace {
         // writeDirectly last eof
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
-        lastEof.write(buffer,shardingService);
+        lastEof.write(buffer, shardingService);
     }
 }

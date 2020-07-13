@@ -45,7 +45,7 @@ public final class SelectTxReadOnly {
         buffer = row.write(buffer, shardingService, true);
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(shardingService.nextPacketId());
-        lastEof.write(buffer,shardingService);
+        lastEof.write(buffer, shardingService);
     }
 
 

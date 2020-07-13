@@ -4,7 +4,6 @@ import com.actiontech.dble.net.SocketWR;
 import com.actiontech.dble.net.service.AuthResultInfo;
 import com.actiontech.dble.net.service.FrontEndService;
 import com.actiontech.dble.services.mysqlsharding.MySQLShardingService;
-import com.actiontech.dble.singleton.FrontendUserManager;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

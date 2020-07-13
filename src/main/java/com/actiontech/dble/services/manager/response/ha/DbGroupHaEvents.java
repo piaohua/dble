@@ -68,7 +68,7 @@ public final class DbGroupHaEvents {
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
 
-        lastEof.write(buffer,service);
+        lastEof.write(buffer, service);
     }
 
 

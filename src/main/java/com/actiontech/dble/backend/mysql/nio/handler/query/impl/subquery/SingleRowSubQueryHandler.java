@@ -6,7 +6,6 @@
 package com.actiontech.dble.backend.mysql.nio.handler.query.impl.subquery;
 
 
-import com.actiontech.dble.backend.mysql.nio.handler.transaction.xa.handler.AbstractXAHandler;
 import com.actiontech.dble.backend.mysql.nio.handler.util.HandlerTool;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.net.mysql.FieldPacket;

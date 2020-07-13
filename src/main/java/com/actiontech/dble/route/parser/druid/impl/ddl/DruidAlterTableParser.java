@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public class DruidAlterTableParser extends DefaultDruidParser {
     @Override
-    public SchemaConfig visitorParse(SchemaConfig schema, RouteResultset rrs, SQLStatement stmt, ServerSchemaStatVisitor visitor, MySQLShardingService service , boolean isExplain)
+    public SchemaConfig visitorParse(SchemaConfig schema, RouteResultset rrs, SQLStatement stmt, ServerSchemaStatVisitor visitor, MySQLShardingService service, boolean isExplain)
             throws SQLException {
         SQLAlterTableStatement alterTable = (SQLAlterTableStatement) stmt;
         String schemaName = schema == null ? null : schema.getName();

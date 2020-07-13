@@ -76,7 +76,7 @@ public class DistinctHandler extends BaseDMLHandler {
         if (orders == null)
             orders = HandlerTool.makeOrder(this.distinctCols);
         RowDataComparator comparator = new RowDataComparator(this.fieldPackets, orders, this.isAllPushDown(), type());
-        String charSet = service != null ? CharsetUtil.getJavaCharset(((MySQLResponseService)service).getCharset().getResults()) :
+        String charSet = service != null ? CharsetUtil.getJavaCharset(((MySQLResponseService) service).getCharset().getResults()) :
                 CharsetUtil.getJavaCharset(session.getShardingService().getCharset().getResults());
         localResult = new DistinctSortedLocalResult(pool, sourceFields.size(), comparator, charSet).
                 setMemSizeController(session.getOtherBufferMC());

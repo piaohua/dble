@@ -57,7 +57,7 @@ public class NormalTransactionHandler extends MultiNodeHandler implements Transa
         for (RouteResultsetNode rrn : session.getTargetKeys()) {
             conn = session.getTarget(rrn);
             conn.getBackendService().setResponseHandler(this);
-            conns.add( conn);
+            conns.add(conn);
         }
         changeStageTo(new CommitStage(session, conns, implicitCommitHandler));
     }
@@ -79,7 +79,7 @@ public class NormalTransactionHandler extends MultiNodeHandler implements Transa
             if (!conn.isClosed()) {
                 unResponseRrns.add(node);
                 conn.getBackendService().setResponseHandler(this);
-                conns.add( conn);
+                conns.add(conn);
             }
         }
 
@@ -150,7 +150,7 @@ public class NormalTransactionHandler extends MultiNodeHandler implements Transa
         boolean finished = result[0];
         boolean justRemoved = result[1];
         if (justRemoved) {
-            String closeReason = "Connection {dbInstance[" + service.getConnection().getHost() + ":" + service.getConnection().getPort() + "],Schema[" + ((MySQLResponseService)service).getSchema() + "],threadID[" +
+            String closeReason = "Connection {dbInstance[" + service.getConnection().getHost() + ":" + service.getConnection().getPort() + "],Schema[" + ((MySQLResponseService) service).getSchema() + "],threadID[" +
                     ((MySQLResponseService) service).getConnection().getThreadId() + "]} was closed ,reason is [" + reason + "]";
             this.setFail(closeReason);
 

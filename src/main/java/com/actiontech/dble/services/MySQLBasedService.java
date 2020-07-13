@@ -7,11 +7,9 @@ import com.actiontech.dble.net.mysql.CharsetNames;
 import com.actiontech.dble.net.mysql.ErrorPacket;
 import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.net.service.ServiceTask;
-import com.actiontech.dble.route.parser.util.Pair;
 import com.actiontech.dble.util.CompressUtil;
 import com.actiontech.dble.util.StringUtil;
 
-import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,11 +32,11 @@ public abstract class MySQLBasedService extends AbstractService {
     }
 
 
-    protected void TaskToPriorityQueue(ServiceTask task) {
+    protected void taskToPriorityQueue(ServiceTask task) {
         DbleServer.getInstance().getFrontPriorityQueue().offer(task);
     }
 
-    protected void TaskToTotalQueue(ServiceTask task) {
+    protected void taskToTotalQueue(ServiceTask task) {
         DbleServer.getInstance().getFrontHandlerQueue().offer(task);
     }
 
@@ -54,7 +52,7 @@ public abstract class MySQLBasedService extends AbstractService {
                 }
             }
             if (currentTask != task) {
-                TaskToPriorityQueue(task);
+                taskToPriorityQueue(task);
             }
         }
 

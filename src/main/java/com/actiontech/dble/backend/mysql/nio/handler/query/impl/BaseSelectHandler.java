@@ -161,7 +161,7 @@ public class BaseSelectHandler extends BaseDMLHandler {
             return;
         LOGGER.warn(service.toString() + "|connectionClose()|" + reason);
         reason = "Connection {dbInstance[" + service.getConnection().getHost() + ":" + service.getConnection().getPort() + "],Schema[" + ((MySQLResponseService) service).getSchema() + "],threadID[" +
-                ((BackendConnection)service.getConnection()).getThreadId() + "]} was closed ,reason is [" + reason + "]";
+                ((BackendConnection) service.getConnection()).getThreadId() + "]} was closed ,reason is [" + reason + "]";
         session.onQueryError(reason.getBytes());
     }
 

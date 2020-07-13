@@ -64,7 +64,7 @@ public class GlobalCheckJob implements Job {
             }
             checker.setSchema(schema);
             checker.setTableName(tc.getName());
-            //checker.setHandler(handler);
+            checker.setHandler(handler);
             for (String nodeName : tc.getShardingNodes()) {
                 Map<String, ShardingNode> map = config.getShardingNodes();
                 for (ShardingNode dbNode : map.values()) {

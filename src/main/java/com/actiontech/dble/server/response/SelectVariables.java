@@ -91,7 +91,7 @@ public final class SelectVariables {
         // writeDirectly lastEof
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(service.nextPacketId());
-        lastEof.write(buffer,service);
+        lastEof.write(buffer, service);
     }
 
     private static List<String> convert(List<String> in) {

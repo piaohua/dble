@@ -5,14 +5,11 @@ import com.actiontech.dble.backend.mysql.nio.handler.ResponseHandler;
 import com.actiontech.dble.backend.pool.PooledConnectionListener;
 import com.actiontech.dble.backend.pool.ReadTimeStatusInstance;
 import com.actiontech.dble.config.model.SystemConfig;
-import com.actiontech.dble.config.model.db.DbGroupConfig;
 import com.actiontech.dble.net.IOProcessor;
 import com.actiontech.dble.net.SocketWR;
 import com.actiontech.dble.net.connection.BackendConnection;
 import com.actiontech.dble.net.connection.PooledConnection;
 import com.actiontech.dble.net.impl.aio.AIOSocketWR;
-import com.actiontech.dble.net.impl.nio.NIOConnector;
-import com.actiontech.dble.net.impl.nio.NIOReactor;
 import com.actiontech.dble.net.impl.nio.NIOSocketWR;
 
 import java.io.IOException;
