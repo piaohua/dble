@@ -243,7 +243,7 @@ public class ConfigInitializer implements ProblemReporter {
             BoolPtr isDSConnectedPtr = new BoolPtr(false);
             TestTask testDsTask = new TestTask(ds, isDSConnectedPtr);
             testDsTask.start();
-            testDsTask.join(3000);
+            testDsTask.join(3000000);
             boolean isDbInstanceConnected = isDSConnectedPtr.get();
             ds.setTestConnSuccess(isDbInstanceConnected);
             if (!isDbInstanceConnected) {

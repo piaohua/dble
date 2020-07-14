@@ -32,7 +32,6 @@ public class ProtoHandlerResult {
         return packetData;
     }
 
-
     public int getPacketLength() {
         return packetLength;
     }

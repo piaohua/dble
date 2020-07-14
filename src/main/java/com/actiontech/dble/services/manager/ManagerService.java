@@ -1,5 +1,6 @@
 package com.actiontech.dble.services.manager;
 
+import com.actiontech.dble.backend.mysql.MySQLMessage;
 import com.actiontech.dble.config.Capabilities;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.config.model.SystemConfig;
@@ -7,6 +8,7 @@ import com.actiontech.dble.config.model.user.ManagerUserConfig;
 import com.actiontech.dble.config.model.user.UserName;
 import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.mysql.AuthPacket;
+import com.actiontech.dble.net.mysql.CharsetNames;
 import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.net.mysql.PingPacket;
 import com.actiontech.dble.net.service.AuthResultInfo;
@@ -51,7 +53,7 @@ public class ManagerService extends MySQLBasedService implements FrontEndService
             case MySQLPacket.COM_QUERY:
                 //commands.doQuery();
                 try {
-                    handler.query(proto.getSQL(data, this.getConnection().getCharsetName()));
+                    handler.query(getCommand(data, this.getConnection().getCharsetName()));
                 } catch (UnsupportedEncodingException e) {
                     writeErrMessage(ErrorCode.ER_UNKNOWN_CHARACTER_SET, "Unknown charset '" + this.getConnection().getCharsetName().getClient() + "'");
                 }
@@ -92,6 +94,19 @@ public class ManagerService extends MySQLBasedService implements FrontEndService
     @Override
     public String getExecuteSql() {
         return "";
+    }
+
+
+    public String getCommand(byte[] data, CharsetNames charsetName) throws UnsupportedEncodingException {
+        String sql = null;
+        try {
+            MySQLMessage mm = new MySQLMessage(data);
+            mm.position(5);
+            sql = mm.readString(charsetName.getClient());
+        } catch (UnsupportedEncodingException e) {
+            throw e;
+        }
+        return sql;
     }
 
 

@@ -230,10 +230,8 @@ public class SingleNodeHandler implements ResponseHandler, LoadDataResponseHandl
             OkPacket ok = new OkPacket();
             ok.read(data);
             if (rrs.isLoadData()) {
-                byte lastPackId = shardingService.getLoadDataInfileHandler().getLastPackId();
-                ok.setPacketId(++lastPackId); // OK_PACKET
+                ok.setPacketId(shardingService.nextPacketId()); // OK_PACKET
                 shardingService.getLoadDataInfileHandler().clear();
-
             } else {
                 ok.setPacketId(shardingService.nextPacketId()); // OK_PACKET
             }

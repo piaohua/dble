@@ -5,8 +5,6 @@
 
 package com.actiontech.dble.net;
 
-import com.actiontech.dble.net.connection.*;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 

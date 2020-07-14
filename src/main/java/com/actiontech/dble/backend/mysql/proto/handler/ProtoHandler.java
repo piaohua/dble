@@ -1,8 +1,5 @@
 package com.actiontech.dble.backend.mysql.proto.handler;
 
-import com.actiontech.dble.net.mysql.CharsetNames;
-
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 /**
@@ -11,8 +8,5 @@ import java.nio.ByteBuffer;
 public interface ProtoHandler {
 
     ProtoHandlerResult handle(ByteBuffer dataBuffer, int dataBufferOffset, boolean isSupportCompress);
-
-    String getSQL(byte[] data, CharsetNames charsetNames) throws UnsupportedEncodingException;
-
 
 }

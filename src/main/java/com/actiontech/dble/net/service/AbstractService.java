@@ -38,7 +38,6 @@ public abstract class AbstractService implements Service {
 
         boolean hasReming = true;
         int offset = 0;
-        //int totalsize = 0; debug usage
         while (hasReming) {
             ProtoHandlerResult result = proto.handle(dataBuffer, offset, isSupportCompress);
             switch (result.getCode()) {
@@ -46,33 +45,29 @@ public abstract class AbstractService implements Service {
                     connection.readReachEnd();
                     byte[] packetData = result.getPacketData();
                     if (packetData != null) {
-                        //LOGGER.debug(" get the packet of length " + packetData.length + " of connection " + connection.toString());
-                        //totalsize += packetData.length;
                         taskCreate(packetData);
                     }
                     dataBuffer.clear();
-                    //LOGGER.debug("get OUT OF THE READ BECAUSE OF THE REACH_END_BUFFER");
                     hasReming = false;
                     break;
                 case BUFFER_PACKET_UNCOMPLETE:
                     connection.compactReadBuffer(dataBuffer, result.getOffset());
-                    //LOGGER.debug("get OUT OF THE READ BECAUSE OF THE BUFFER_PACKET_UNCOMPLETE");
                     hasReming = false;
                     break;
                 case BUFFER_NOT_BIG_ENOUGH:
                     connection.ensureFreeSpaceOfReadBuffer(dataBuffer, result.getOffset(), result.getPacketLength());
-                    //LOGGER.debug("get OUT OF THE READ BECAUSE OF THE BUFFER_NOT_BIG_ENOUGH");
                     hasReming = false;
                     break;
                 case STLL_DATA_REMING:
-                    //totalsize += result.getPacketData().length;
-                    taskCreate(result.getPacketData());
+                    byte[] partData = result.getPacketData();
+                    if (partData != null) {
+                        taskCreate(partData);
+                    }
                     offset = result.getOffset();
                     continue;
                 default:
                     throw new RuntimeException("unknow error when read data");
             }
-            //LOGGER.info("the read end of the result is +++++++++++++++++++++ " + totalsize);
         }
     }
 

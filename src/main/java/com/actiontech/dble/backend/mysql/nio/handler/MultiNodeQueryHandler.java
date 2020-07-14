@@ -222,8 +222,6 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
         pauseTime((MySQLResponseService) service);
         ErrorPacket errPacket = new ErrorPacket();
         errPacket.read(data);
-        byte lastPacketId = (byte) session.getShardingService().nextPacketId();
-        errPacket.setPacketId(++lastPacketId); //just for normal error
         err = errPacket;
         session.resetMultiStatementStatus();
         lock.lock();
@@ -241,6 +239,7 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
                 } else if (byteBuffer != null) {
                     session.getFrontConnection().write(byteBuffer);
                 }
+                errPacket.setPacketId(session.getShardingService().nextPacketId()); //just for normal error
                 handleEndPacket(errPacket, AutoTxOperation.ROLLBACK, false);
             }
         } finally {

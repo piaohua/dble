@@ -37,6 +37,8 @@ public final class PasswordAuthPlugin {
 
     public static final byte[] GETPUBLICKEY_NATIVE_FIRST = new byte[]{1, 0, 0, 5, 2};
 
+    public static final byte[] PASS_WITH_PUBLICKEY_TEST = new byte[]{0, 1, 0, 5};
+
     public static final byte[] PASS_WITH_PUBLICKEY_NATIVE_FIRST = new byte[]{0, 1, 0, 7};
 
     public static final byte[] WRITECACHINGPASSWORD = new byte[]{0x20, 0, 0, 3};
@@ -175,10 +177,12 @@ public final class PasswordAuthPlugin {
         if (Arrays.equals(getPublicKeyType, PasswordAuthPlugin.GETPUBLICKEY_NATIVE_FIRST)) {
             out.write(PasswordAuthPlugin.PASS_WITH_PUBLICKEY_NATIVE_FIRST);
         } else if (Arrays.equals(getPublicKeyType, PasswordAuthPlugin.GETPUBLICKEY)) {
-            out.write(PasswordAuthPlugin.PASS_WITH_PUBLICKEY);
+            LOGGER.info("write out for the GETPUBLICKEY ..............");
+            out.write(PasswordAuthPlugin.PASS_WITH_PUBLICKEY_TEST);
         } else {
             return false;
         }
+        LOGGER.info("send password with ");
         out.write(encryptedPassword);
         out.flush();
         BinaryPacket resEncryBin = new BinaryPacket();

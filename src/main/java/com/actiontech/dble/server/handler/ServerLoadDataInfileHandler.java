@@ -63,7 +63,6 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
     private ShardingService service;
     private String sql;
     private String fileName;
-    private byte packID = 0;
     private MySqlLoadDataInFileStatement statement;
 
     private Map<String, LoadData> routeResultMap = new HashMap<>();
@@ -82,8 +81,6 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
     private int partitionColumnIndex = -1;
     private int autoIncrementIndex = -1;
     private boolean appendAutoIncrementColumn = false;
-    private boolean isStartLoadData = false;
-
 
     public ServerLoadDataInfileHandler(ShardingService service) {
         this.service = service;
@@ -127,10 +124,7 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
 
     @Override
     public void start(String strSql) {
-        clear();
         this.sql = strSql;
-        this.packID = (byte) service.getSession2().getPacketId().get();
-
         if (this.checkPartition(strSql)) {
             service.writeErrMessage(ErrorCode.ER_UNSUPPORTED_PS, " unsupported load data with Partition");
             clear();
@@ -199,7 +193,6 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
 
         parseLoadDataPram();
         if (statement.isLocal()) {
-            isStartLoadData = true;
             //request file from client
             ByteBuffer buffer = service.allocate();
             RequestFilePacket filePacket = new RequestFilePacket();
@@ -216,7 +209,6 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
                     RouteResultset rrs = buildResultSet(routeResultMap);
                     if (rrs != null) {
                         flushDataToFile();
-                        isStartLoadData = false;
                         service.getSession2().execute(rrs);
                     }
                 }
@@ -575,12 +567,10 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
 
 
     @Override
-    public void end(byte packId) {
-        isStartLoadData = false;
-        this.packID = packId;
+    public void end(byte packetId) {
+        service.setPacketId(packetId);
         //empty packet for end
         saveByteOrToFile(null, true);
-
         if (isHasStoreToFile) {
             parseFileByLine(tempFile, loadData.getCharset());
         } else {
@@ -588,7 +578,7 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
             if ("".equals(content)) {
                 clear();
                 OkPacket ok = new OkPacket();
-                ok.setPacketId(++packId);
+                ok.setPacketId(service.nextPacketId());
                 ok.setMessage("Records: 0  Deleted: 0  Skipped: 0  Warnings: 0".getBytes());
                 ok.write(service.getConnection());
                 return;
@@ -630,7 +620,7 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
                             parseOneLine(row);
                         } catch (Exception e) {
                             clear();
-                            service.writeErrMessage(++packId, ErrorCode.ER_WRONG_VALUE_COUNT_ON_ROW, "row data can't not calculate a sharding value," + e.getMessage());
+                            service.writeErrMessage(ErrorCode.ER_WRONG_VALUE_COUNT_ON_ROW, "row data can't not calculate a sharding value," + e.getMessage());
                             return;
                         }
                     } else {
@@ -689,8 +679,7 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
                         parseOneLine(row);
                     } catch (Exception e) {
                         clear();
-                        byte packId = packID;
-                        service.writeErrMessage(++packId, ErrorCode.ER_WRONG_VALUE_COUNT_ON_ROW, "row data can't not calculate a sharding value," + e.getMessage());
+                        service.writeErrMessage(ErrorCode.ER_WRONG_VALUE_COUNT_ON_ROW, "row data can't not calculate a sharding value," + e.getMessage());
                         return false;
                     }
                     empty = false;
@@ -699,10 +688,9 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
                 }
             }
             if (empty) {
-                byte packId = packID;
                 clear();
                 OkPacket ok = new OkPacket();
-                ok.setPacketId(++packId);
+                ok.setPacketId(service.nextPacketId());
                 ok.setMessage("Records: 0  Deleted: 0  Skipped: 0  Warnings: 0".getBytes());
                 ok.write(service.getConnection());
                 return false;
@@ -758,11 +746,10 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
 
 
     public void clear() {
-        isStartLoadData = false;
+        service.resetProto();
         schema = null;
         tableConfig = null;
         isHasStoreToFile = false;
-        packID = 0;
         tempByteBufferSize = 0;
         tableName = null;
         partitionColumnIndex = -1;
@@ -783,18 +770,6 @@ public final class ServerLoadDataInfileHandler implements LoadDataInfileHandler 
         fileName = null;
         statement = null;
         routeResultMap.clear();
-    }
-
-
-    @Override
-    public byte getLastPackId() {
-        return packID;
-    }
-
-
-    @Override
-    public boolean isStartLoadData() {
-        return isStartLoadData;
     }
 
 

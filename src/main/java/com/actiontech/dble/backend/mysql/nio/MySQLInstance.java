@@ -166,7 +166,7 @@ public class MySQLInstance extends PhysicalDbInstance {
                             break;
                     }
                 } catch (Exception e) {
-                    LOGGER.warn("testConnection failed");
+                    LOGGER.warn("testConnection failed", e);
                     isConnected = false;
                 }
             } else {

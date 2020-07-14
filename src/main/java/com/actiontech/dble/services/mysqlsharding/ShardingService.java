@@ -31,6 +31,7 @@ import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.server.response.InformationSchemaProfiling;
 import com.actiontech.dble.server.util.SchemaUtil;
 import com.actiontech.dble.services.MySQLBasedService;
+import com.actiontech.dble.services.mysqlsharding.handler.LoadDataProtoHandlerImpl;
 import com.actiontech.dble.singleton.FrontendUserManager;
 import com.actiontech.dble.singleton.RouteService;
 import com.actiontech.dble.singleton.SerializableLock;
@@ -488,6 +489,8 @@ public class ShardingService extends MySQLBasedService implements FrontEndServic
     public void loadDataInfileStart(String sql) {
         if (loadDataInfileHandler != null) {
             try {
+                loadDataInfileHandler.clear();
+                proto = new LoadDataProtoHandlerImpl(loadDataInfileHandler);
                 loadDataInfileHandler.start(sql);
             } catch (Exception e) {
                 LOGGER.info("load data error", e);
@@ -773,5 +776,9 @@ public class ShardingService extends MySQLBasedService implements FrontEndServic
     @Override
     public void userConnectionCount() {
         FrontendUserManager.getInstance().countDown(user, false);
+    }
+
+    public void resetProto() {
+        this.proto = new MySQLProtoHandlerImpl();
     }
 }

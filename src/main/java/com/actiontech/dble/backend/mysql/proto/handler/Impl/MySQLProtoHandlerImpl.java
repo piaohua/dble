@@ -1,14 +1,10 @@
 package com.actiontech.dble.backend.mysql.proto.handler.Impl;
 
-import com.actiontech.dble.backend.mysql.MySQLMessage;
 import com.actiontech.dble.backend.mysql.proto.handler.ProtoHandler;
 import com.actiontech.dble.backend.mysql.proto.handler.ProtoHandlerResult;
-import com.actiontech.dble.net.mysql.CharsetNames;
 import com.actiontech.dble.net.mysql.MySQLPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import static com.actiontech.dble.backend.mysql.proto.handler.ProtoHandlerResultCode.*;
@@ -77,18 +73,7 @@ public class MySQLProtoHandlerImpl implements ProtoHandler {
         }
     }
 
-    @Override
-    public String getSQL(byte[] data, CharsetNames charsetName) throws UnsupportedEncodingException {
-        String sql = null;
-        try {
-            MySQLMessage mm = new MySQLMessage(data);
-            mm.position(5);
-            sql = mm.readString(charsetName.getClient());
-        } catch (UnsupportedEncodingException e) {
-            throw e;
-        }
-        return sql;
-    }
+
 
 
     private int getPacketLength(ByteBuffer buffer, int offset, boolean isSupportCompress) {
