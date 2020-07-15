@@ -15,6 +15,7 @@ import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.connection.BackendConnection;
 import com.actiontech.dble.net.handler.FrontendPrepareHandler;
 import com.actiontech.dble.net.mysql.AuthPacket;
+import com.actiontech.dble.net.mysql.ErrorPacket;
 import com.actiontech.dble.net.mysql.MySQLPacket;
 import com.actiontech.dble.net.service.AuthResultInfo;
 import com.actiontech.dble.net.service.FrontEndService;
@@ -196,7 +197,7 @@ public class ShardingService extends MySQLBasedService implements FrontEndServic
                 protoLogicHandler.setOption(data);
                 break;
             case MySQLPacket.COM_CHANGE_USER:
-                //todo 如果是切换用户，那么就转到验证的service里面去
+                //todo if get the user change packet ,the service should trance into auth
                 /*commands.doOther();
                 changeUserPacket = new ChangeUserPacket(sc.getClientFlags(), CharsetUtil.getCollationIndex(sc.getCharset().getCollation()));
                 sc.changeUser(data, changeUserPacket, isAuthSwitch);*/
@@ -349,6 +350,13 @@ public class ShardingService extends MySQLBasedService implements FrontEndServic
             session.setKilled(false);
             session.setDiscard(false);
         }
+    }
+
+
+    @Override
+    protected void writeErrMessage(byte id, int vendorCode, String sqlState, String msg) {
+        markFinished();
+        super.writeErrMessage(id, vendorCode, sqlState, msg);
     }
 
     public void markFinished() {
@@ -780,5 +788,9 @@ public class ShardingService extends MySQLBasedService implements FrontEndServic
 
     public void resetProto() {
         this.proto = new MySQLProtoHandlerImpl();
+    }
+
+    public long getClientFlags() {
+        return clientFlags;
     }
 }

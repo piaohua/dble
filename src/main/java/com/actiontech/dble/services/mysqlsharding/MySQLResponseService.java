@@ -52,13 +52,9 @@ public class MySQLResponseService extends MySQLBasedService {
 
     private volatile boolean isExecuting = false;
 
-    private volatile long lastTime;
-
     private volatile Object attachment;
 
     private volatile NonBlockingSession session;
-
-    private final MySQLConnectionStatus status = new MySQLConnectionStatus();
 
     private volatile boolean metaDataSynced = true;
 
@@ -178,14 +174,9 @@ public class MySQLResponseService extends MySQLBasedService {
         }
     }
 
-    @Override
-    public void markFinished() {
-
-    }
 
     @Override
     public void taskToTotalQueue(ServiceTask task) {
-        //LOGGER.info("count of the xxxxxxxxxxxxxxxxxxxxxx " + taskCommand++);
         Executor executor;
         if (this.isComplexQuery()) {
             executor = DbleServer.getInstance().getComplexQueryExecutor();
@@ -205,8 +196,6 @@ public class MySQLResponseService extends MySQLBasedService {
                         isHandling.set(false);
                         if (taskQueue.size() > 0) {
                             taskToTotalQueue(null);
-                        } else {
-                            //LOGGER.info("taskQueue size  == " + taskQueue.size());
                         }
                     }
                 }
@@ -244,7 +233,7 @@ public class MySQLResponseService extends MySQLBasedService {
             throw new RuntimeException(e);
         }
         isExecuting = true;
-        lastTime = TimeUtil.currentTimeMillis();
+        connection.setLastTime(TimeUtil.currentTimeMillis());
         int size = packet.calcPacketSize();
         if (size >= MySQLPacket.MAX_PACKET_SIZE) {
             packet.writeBigPackage(this, size);
@@ -609,7 +598,7 @@ public class MySQLResponseService extends MySQLBasedService {
             throw new RuntimeException(e);
         }
         isExecuting = true;
-        lastTime = TimeUtil.currentTimeMillis();
+        connection.setLastTime(TimeUtil.currentTimeMillis());
         return new WriteToBackendTask(this, packet);
     }
 

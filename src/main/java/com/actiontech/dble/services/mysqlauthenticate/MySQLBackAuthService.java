@@ -189,8 +189,4 @@ public class MySQLBackAuthService extends MySQLBasedService implements AuthServi
         }
     }
 
-    @Override
-    public void markFinished() {
-
-    }
 }

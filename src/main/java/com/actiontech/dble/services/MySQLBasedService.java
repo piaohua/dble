@@ -79,8 +79,6 @@ public abstract class MySQLBasedService extends AbstractService {
 
     protected abstract void handleInnerData(byte[] data);
 
-    public abstract void markFinished();
-
     public UserConfig getUserConfig() {
         return userConfig;
     }
@@ -98,7 +96,6 @@ public abstract class MySQLBasedService extends AbstractService {
     }
 
     protected void writeErrMessage(byte id, int vendorCode, String sqlState, String msg) {
-        markFinished();
         ErrorPacket err = new ErrorPacket();
         err.setPacketId(id);
         err.setErrNo(vendorCode);

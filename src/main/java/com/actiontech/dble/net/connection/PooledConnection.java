@@ -81,6 +81,9 @@ public abstract class PooledConnection extends AbstractConnection {
         return lastTime;
     }
 
+    public void setLastTime(long time) {
+        this.lastTime = time;
+    }
 
     public long getPoolDestroyedTime() {
         return poolDestroyedTime;

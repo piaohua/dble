@@ -1,6 +1,7 @@
 package com.actiontech.dble.singleton;
 
 import com.actiontech.dble.net.connection.FrontendConnection;
+import com.actiontech.dble.net.service.AbstractService;
 import io.jaegertracing.internal.JaegerTracer;
 import io.jaegertracing.internal.metrics.Metrics;
 import io.jaegertracing.internal.metrics.NoopMetricsFactory;
@@ -9,6 +10,7 @@ import io.jaegertracing.internal.reporters.LoggingReporter;
 import io.jaegertracing.internal.reporters.RemoteReporter;
 import io.jaegertracing.internal.samplers.ProbabilisticSampler;
 import io.jaegertracing.thrift.internal.senders.HttpSender;
+import io.opentracing.Scope;
 import io.opentracing.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,10 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by szf on 2020/5/9.
  */
 public class TraceManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CacheService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TraceManager.class);
     private static final TraceManager INSTANCE = new TraceManager();
     private final JaegerTracer tracer;
-    private final Map<FrontendConnection, List<Span>> connectionTracerMap = new ConcurrentHashMap<>();
+    private final Map<AbstractService, List<Span>> connectionTracerMap = new ConcurrentHashMap<>();
 
 
     private TraceManager() {
@@ -53,27 +55,24 @@ public class TraceManager {
         return INSTANCE.tracer;
     }
 
-    public static void setSpan(FrontendConnection connection, Span newSpan) {
-        if (INSTANCE.connectionTracerMap.get(connection) == null) {
+
+    public static Span threadTrace(AbstractService service, String traceMessage) {
+        Span span = TraceManager.getTracer().buildSpan(traceMessage).start();
+        Scope scope = TraceManager.getTracer().scopeManager().activate(span);
+
+        if (INSTANCE.connectionTracerMap.get(service) == null) {
             List<Span> spanList = new ArrayList<>();
-            spanList.add(newSpan);
-            INSTANCE.connectionTracerMap.put(connection, spanList);
+            spanList.add(span);
+            //INSTANCE.connectionTracerMap.put(connection, spanList);
         } else {
-            List<Span> spanList = INSTANCE.connectionTracerMap.get(connection);
-            spanList.add(newSpan);
+            List<Span> spanList = INSTANCE.connectionTracerMap.get(service);
+            spanList.add(span);
         }
+        return span;
     }
 
-    public static Span popSpan(FrontendConnection connection, boolean needRemove) {
-        List<Span> spanList = INSTANCE.connectionTracerMap.get(connection);
-        if (!needRemove) {
-            return spanList.get(spanList.size() - 1);
-        } else {
-            Span span = spanList.get(spanList.size() - 1);
-            spanList.remove(span);
-            return span;
-        }
-    }
+
+
 
     public static List<Span> popFullList(FrontendConnection connection) {
         List<Span> spanList = INSTANCE.connectionTracerMap.get(connection);
