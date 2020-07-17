@@ -6,6 +6,8 @@ import com.actiontech.dble.backend.mysql.proto.handler.ProtoHandler;
 import com.actiontech.dble.backend.mysql.proto.handler.ProtoHandlerResult;
 import com.actiontech.dble.net.connection.AbstractConnection;
 import com.actiontech.dble.net.mysql.MySQLPacket;
+import com.actiontech.dble.singleton.TraceManager;
+import io.opentracing.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +38,7 @@ public abstract class AbstractService implements Service {
     @Override
     public void handle(ByteBuffer dataBuffer) {
 
+        this.sessionStart();
         boolean hasReming = true;
         int offset = 0;
         while (hasReming) {
@@ -85,6 +88,9 @@ public abstract class AbstractService implements Service {
 
     protected abstract void taskToTotalQueue(ServiceTask task);
 
+    protected void sessionStart() {
+        //
+    }
 
     @Override
     public void execute(ServiceTask task) {
@@ -95,6 +101,7 @@ public abstract class AbstractService implements Service {
     public void cleanup() {
         this.currentTask = null;
         this.taskQueue.clear();
+        TraceManager.sessionFinish(this);
     }
 
     public void register() throws IOException {
@@ -108,7 +115,7 @@ public abstract class AbstractService implements Service {
     public abstract void handleData(ServiceTask task);
 
     public int nextPacketId() {
-        //LOGGER.info("get packetid increment " + packetId.get(), new Exception("test"));
+       // LOGGER.info("get packetid increment " + connection.getId() + "  " + packetId.get(), new Exception("test"));
         return packetId.incrementAndGet();
     }
 
@@ -149,11 +156,18 @@ public abstract class AbstractService implements Service {
 
 
     public void write(MySQLPacket packet) {
+        if (packet.isEndOfSession() || packet.isEndOfQuery()) {
+            TraceManager.sessionFinish(this);
+        }
         packet.bufferWrite(connection);
     }
 
     public void writeWithBuffer(MySQLPacket packet, ByteBuffer buffer) {
-        packet.write(buffer, this, true);
+        buffer = packet.write(buffer, this, true);
+        connection.write(buffer);
+        if (packet.isEndOfSession() || packet.isEndOfQuery()) {
+            TraceManager.sessionFinish(this);
+        }
     }
 
     public void recycleBuffer(ByteBuffer buffer) {
@@ -209,4 +223,8 @@ public abstract class AbstractService implements Service {
         isSupportCompress = supportCompress;
     }
 
+
+    public String toBriefString() {
+        return "Service " + this.getClass() + " " + connection.getId();
+    }
 }

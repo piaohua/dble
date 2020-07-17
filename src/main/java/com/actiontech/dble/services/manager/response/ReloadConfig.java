@@ -39,6 +39,8 @@ import com.actiontech.dble.server.variables.SystemVariables;
 import com.actiontech.dble.server.variables.VarsExtractorHandler;
 import com.actiontech.dble.singleton.CronScheduler;
 import com.actiontech.dble.singleton.FrontendUserManager;
+import com.actiontech.dble.singleton.TraceManager;
+import io.opentracing.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,71 +72,77 @@ public final class ReloadConfig {
         }
     }
 
-    private static void execute(ManagerService c, final int loadAllMode) {
+    private static void execute(ManagerService service, final int loadAllMode) {
         if (ClusterConfig.getInstance().isClusterEnable()) {
-            reloadWithCluster(c, loadAllMode);
+            reloadWithCluster(service, loadAllMode);
         } else {
-            reloadWithoutCluster(c, loadAllMode);
+            reloadWithoutCluster(service, loadAllMode);
         }
         ReloadManager.reloadFinish();
     }
 
     private static void reloadWithCluster(ManagerService service, int loadAllMode) {
-        DistributeLock distributeLock = ClusterHelper.createDistributeLock(ClusterPathUtil.getConfChangeLockPath(), SystemConfig.getInstance().getInstanceName());
-        if (!distributeLock.acquire()) {
-            service.writeErrMessage(ErrorCode.ER_YES, "Other instance is reloading/rolling back, please try again later.");
-            return;
-        }
-        LOGGER.info("reload config: added distributeLock " + ClusterPathUtil.getConfChangeLockPath() + "");
-        ClusterDelayProvider.delayAfterReloadLock();
-        if (!ReloadManager.startReload(TRIGGER_TYPE_COMMAND, ConfStatus.Status.RELOAD_ALL)) {
-            writeErrorResult(service, "Reload status error ,other client or cluster may in reload");
-            return;
-        }
-        //step 1 lock the local meta ,than all the query depends on meta will be hanging
-        final ReentrantReadWriteLock lock = DbleServer.getInstance().getConfig().getLock();
-        lock.writeLock().lock();
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "reload-with-cluster");
         try {
-            //step 2 reload the local config file
-            if (!reloadAll(loadAllMode)) {
-                writeSpecialError(service, "Reload interruputed by others,config should be reload");
+            DistributeLock distributeLock = ClusterHelper.createDistributeLock(ClusterPathUtil.getConfChangeLockPath(), SystemConfig.getInstance().getInstanceName());
+            if (!distributeLock.acquire()) {
+                service.writeErrMessage(ErrorCode.ER_YES, "Other instance is reloading/rolling back, please try again later.");
                 return;
             }
-            ReloadLogHelper.info("reload config: single instance(self) finished", LOGGER);
-            ClusterDelayProvider.delayAfterMasterLoad();
-
-            //step 3 if the reload with no error ,than write the config file into cluster center remote
-            ClusterHelper.writeConfToCluster();
-            ReloadLogHelper.info("reload config: sent config file to cluster center", LOGGER);
-
-            //step 4 write the reload flag and self reload result into cluster center,notify the other dble to reload
-            ConfStatus status = new ConfStatus(SystemConfig.getInstance().getInstanceName(),
-                    ConfStatus.Status.RELOAD_ALL, String.valueOf(loadAllMode));
-            ClusterHelper.setKV(ClusterPathUtil.getConfStatusOperatorPath(), status.toString());
-            ReloadLogHelper.info("reload config: sent config status to cluster center", LOGGER);
-            //step 5 start a loop to check if all the dble in cluster is reload finished
-            ReloadManager.waitingOthers();
-            ClusterHelper.createSelfTempNode(ClusterPathUtil.getConfStatusOperatorPath(), ClusterPathUtil.SUCCESS);
-            final String errorMsg = ClusterLogic.waitingForAllTheNode(ClusterPathUtil.getConfStatusOperatorPath(), ClusterPathUtil.SUCCESS);
-            ReloadLogHelper.info("reload config: all instances finished ", LOGGER);
-            ClusterDelayProvider.delayBeforeDeleteReloadLock();
-
-            if (errorMsg != null) {
-                writeErrorResultForCluster(service, errorMsg);
+            LOGGER.info("reload config: added distributeLock " + ClusterPathUtil.getConfChangeLockPath() + "");
+            ClusterDelayProvider.delayAfterReloadLock();
+            if (!ReloadManager.startReload(TRIGGER_TYPE_COMMAND, ConfStatus.Status.RELOAD_ALL)) {
+                writeErrorResult(service, "Reload status error ,other client or cluster may in reload");
                 return;
             }
-            writeOKResult(service);
-        } catch (Exception e) {
-            LOGGER.warn("reload config failure", e);
-            writeErrorResult(service, e.getMessage() == null ? e.toString() : e.getMessage());
+            //step 1 lock the local meta ,than all the query depends on meta will be hanging
+            final ReentrantReadWriteLock lock = DbleServer.getInstance().getConfig().getLock();
+            lock.writeLock().lock();
+            try {
+                //step 2 reload the local config file
+                if (!reloadAll(loadAllMode)) {
+                    writeSpecialError(service, "Reload interruputed by others,config should be reload");
+                    return;
+                }
+                ReloadLogHelper.info("reload config: single instance(self) finished", LOGGER);
+                ClusterDelayProvider.delayAfterMasterLoad();
+
+                //step 3 if the reload with no error ,than write the config file into cluster center remote
+                ClusterHelper.writeConfToCluster();
+                ReloadLogHelper.info("reload config: sent config file to cluster center", LOGGER);
+
+                //step 4 write the reload flag and self reload result into cluster center,notify the other dble to reload
+                ConfStatus status = new ConfStatus(SystemConfig.getInstance().getInstanceName(),
+                        ConfStatus.Status.RELOAD_ALL, String.valueOf(loadAllMode));
+                ClusterHelper.setKV(ClusterPathUtil.getConfStatusOperatorPath(), status.toString());
+                ReloadLogHelper.info("reload config: sent config status to cluster center", LOGGER);
+                //step 5 start a loop to check if all the dble in cluster is reload finished
+                ReloadManager.waitingOthers();
+                ClusterHelper.createSelfTempNode(ClusterPathUtil.getConfStatusOperatorPath(), ClusterPathUtil.SUCCESS);
+                final String errorMsg = ClusterLogic.waitingForAllTheNode(ClusterPathUtil.getConfStatusOperatorPath(), ClusterPathUtil.SUCCESS);
+                ReloadLogHelper.info("reload config: all instances finished ", LOGGER);
+                ClusterDelayProvider.delayBeforeDeleteReloadLock();
+
+                if (errorMsg != null) {
+                    writeErrorResultForCluster(service, errorMsg);
+                    return;
+                }
+                writeOKResult(service);
+            } catch (Exception e) {
+                LOGGER.warn("reload config failure", e);
+                writeErrorResult(service, e.getMessage() == null ? e.toString() : e.getMessage());
+            } finally {
+                lock.writeLock().unlock();
+                ClusterHelper.cleanPath(ClusterPathUtil.getConfStatusOperatorPath() + SEPARATOR);
+                distributeLock.release();
+            }
         } finally {
-            lock.writeLock().unlock();
-            ClusterHelper.cleanPath(ClusterPathUtil.getConfStatusOperatorPath() + SEPARATOR);
-            distributeLock.release();
+            TraceManager.finishSpan(service, traceObject);
         }
     }
 
     private static void reloadWithoutCluster(ManagerService service, final int loadAllMode) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "reload-in-local");
         final ReentrantReadWriteLock lock = DbleServer.getInstance().getConfig().getLock();
         lock.writeLock().lock();
         try {
@@ -154,6 +162,7 @@ public final class ReloadConfig {
             }
         } finally {
             lock.writeLock().unlock();
+            TraceManager.finishSpan(service, traceObject);
         }
         return;
     }
@@ -195,79 +204,85 @@ public final class ReloadConfig {
     }
 
     public static boolean reloadAll(final int loadAllMode) throws Exception {
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("self-reload");
+        try {
         /*
          *  1 load new conf
          *  1.1 ConfigInitializer init adn check itself
          *  1.2 ShardingNode/dbGroup test connection
          */
-        ReloadLogHelper.info("reload config: load all xml info start", LOGGER);
-        ConfigInitializer loader;
-        try {
-            loader = new ConfigInitializer(false);
-        } catch (Exception e) {
-            throw new Exception(e);
-        }
-        ReloadLogHelper.info("reload config: load all xml info end", LOGGER);
-
-        ReloadLogHelper.info("reload config: get variables from random alive dbGroup start", LOGGER);
-
-        try {
-            loader.testConnection();
-        } catch (Exception e) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("just test ,not stop reload, catch exception", e);
+            ReloadLogHelper.info("reload config: load all xml info start", LOGGER);
+            ConfigInitializer loader;
+            try {
+                loader = new ConfigInitializer(false);
+            } catch (Exception e) {
+                throw new Exception(e);
             }
+            ReloadLogHelper.info("reload config: load all xml info end", LOGGER);
+
+            ReloadLogHelper.info("reload config: get variables from random alive dbGroup start", LOGGER);
+
+            try {
+                loader.testConnection();
+            } catch (Exception e) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("just test ,not stop reload, catch exception", e);
+                }
+            }
+
+            boolean forceAllReload = false;
+
+            if ((loadAllMode & ManagerParseConfig.OPTR_MODE) != 0) {
+                forceAllReload = true;
+            }
+
+            if (forceAllReload) {
+                return forceReloadAll(loadAllMode, loader);
+            } else {
+                return intelligentReloadAll(loadAllMode, loader);
+            }
+        } finally {
+            TraceManager.finishSpan(traceObject);
         }
-
-        boolean forceAllReload = false;
-
-        if ((loadAllMode & ManagerParseConfig.OPTR_MODE) != 0) {
-            forceAllReload = true;
-        }
-
-        if (forceAllReload) {
-            return forceReloadAll(loadAllMode, loader);
-        } else {
-            return intelligentReloadAll(loadAllMode, loader);
-        }
-
     }
 
     private static boolean intelligentReloadAll(int loadAllMode, ConfigInitializer loader) throws Exception {
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("self-intelligent-reload");
+        try {
         /* 2.1.1 get diff of dbGroups */
-        ServerConfig config = DbleServer.getInstance().getConfig();
-        Map<String, PhysicalDbGroup> addOrChangeHosts = new HashMap<>();
-        Map<String, PhysicalDbGroup> noChangeHosts = new HashMap<>();
-        Map<String, PhysicalDbGroup> recycleHosts = new HashMap<>();
-        distinguishDbGroup(loader.getDbGroups(), config.getDbGroups(), addOrChangeHosts, noChangeHosts, recycleHosts);
+            ServerConfig config = DbleServer.getInstance().getConfig();
+            Map<String, PhysicalDbGroup> addOrChangeHosts = new HashMap<>();
+            Map<String, PhysicalDbGroup> noChangeHosts = new HashMap<>();
+            Map<String, PhysicalDbGroup> recycleHosts = new HashMap<>();
+            distinguishDbGroup(loader.getDbGroups(), config.getDbGroups(), addOrChangeHosts, noChangeHosts, recycleHosts);
 
-        Map<String, PhysicalDbGroup> mergedDbGroups = new HashMap<>();
-        mergedDbGroups.putAll(addOrChangeHosts);
-        mergedDbGroups.putAll(noChangeHosts);
+            Map<String, PhysicalDbGroup> mergedDbGroups = new HashMap<>();
+            mergedDbGroups.putAll(addOrChangeHosts);
+            mergedDbGroups.putAll(noChangeHosts);
 
-        ConfigUtil.getAndSyncKeyVariables(mergedDbGroups, true);
+            ConfigUtil.getAndSyncKeyVariables(mergedDbGroups, true);
 
-        SystemVariables newSystemVariables = getSystemVariablesFromdbGroup(loader, mergedDbGroups);
-        ReloadLogHelper.info("reload config: get variables from random node end", LOGGER);
-        ServerConfig serverConfig = new ServerConfig(loader);
+            SystemVariables newSystemVariables = getSystemVariablesFromdbGroup(loader, mergedDbGroups);
+            ReloadLogHelper.info("reload config: get variables from random node end", LOGGER);
+            ServerConfig serverConfig = new ServerConfig(loader);
 
-        if (loader.isFullyConfigured()) {
-            if (newSystemVariables.isLowerCaseTableNames()) {
-                ReloadLogHelper.info("reload config: dbGroup's lowerCaseTableNames=1, lower the config properties start", LOGGER);
-                serverConfig.reviseLowerCase();
-                ReloadLogHelper.info("reload config: dbGroup's lowerCaseTableNames=1, lower the config properties end", LOGGER);
-            } else {
-                serverConfig.loadSequence();
-                serverConfig.selfChecking0();
+            if (loader.isFullyConfigured()) {
+                if (newSystemVariables.isLowerCaseTableNames()) {
+                    ReloadLogHelper.info("reload config: dbGroup's lowerCaseTableNames=1, lower the config properties start", LOGGER);
+                    serverConfig.reviseLowerCase();
+                    ReloadLogHelper.info("reload config: dbGroup's lowerCaseTableNames=1, lower the config properties end", LOGGER);
+                } else {
+                    serverConfig.loadSequence();
+                    serverConfig.selfChecking0();
+                }
             }
-        }
-        checkTestConnIfNeed(loadAllMode, loader);
+            checkTestConnIfNeed(loadAllMode, loader);
 
-        Map<UserName, UserConfig> newUsers = serverConfig.getUsers();
-        Map<String, SchemaConfig> newSchemas = serverConfig.getSchemas();
-        Map<String, ShardingNode> newShardingNodes = serverConfig.getShardingNodes();
-        Map<ERTable, Set<ERTable>> newErRelations = serverConfig.getErRelations();
-        Map<String, PhysicalDbGroup> newDbGroups = serverConfig.getDbGroups();
+            Map<UserName, UserConfig> newUsers = serverConfig.getUsers();
+            Map<String, SchemaConfig> newSchemas = serverConfig.getSchemas();
+            Map<String, ShardingNode> newShardingNodes = serverConfig.getShardingNodes();
+            Map<ERTable, Set<ERTable>> newErRelations = serverConfig.getErRelations();
+            Map<String, PhysicalDbGroup> newDbGroups = serverConfig.getDbGroups();
 
         /*
          *  2 transform
@@ -281,33 +296,36 @@ public final class ReloadConfig {
 
 
         /* 2.2 init the lDbInstance with diff*/
-        ReloadLogHelper.info("reload config: init new dbGroup start", LOGGER);
-        String reasonMsg = initDbGroupByMap(mergedDbGroups, newShardingNodes, loader.isFullyConfigured());
-        ReloadLogHelper.info("reload config: init new dbGroup end", LOGGER);
-        if (reasonMsg == null) {
+            ReloadLogHelper.info("reload config: init new dbGroup start", LOGGER);
+            String reasonMsg = initDbGroupByMap(mergedDbGroups, newShardingNodes, loader.isFullyConfigured());
+            ReloadLogHelper.info("reload config: init new dbGroup end", LOGGER);
+            if (reasonMsg == null) {
             /* 2.3 apply new conf */
-            ReloadLogHelper.info("reload config: apply new config start", LOGGER);
-            boolean result;
-            try {
-                result = config.reload(newUsers, newSchemas, newShardingNodes, mergedDbGroups, addOrChangeHosts, recycleHosts, newErRelations,
-                        newSystemVariables, loader.isFullyConfigured(), loadAllMode);
-                CronScheduler.getInstance().init(config.getSchemas());
-                if (!result) {
+                ReloadLogHelper.info("reload config: apply new config start", LOGGER);
+                boolean result;
+                try {
+                    result = config.reload(newUsers, newSchemas, newShardingNodes, mergedDbGroups, addOrChangeHosts, recycleHosts, newErRelations,
+                            newSystemVariables, loader.isFullyConfigured(), loadAllMode);
+                    CronScheduler.getInstance().init(config.getSchemas());
+                    if (!result) {
+                        initFailed(newDbGroups);
+                    }
+                    FrontendUserManager.getInstance().initForLatest(newUsers, SystemConfig.getInstance().getMaxCon());
+                    ReloadLogHelper.info("reload config: apply new config end", LOGGER);
+                    if (!loader.isFullyConfigured()) {
+                        recycleServerConnections();
+                    }
+                    return result;
+                } catch (Exception e) {
                     initFailed(newDbGroups);
+                    throw e;
                 }
-                FrontendUserManager.getInstance().initForLatest(newUsers, SystemConfig.getInstance().getMaxCon());
-                ReloadLogHelper.info("reload config: apply new config end", LOGGER);
-                if (!loader.isFullyConfigured()) {
-                    recycleServerConnections();
-                }
-                return result;
-            } catch (Exception e) {
+            } else {
                 initFailed(newDbGroups);
-                throw e;
+                throw new Exception(reasonMsg);
             }
-        } else {
-            initFailed(newDbGroups);
-            throw new Exception(reasonMsg);
+        } finally {
+            TraceManager.finishSpan(traceObject);
         }
     }
 
@@ -320,70 +338,75 @@ public final class ReloadConfig {
     }
 
     private static boolean forceReloadAll(final int loadAllMode, ConfigInitializer loader) throws Exception {
-        ServerConfig config = DbleServer.getInstance().getConfig();
-        ServerConfig serverConfig = new ServerConfig(loader);
-        Map<String, PhysicalDbGroup> newDbGroups = serverConfig.getDbGroups();
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("self-force-reload");
+        try {
+            ServerConfig config = DbleServer.getInstance().getConfig();
+            ServerConfig serverConfig = new ServerConfig(loader);
+            Map<String, PhysicalDbGroup> newDbGroups = serverConfig.getDbGroups();
 
-        ConfigUtil.getAndSyncKeyVariables(newDbGroups, true);
+            ConfigUtil.getAndSyncKeyVariables(newDbGroups, true);
 
-        SystemVariables newSystemVariables = getSystemVariablesFromdbGroup(loader, newDbGroups);
-        ReloadLogHelper.info("reload config: get variables from random node end", LOGGER);
-        // recycle old active conn
-        if ((loadAllMode & ManagerParseConfig.OPTF_MODE) != 0) {
-            for (IOProcessor processor : DbleServer.getInstance().getBackendProcessors()) {
-                for (BackendConnection con : processor.getBackends().values()) {
-                    if (con.getPoolDestroyedTime() != 0) {
-                        con.close("old active backend conn will be forced closed by closing front conn");
+            SystemVariables newSystemVariables = getSystemVariablesFromdbGroup(loader, newDbGroups);
+            ReloadLogHelper.info("reload config: get variables from random node end", LOGGER);
+            // recycle old active conn
+            if ((loadAllMode & ManagerParseConfig.OPTF_MODE) != 0) {
+                for (IOProcessor processor : DbleServer.getInstance().getBackendProcessors()) {
+                    for (BackendConnection con : processor.getBackends().values()) {
+                        if (con.getPoolDestroyedTime() != 0) {
+                            con.close("old active backend conn will be forced closed by closing front conn");
+                        }
                     }
                 }
             }
-        }
 
-        if (loader.isFullyConfigured()) {
-            if (newSystemVariables.isLowerCaseTableNames()) {
-                ReloadLogHelper.info("reload config: dbGroup's lowerCaseTableNames=1, lower the config properties start", LOGGER);
-                serverConfig.reviseLowerCase();
-                ReloadLogHelper.info("reload config: dbGroup's lowerCaseTableNames=1, lower the config properties end", LOGGER);
-            } else {
-                serverConfig.loadSequence();
-                serverConfig.selfChecking0();
+            if (loader.isFullyConfigured()) {
+                if (newSystemVariables.isLowerCaseTableNames()) {
+                    ReloadLogHelper.info("reload config: dbGroup's lowerCaseTableNames=1, lower the config properties start", LOGGER);
+                    serverConfig.reviseLowerCase();
+                    ReloadLogHelper.info("reload config: dbGroup's lowerCaseTableNames=1, lower the config properties end", LOGGER);
+                } else {
+                    serverConfig.loadSequence();
+                    serverConfig.selfChecking0();
+                }
             }
-        }
-        checkTestConnIfNeed(loadAllMode, loader);
+            checkTestConnIfNeed(loadAllMode, loader);
 
-        Map<UserName, UserConfig> newUsers = serverConfig.getUsers();
-        Map<String, SchemaConfig> newSchemas = serverConfig.getSchemas();
-        Map<String, ShardingNode> newShardingNodes = serverConfig.getShardingNodes();
-        Map<ERTable, Set<ERTable>> newErRelations = serverConfig.getErRelations();
+            Map<UserName, UserConfig> newUsers = serverConfig.getUsers();
+            Map<String, SchemaConfig> newSchemas = serverConfig.getSchemas();
+            Map<String, ShardingNode> newShardingNodes = serverConfig.getShardingNodes();
+            Map<ERTable, Set<ERTable>> newErRelations = serverConfig.getErRelations();
 
 
-        ReloadLogHelper.info("reload config: init new dbGroup start", LOGGER);
-        String reasonMsg = initDbGroupByMap(newDbGroups, newShardingNodes, loader.isFullyConfigured());
-        ReloadLogHelper.info("reload config: init new dbGroup end", LOGGER);
-        if (reasonMsg == null) {
+            ReloadLogHelper.info("reload config: init new dbGroup start", LOGGER);
+            String reasonMsg = initDbGroupByMap(newDbGroups, newShardingNodes, loader.isFullyConfigured());
+            ReloadLogHelper.info("reload config: init new dbGroup end", LOGGER);
+            if (reasonMsg == null) {
             /* 2.3 apply new conf */
-            ReloadLogHelper.info("reload config: apply new config start", LOGGER);
-            boolean result;
-            try {
-                result = config.reload(newUsers, newSchemas, newShardingNodes, newDbGroups, newDbGroups, config.getDbGroups(), newErRelations,
-                        newSystemVariables, loader.isFullyConfigured(), loadAllMode);
-                CronScheduler.getInstance().init(config.getSchemas());
-                if (!result) {
+                ReloadLogHelper.info("reload config: apply new config start", LOGGER);
+                boolean result;
+                try {
+                    result = config.reload(newUsers, newSchemas, newShardingNodes, newDbGroups, newDbGroups, config.getDbGroups(), newErRelations,
+                            newSystemVariables, loader.isFullyConfigured(), loadAllMode);
+                    CronScheduler.getInstance().init(config.getSchemas());
+                    if (!result) {
+                        initFailed(newDbGroups);
+                    }
+                    FrontendUserManager.getInstance().initForLatest(newUsers, SystemConfig.getInstance().getMaxCon());
+                    ReloadLogHelper.info("reload config: apply new config end", LOGGER);
+                    if (!loader.isFullyConfigured()) {
+                        recycleServerConnections();
+                    }
+                    return result;
+                } catch (Exception e) {
                     initFailed(newDbGroups);
+                    throw e;
                 }
-                FrontendUserManager.getInstance().initForLatest(newUsers, SystemConfig.getInstance().getMaxCon());
-                ReloadLogHelper.info("reload config: apply new config end", LOGGER);
-                if (!loader.isFullyConfigured()) {
-                    recycleServerConnections();
-                }
-                return result;
-            } catch (Exception e) {
+            } else {
                 initFailed(newDbGroups);
-                throw e;
+                throw new Exception(reasonMsg);
             }
-        } else {
-            initFailed(newDbGroups);
-            throw new Exception(reasonMsg);
+        } finally {
+            TraceManager.finishSpan(traceObject);
         }
     }
 
@@ -415,12 +438,17 @@ public final class ReloadConfig {
     }
 
     private static void recycleServerConnections() {
-        for (IOProcessor processor : DbleServer.getInstance().getFrontProcessors()) {
-            for (FrontendConnection fcon : processor.getFrontends().values()) {
-                if (!fcon.isManager()) {
-                    fcon.close("Reload causes the service to stop");
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("recycle-sharding-connections");
+        try {
+            for (IOProcessor processor : DbleServer.getInstance().getFrontProcessors()) {
+                for (FrontendConnection fcon : processor.getFrontends().values()) {
+                    if (!fcon.isManager()) {
+                        fcon.close("Reload causes the service to stop");
+                    }
                 }
             }
+        } finally {
+            TraceManager.finishSpan(traceObject);
         }
     }
 

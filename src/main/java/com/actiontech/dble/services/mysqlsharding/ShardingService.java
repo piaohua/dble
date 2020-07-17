@@ -36,6 +36,7 @@ import com.actiontech.dble.services.mysqlsharding.handler.LoadDataProtoHandlerIm
 import com.actiontech.dble.singleton.FrontendUserManager;
 import com.actiontech.dble.singleton.RouteService;
 import com.actiontech.dble.singleton.SerializableLock;
+import com.actiontech.dble.singleton.TraceManager;
 import com.actiontech.dble.statistic.CommandCount;
 import com.actiontech.dble.util.SplitUtil;
 import com.actiontech.dble.util.StringUtil;
@@ -214,35 +215,39 @@ public class ShardingService extends MySQLBasedService implements FrontEndServic
 
 
     public void execute(String sql, int type) {
-        if (connection.isClosed()) {
-            LOGGER.info("ignore execute ,server connection is closed " + this);
-            return;
-        }
-        if (txInterrupted) {
-            writeErrMessage(ErrorCode.ER_YES, txInterruptMsg);
-            return;
-        }
-        session.setQueryStartTime(System.currentTimeMillis());
-
-        String db = this.schema;
-
-        SchemaConfig schemaConfig = null;
-        if (db != null) {
-            schemaConfig = DbleServer.getInstance().getConfig().getSchemas().get(db);
-            if (schemaConfig == null) {
-                writeErrMessage(ErrorCode.ERR_BAD_LOGICDB, "Unknown Database '" + db + "'");
+        try {
+            if (connection.isClosed()) {
+                LOGGER.info("ignore execute ,server connection is closed " + this);
                 return;
             }
-        }
-        //fix navicat
-        // SELECT STATE AS `State`, ROUND(SUM(DURATION),7) AS `Duration`, CONCAT(ROUND(SUM(DURATION)/*100,3), '%') AS `Percentage`
-        // FROM INFORMATION_SCHEMA.PROFILING WHERE QUERY_ID= GROUP BY STATE ORDER BY SEQ
-        if (ServerParse.SELECT == type && sql.contains(" INFORMATION_SCHEMA.PROFILING ") && sql.contains("CONCAT(ROUND(SUM(DURATION)/")) {
-            InformationSchemaProfiling.response(this);
-            return;
-        }
-        shardingSQLHandler.routeEndExecuteSQL(sql, type, schemaConfig);
+            if (txInterrupted) {
+                writeErrMessage(ErrorCode.ER_YES, txInterruptMsg);
+                return;
+            }
+            session.setQueryStartTime(System.currentTimeMillis());
 
+            String db = this.schema;
+
+            SchemaConfig schemaConfig = null;
+            if (db != null) {
+                schemaConfig = DbleServer.getInstance().getConfig().getSchemas().get(db);
+                if (schemaConfig == null) {
+                    writeErrMessage(ErrorCode.ERR_BAD_LOGICDB, "Unknown Database '" + db + "'");
+                    return;
+                }
+            }
+            //fix navicat
+            // SELECT STATE AS `State`, ROUND(SUM(DURATION),7) AS `Duration`, CONCAT(ROUND(SUM(DURATION)/*100,3), '%') AS `Percentage`
+            // FROM INFORMATION_SCHEMA.PROFILING WHERE QUERY_ID= GROUP BY STATE ORDER BY SEQ
+            if (ServerParse.SELECT == type && sql.contains(" INFORMATION_SCHEMA.PROFILING ") && sql.contains("CONCAT(ROUND(SUM(DURATION)/")) {
+                InformationSchemaProfiling.response(this);
+                return;
+            }
+            shardingSQLHandler.routeEndExecuteSQL(sql, type, schemaConfig);
+
+        } catch (Exception e) {
+            writeErrMessage(ErrorCode.ER_YES, e.getMessage());
+        }
     }
 
 
@@ -561,11 +566,23 @@ public class ShardingService extends MySQLBasedService implements FrontEndServic
         if (packet.isEndOfSession()) {
             //error finished do resource clean up
             session.resetMultiStatementStatus();
+            for (BackendConnection backendConnection : session.getTargetMap().values()) {
+                TraceManager.sessionFinish(backendConnection.getBackendService());
+            }
+            TraceManager.sessionFinish(this);
             packet.bufferWrite(connection);
             SerializableLock.getInstance().unLock(this.connection.getId());
         } else if (packet.isEndOfQuery()) {
             //normal finish may loop to another round of query
             packet.bufferWrite(connection);
+            for (BackendConnection backendConnection : session.getTargetMap().values()) {
+                TraceManager.sessionFinish(backendConnection.getBackendService());
+            }
+            if (multiQueryFlag) {
+                TraceManager.queryFinish(this);
+            } else {
+                TraceManager.sessionFinish(this);
+            }
             multiStatementNextSql(multiQueryFlag);
             SerializableLock.getInstance().unLock(this.connection.getId());
         } else {
@@ -579,12 +596,25 @@ public class ShardingService extends MySQLBasedService implements FrontEndServic
         if (packet.isEndOfSession()) {
             //error finished do resource clean up
             session.resetMultiStatementStatus();
+            for (BackendConnection backendConnection : session.getTargetMap().values()) {
+                TraceManager.sessionFinish(backendConnection.getBackendService());
+            }
+            TraceManager.sessionFinish(this);
         }
         buffer = packet.write(buffer, this, true);
         connection.write(buffer);
         if (packet.isEndOfQuery() && !packet.isEndOfSession()) {
+            for (BackendConnection backendConnection : session.getTargetMap().values()) {
+                TraceManager.sessionFinish(backendConnection.getBackendService());
+            }
+            if (multiQueryFlag) {
+                TraceManager.queryFinish(this);
+            } else {
+                TraceManager.sessionFinish(this);
+            }
             multiStatementNextSql(multiQueryFlag);
         }
+        SerializableLock.getInstance().unLock(this.connection.getId());
     }
 
 
@@ -595,6 +625,11 @@ public class ShardingService extends MySQLBasedService implements FrontEndServic
             taskMultiQueryCreate(protoLogicHandler.getMultiQueryData());
         }
     }
+
+    protected void sessionStart() {
+        TraceManager.sessionStart(this, "sharding-server-start");
+    }
+
 
     public void setCollationConnection(String collation) {
         connection.getCharsetName().setCollation(collation);
@@ -792,5 +827,9 @@ public class ShardingService extends MySQLBasedService implements FrontEndServic
 
     public long getClientFlags() {
         return clientFlags;
+    }
+
+    public String toBriefString() {
+        return "Shardingservice";
     }
 }

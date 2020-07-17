@@ -62,8 +62,6 @@ public final class ShowVersion {
         // write last eof
         EOFRowPacket lastEof = new EOFRowPacket();
         lastEof.setPacketId(++packetId);
-
-
         lastEof.write(buffer, service);
     }
 

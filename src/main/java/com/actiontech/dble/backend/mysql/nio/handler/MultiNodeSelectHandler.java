@@ -21,6 +21,7 @@ import com.actiontech.dble.plan.common.item.ItemField;
 import com.actiontech.dble.route.RouteResultset;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
+import com.actiontech.dble.singleton.TraceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,8 @@ public class MultiNodeSelectHandler extends MultiNodeQueryHandler {
 
     @Override
     public void okResponse(byte[] data, AbstractService service) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-ok-response");
+        TraceManager.finishSpan(service, traceObject);
         boolean executeResponse = ((MySQLResponseService) service).syncAndExecute();
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("received ok response ,executeResponse:" + executeResponse + " from " + service);
@@ -90,6 +93,8 @@ public class MultiNodeSelectHandler extends MultiNodeQueryHandler {
 
     @Override
     public void rowEofResponse(final byte[] eof, boolean isLeft, AbstractService service) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-rowEof-response");
+        TraceManager.finishSpan(service, traceObject);
         BlockingQueue<HeapItem> queue = queues.get(service);
         if (queue == null)
             return;

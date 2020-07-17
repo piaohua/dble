@@ -14,17 +14,21 @@ import com.actiontech.dble.net.connection.PooledConnection;
 import com.actiontech.dble.net.handler.BackEndCleaner;
 import com.actiontech.dble.net.handler.BackEndRecycleRunnable;
 import com.actiontech.dble.net.mysql.*;
+import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.net.service.ServiceTask;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.route.parser.util.Pair;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.services.MySQLBasedService;
+import com.actiontech.dble.singleton.TraceManager;
 import com.actiontech.dble.statistic.stat.ThreadWorkUsage;
 import com.actiontech.dble.util.CompressUtil;
 import com.actiontech.dble.util.StringUtil;
 import com.actiontech.dble.util.TimeUtil;
 import com.actiontech.dble.util.exception.UnknownTxIsolationException;
+import com.google.common.collect.ImmutableMap;
+import io.opentracing.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,31 +150,36 @@ public class MySQLResponseService extends MySQLBasedService {
     }
 
     protected void handleInnerData() {
-        ServiceTask task;
-        //LOGGER.info("LOOP FOR BACKEND " + Thread.currentThread().getName() + " " + taskQueue.size());
-        //threadUsageStat start
-        String threadName = null;
-        ThreadWorkUsage workUsage = null;
-        long workStart = 0;
-        if (SystemConfig.getInstance().getUseThreadUsageStat() == 1) {
-            threadName = Thread.currentThread().getName();
-            workUsage = DbleServer.getInstance().getThreadUsedMap().get(threadName);
-            if (threadName.startsWith("backend")) {
-                if (workUsage == null) {
-                    workUsage = new ThreadWorkUsage();
-                    DbleServer.getInstance().getThreadUsedMap().put(threadName, workUsage);
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(this, "loop-handle-back-data");
+        try {
+            ServiceTask task;
+            //LOGGER.info("LOOP FOR BACKEND " + Thread.currentThread().getName() + " " + taskQueue.size());
+            //threadUsageStat start
+            String threadName = null;
+            ThreadWorkUsage workUsage = null;
+            long workStart = 0;
+            if (SystemConfig.getInstance().getUseThreadUsageStat() == 1) {
+                threadName = Thread.currentThread().getName();
+                workUsage = DbleServer.getInstance().getThreadUsedMap().get(threadName);
+                if (threadName.startsWith("backend")) {
+                    if (workUsage == null) {
+                        workUsage = new ThreadWorkUsage();
+                        DbleServer.getInstance().getThreadUsedMap().put(threadName, workUsage);
+                    }
                 }
-            }
 
-            workStart = System.nanoTime();
-        }
-        //handleData
-        while ((task = taskQueue.poll()) != null) {
-            handleData(task);
-        }
-        //threadUsageStat end
-        if (workUsage != null && threadName.startsWith("backend")) {
-            workUsage.setCurrentSecondUsed(workUsage.getCurrentSecondUsed() + System.nanoTime() - workStart);
+                workStart = System.nanoTime();
+            }
+            //handleData
+            while ((task = taskQueue.poll()) != null) {
+                handleData(task);
+            }
+            //threadUsageStat end
+            if (workUsage != null && threadName.startsWith("backend")) {
+                workUsage.setCurrentSecondUsed(workUsage.getCurrentSecondUsed() + System.nanoTime() - workStart);
+            }
+        } finally {
+            TraceManager.finishSpan(this, traceObject);
         }
     }
 
@@ -281,24 +290,31 @@ public class MySQLResponseService extends MySQLBasedService {
     }
 
     private void synAndDoExecute(StringBuilder synSQL, RouteResultsetNode rrn, CharsetNames clientCharset) {
-        if (synSQL == null) {
-            // not need syn connection
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(this, "syn&do-execute-sql");
+        if (synSQL != null && traceObject != null) {
+            traceObject.log(ImmutableMap.of("synSQL", synSQL));
+        }
+        try {
+            if (synSQL == null) {
+                // not need syn connection
+                if (session != null) {
+                    session.setBackendRequestTime(this.getConnection().getId());
+                }
+                sendQueryCmd(rrn.getStatement(), clientCharset);
+                return;
+            }
+
+            // and our query sql to multi command at last
+            synSQL.append(rrn.getStatement()).append(";");
+            // syn and execute others
             if (session != null) {
                 session.setBackendRequestTime(this.getConnection().getId());
             }
-            sendQueryCmd(rrn.getStatement(), clientCharset);
-            return;
+            this.sendQueryCmd(synSQL.toString(), clientCharset);
+            // waiting syn result...
+        } finally {
+            TraceManager.finishSpan(this, traceObject);
         }
-
-        // and our query sql to multi command at last
-        synSQL.append(rrn.getStatement()).append(";");
-        // syn and execute others
-        if (session != null) {
-            session.setBackendRequestTime(this.getConnection().getId());
-        }
-        this.sendQueryCmd(synSQL.toString(), clientCharset);
-        // waiting syn result...
-
     }
 
     private StringBuilder getSynSql(String xaTxID, RouteResultsetNode rrn,
@@ -489,6 +505,7 @@ public class MySQLResponseService extends MySQLBasedService {
         setResponseHandler(null);
         setSession(null);
         logResponse.set(false);
+        TraceManager.sessionFinish(this);
         ((PooledConnection) connection).getPoolRelated().release((PooledConnection) connection);
     }
 
@@ -522,29 +539,40 @@ public class MySQLResponseService extends MySQLBasedService {
         this.signal();
     }
 
-
     public String compactInfo() {
         return "MySQLConnection host=" + connection.getHost() + ", port=" + connection.getPort() + ", schema=" + connection.getSchema();
     }
 
     public void executeMultiNode(RouteResultsetNode rrn, ShardingService service,
                                  boolean isAutoCommit) {
-        String xaTxId = getConnXID(session.getSessionXaID(), rrn.getMultiplexNum().longValue());
-        if (!service.isAutocommit() && !service.isTxStart() && rrn.isModifySQL()) {
-            service.setTxStarted(true);
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(this, "execute-route-multi-result");
+        traceObject.log(ImmutableMap.of("route-result-set", rrn.toString(), "service-detail", this.toString()));
+        try {
+            String xaTxId = getConnXID(session.getSessionXaID(), rrn.getMultiplexNum().longValue());
+            if (!service.isAutocommit() && !service.isTxStart() && rrn.isModifySQL()) {
+                service.setTxStarted(true);
+            }
+            StringBuilder synSQL = getSynSql(xaTxId, rrn, service.getCharset(), service.getTxIsolation(), isAutoCommit, service.getUsrVariables(), service.getSysVariables());
+            synAndDoExecuteMultiNode(synSQL, rrn, service.getCharset());
+        } finally {
+            TraceManager.finishSpan(this, traceObject);
         }
-        StringBuilder synSQL = getSynSql(xaTxId, rrn, service.getCharset(), service.getTxIsolation(), isAutoCommit, service.getUsrVariables(), service.getSysVariables());
-        synAndDoExecuteMultiNode(synSQL, rrn, service.getCharset());
     }
 
     public void execute(RouteResultsetNode rrn, ShardingService service,
                         boolean isAutoCommit) {
-        String xaTxId = getConnXID(session.getSessionXaID(), rrn.getMultiplexNum().longValue());
-        if (!service.isAutocommit() && !service.isTxStart() && rrn.isModifySQL()) {
-            service.setTxStarted(true);
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(this, "execute-route-result");
+        traceObject.log(ImmutableMap.of("route-result-set", rrn, "service-detail", this.compactInfo()));
+        try {
+            String xaTxId = getConnXID(session.getSessionXaID(), rrn.getMultiplexNum().longValue());
+            if (!service.isAutocommit() && !service.isTxStart() && rrn.isModifySQL()) {
+                service.setTxStarted(true);
+            }
+            StringBuilder synSQL = getSynSql(xaTxId, rrn, service.getCharset(), service.getTxIsolation(), isAutoCommit, service.getUsrVariables(), service.getSysVariables());
+            synAndDoExecute(synSQL, rrn, service.getCharset());
+        } finally {
+            TraceManager.finishSpan(this, traceObject);
         }
-        StringBuilder synSQL = getSynSql(xaTxId, rrn, service.getCharset(), service.getTxIsolation(), isAutoCommit, service.getUsrVariables(), service.getSysVariables());
-        synAndDoExecute(synSQL, rrn, service.getCharset());
     }
 
 

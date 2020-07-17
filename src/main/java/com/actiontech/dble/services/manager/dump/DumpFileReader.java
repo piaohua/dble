@@ -2,6 +2,8 @@ package com.actiontech.dble.services.manager.dump;
 
 import com.actiontech.dble.backend.mysql.store.fs.FileUtils;
 import com.actiontech.dble.services.manager.ManagerService;
+import com.actiontech.dble.singleton.TraceManager;
+import io.opentracing.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +40,7 @@ public final class DumpFileReader {
 
     public void start(ManagerService service, DumpFileExecutor executor) throws IOException, InterruptedException {
         LOGGER.info("begin to read dump file.");
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("dump-file-read");
         try {
             ByteBuffer buffer = ByteBuffer.allocate(0x20000);
             int byteRead = fileChannel.read(buffer);
@@ -62,6 +65,7 @@ public final class DumpFileReader {
             }
             this.readQueue.put(EOF);
         } finally {
+            TraceManager.finishSpan(traceObject);
             try {
                 if (fileChannel != null) {
                     fileChannel.close();

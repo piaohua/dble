@@ -1,6 +1,7 @@
 package com.actiontech.dble.services.manager;
 
 import com.actiontech.dble.backend.mysql.MySQLMessage;
+import com.actiontech.dble.backend.mysql.proto.handler.Impl.MySQLProtoHandlerImpl;
 import com.actiontech.dble.config.Capabilities;
 import com.actiontech.dble.config.ErrorCode;
 import com.actiontech.dble.config.model.SystemConfig;
@@ -15,6 +16,7 @@ import com.actiontech.dble.net.service.AuthResultInfo;
 import com.actiontech.dble.net.service.FrontEndService;
 import com.actiontech.dble.services.MySQLBasedService;
 import com.actiontech.dble.singleton.FrontendUserManager;
+import com.actiontech.dble.singleton.TraceManager;
 
 import java.io.UnsupportedEncodingException;
 
@@ -31,12 +33,14 @@ public class ManagerService extends MySQLBasedService implements FrontEndService
     public ManagerService(AbstractConnection connection) {
         super(connection);
         this.handler = new ManagerQueryHandler(this);
+        this.proto = new MySQLProtoHandlerImpl();
     }
 
     public void initFromAuthInfo(AuthResultInfo info) {
         AuthPacket auth = info.getMysqlAuthPacket();
         this.user = new UserName(auth.getUser(), auth.getTenant());
         this.userConfig = info.getUserConfig();
+        this.handler.setReadOnly(((ManagerUserConfig) userConfig).isReadOnly());
         connection.initCharsetIndex(info.getMysqlAuthPacket().getCharsetIndex());
         this.clientFlags = info.getMysqlAuthPacket().getClientFlags();
         boolean clientCompress = Capabilities.CLIENT_COMPRESS == (Capabilities.CLIENT_COMPRESS & auth.getClientFlags());
@@ -72,11 +76,6 @@ public class ManagerService extends MySQLBasedService implements FrontEndService
         }
     }
 
-    @Override
-    public void markFinished() {
-
-    }
-
     public ManagerUserConfig getUserConfig() {
         return (ManagerUserConfig) userConfig;
     }
@@ -109,5 +108,11 @@ public class ManagerService extends MySQLBasedService implements FrontEndService
         return sql;
     }
 
+    public String toBriefString() {
+        return "managerService";
+    }
 
+    protected void sessionStart() {
+        TraceManager.sessionStart(this, "manager-server-start");
+    }
 }

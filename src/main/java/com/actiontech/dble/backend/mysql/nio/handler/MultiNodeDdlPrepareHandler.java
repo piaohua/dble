@@ -24,6 +24,7 @@ import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
 import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.DDLTraceManager;
+import com.actiontech.dble.singleton.TraceManager;
 import com.actiontech.dble.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,38 +78,43 @@ public class MultiNodeDdlPrepareHandler extends MultiNodeHandler implements Exec
 
     @Override
     public void execute() throws Exception {
-        lock.lock();
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(session.getShardingService(), "execute-for-ddl-prepare");
         try {
-            this.reset();
+            lock.lock();
+            try {
+                this.reset();
+            } finally {
+                lock.unlock();
+            }
+
+            LOGGER.debug("rrs.getRunOnSlave()-" + rrs.getRunOnSlave());
+            StringBuilder sb = new StringBuilder();
+            for (final RouteResultsetNode node : rrs.getNodes()) {
+                unResponseRrns.add(node);
+                if (node.isModifySQL()) {
+                    sb.append("[").append(node.getName()).append("]").append(node.getStatement()).append(";\n");
+                }
+            }
+            if (sb.length() > 0) {
+                TxnLogHelper.putTxnLog(session.getShardingService(), sb.toString());
+            }
+
+            DDLTraceManager.getInstance().updateDDLStatus(DDLTraceInfo.DDLStage.CONN_TEST_START, session.getShardingService());
+
+            for (final RouteResultsetNode node : rrs.getNodes()) {
+                BackendConnection conn = session.getTarget(node);
+                if (session.tryExistsCon(conn, node)) {
+                    node.setRunOnSlave(rrs.getRunOnSlave());
+                    innerExecute(conn.getBackendService(), node);
+                } else {
+                    // create new connection
+                    node.setRunOnSlave(rrs.getRunOnSlave());
+                    ShardingNode dn = DbleServer.getInstance().getConfig().getShardingNodes().get(node.getName());
+                    dn.getConnection(dn.getDatabase(), true, sessionAutocommit, node, this, node);
+                }
+            }
         } finally {
-            lock.unlock();
-        }
-
-        LOGGER.debug("rrs.getRunOnSlave()-" + rrs.getRunOnSlave());
-        StringBuilder sb = new StringBuilder();
-        for (final RouteResultsetNode node : rrs.getNodes()) {
-            unResponseRrns.add(node);
-            if (node.isModifySQL()) {
-                sb.append("[").append(node.getName()).append("]").append(node.getStatement()).append(";\n");
-            }
-        }
-        if (sb.length() > 0) {
-            TxnLogHelper.putTxnLog(session.getShardingService(), sb.toString());
-        }
-
-        DDLTraceManager.getInstance().updateDDLStatus(DDLTraceInfo.DDLStage.CONN_TEST_START, session.getShardingService());
-
-        for (final RouteResultsetNode node : rrs.getNodes()) {
-            BackendConnection conn = session.getTarget(node);
-            if (session.tryExistsCon(conn, node)) {
-                node.setRunOnSlave(rrs.getRunOnSlave());
-                innerExecute(conn.getBackendService(), node);
-            } else {
-                // create new connection
-                node.setRunOnSlave(rrs.getRunOnSlave());
-                ShardingNode dn = DbleServer.getInstance().getConfig().getShardingNodes().get(node.getName());
-                dn.getConnection(dn.getDatabase(), true, sessionAutocommit, node, this, node);
-            }
+            TraceManager.finishSpan(session.getShardingService(), traceObject);
         }
     }
 

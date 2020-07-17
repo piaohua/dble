@@ -28,6 +28,8 @@ import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.meta.ReloadManager;
 import com.actiontech.dble.net.mysql.OkPacket;
 
+import com.actiontech.dble.singleton.TraceManager;
+import io.opentracing.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,41 +159,46 @@ public final class RollbackConfig {
     }
 
     public static boolean rollback(String reloadType) throws Exception {
-        if (!ReloadManager.startReload(reloadType, ConfStatus.Status.ROLLBACK)) {
-            throw new Exception("Reload status error ,other client or cluster may in reload");
-        }
-        ServerConfig conf = DbleServer.getInstance().getConfig();
-        Map<String, PhysicalDbGroup> dbGroups = conf.getBackupDbGroups();
-        Map<UserName, UserConfig> users = conf.getBackupUsers();
-        Map<String, SchemaConfig> schemas = conf.getBackupSchemas();
-        Map<String, ShardingNode> shardingNodes = conf.getBackupShardingNodes();
-        Map<ERTable, Set<ERTable>> erRelations = conf.getBackupErRelations();
-        boolean backIsFullyConfiged = conf.backIsFullyConfiged();
-        if (conf.canRollbackAll()) {
-            if (conf.isFullyConfigured()) {
-                for (PhysicalDbGroup dn : dbGroups.values()) {
-                    dn.init();
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("rollback-local");
+        try {
+            if (!ReloadManager.startReload(reloadType, ConfStatus.Status.ROLLBACK)) {
+                throw new Exception("Reload status error ,other client or cluster may in reload");
+            }
+            ServerConfig conf = DbleServer.getInstance().getConfig();
+            Map<String, PhysicalDbGroup> dbGroups = conf.getBackupDbGroups();
+            Map<UserName, UserConfig> users = conf.getBackupUsers();
+            Map<String, SchemaConfig> schemas = conf.getBackupSchemas();
+            Map<String, ShardingNode> shardingNodes = conf.getBackupShardingNodes();
+            Map<ERTable, Set<ERTable>> erRelations = conf.getBackupErRelations();
+            boolean backIsFullyConfiged = conf.backIsFullyConfiged();
+            if (conf.canRollbackAll()) {
+                if (conf.isFullyConfigured()) {
+                    for (PhysicalDbGroup dn : dbGroups.values()) {
+                        dn.init();
+                    }
                 }
-            }
-            final Map<String, PhysicalDbGroup> cNodes = conf.getDbGroups();
-            // apply
-            boolean result = conf.rollback(users, schemas, shardingNodes, dbGroups, erRelations, backIsFullyConfiged);
-            // stop old resource heartbeat
-            for (PhysicalDbGroup dn : cNodes.values()) {
-                dn.stop("initial failed, rollback up config");
-            }
-            if (!backIsFullyConfiged) {
-                for (IOProcessor processor : DbleServer.getInstance().getFrontProcessors()) {
-                    for (FrontendConnection fcon : processor.getFrontends().values()) {
-                        if (!fcon.isManager()) {
-                            fcon.close("Reload causes the service to stop");
+                final Map<String, PhysicalDbGroup> cNodes = conf.getDbGroups();
+                // apply
+                boolean result = conf.rollback(users, schemas, shardingNodes, dbGroups, erRelations, backIsFullyConfiged);
+                // stop old resource heartbeat
+                for (PhysicalDbGroup dn : cNodes.values()) {
+                    dn.stop("initial failed, rollback up config");
+                }
+                if (!backIsFullyConfiged) {
+                    for (IOProcessor processor : DbleServer.getInstance().getFrontProcessors()) {
+                        for (FrontendConnection fcon : processor.getFrontends().values()) {
+                            if (!fcon.isManager()) {
+                                fcon.close("Reload causes the service to stop");
+                            }
                         }
                     }
                 }
+                return result;
+            } else {
+                throw new Exception("there is no old version");
             }
-            return result;
-        } else {
-            throw new Exception("there is no old version");
+        } finally {
+            TraceManager.finishSpan(traceObject);
         }
     }
 }

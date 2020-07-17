@@ -16,10 +16,13 @@ import com.actiontech.dble.config.model.db.DbInstanceConfig;
 import com.actiontech.dble.net.connection.BackendConnection;
 import com.actiontech.dble.net.connection.PooledConnection;
 import com.actiontech.dble.net.factory.MySQLConnectionFactory;
+import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
 import com.actiontech.dble.singleton.Scheduler;
+import com.actiontech.dble.singleton.TraceManager;
 import com.actiontech.dble.util.StringUtil;
 import com.actiontech.dble.util.TimeUtil;
+import io.opentracing.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,25 +114,31 @@ public abstract class PhysicalDbInstance implements ReadTimeStatusInstance {
 
     public void getConnection(String schema, final ResponseHandler handler,
                               final Object attachment, boolean mustWrite) throws IOException {
-
-        if (mustWrite && readInstance) {
-            throw new IOException("primary dbInstance switched");
-        }
-
-        DbleServer.getInstance().getComplexQueryExecutor().execute(new Runnable() {
-            @Override
-            public void run() {
-                BackendConnection con;
-                try {
-                    con = getConnection(schema, config.getPoolConfig().getConnectionTimeout());
-                } catch (IOException e) {
-                    handler.connectionError(e, attachment);
-                    return;
-                }
-                con.getBackendService().setAttachment(attachment);
-                handler.connectionAcquired(con);
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("get-connection-from-db-instance");
+        AbstractService service = TraceManager.getThreadService();
+        try {
+            if (mustWrite && readInstance) {
+                throw new IOException("primary dbInstance switched");
             }
-        });
+
+            DbleServer.getInstance().getComplexQueryExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    BackendConnection con;
+                    try {
+                        con = getConnection(schema, config.getPoolConfig().getConnectionTimeout());
+                    } catch (IOException e) {
+                        handler.connectionError(e, attachment);
+                        return;
+                    }
+                    TraceManager.crossThread(con.getBackendService(), "backend-response-service", service);
+                    con.getBackendService().setAttachment(attachment);
+                    handler.connectionAcquired(con);
+                }
+            });
+        } finally {
+            TraceManager.finishSpan(traceObject);
+        }
     }
 
     // execute in complex executor guard by business executor

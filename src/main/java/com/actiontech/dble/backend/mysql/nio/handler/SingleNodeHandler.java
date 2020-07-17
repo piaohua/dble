@@ -22,6 +22,7 @@ import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
 import com.actiontech.dble.services.mysqlsharding.ShardingService;
+import com.actiontech.dble.singleton.TraceManager;
 import com.actiontech.dble.singleton.WriteQueueFlowController;
 import com.actiontech.dble.statistic.stat.QueryResult;
 import com.actiontech.dble.statistic.stat.QueryResultDispatcher;
@@ -71,39 +72,49 @@ public class SingleNodeHandler implements ResponseHandler, LoadDataResponseHandl
 
     @Override
     public void execute() throws Exception {
-        connClosed = false;
-        //todo check weither this would change
-        /*if (rrs.isLoadData()) {
-            packetId = session.getShardingService().getLoadDataInfileHandler().getLastPackId();
-        } else {
-            packetId = (byte) session.getPacketId().get();
-        }*/
-        RouteResultsetNode finalNode = null;
-        if (session.getTargetCount() > 0) {
-            BackendConnection conn = session.getTarget(node);
-            if (conn == null && rrs.isGlobalTable() && rrs.getGlobalBackupNodes() != null) {
-                // read only trx for global table
-                for (String shardingNode : rrs.getGlobalBackupNodes()) {
-                    RouteResultsetNode tmpNode = new RouteResultsetNode(shardingNode, rrs.getSqlType(), rrs.getStatement());
-                    conn = session.getTarget(tmpNode);
-                    if (conn != null) {
-                        finalNode = tmpNode;
-                        break;
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(session.getShardingService(), "execute-for-sql");
+        try {
+            connClosed = false;
+            RouteResultsetNode finalNode = null;
+            if (session.getTargetCount() > 0) {
+                BackendConnection conn = session.getTarget(node);
+                if (conn == null && rrs.isGlobalTable() && rrs.getGlobalBackupNodes() != null) {
+                    // read only trx for global table
+                    for (String shardingNode : rrs.getGlobalBackupNodes()) {
+                        RouteResultsetNode tmpNode = new RouteResultsetNode(shardingNode, rrs.getSqlType(), rrs.getStatement());
+                        conn = session.getTarget(tmpNode);
+                        if (conn != null) {
+                            finalNode = tmpNode;
+                            break;
+                        }
                     }
                 }
+                node.setRunOnSlave(rrs.getRunOnSlave());
+                if (session.tryExistsCon(conn, finalNode == null ? node : finalNode)) {
+                    executeInExistsConnection(conn);
+                    return;
+                }
             }
-            node.setRunOnSlave(rrs.getRunOnSlave());
-            if (session.tryExistsCon(conn, finalNode == null ? node : finalNode)) {
-                execute(conn);
-                return;
-            }
-        }
 
-        // create new connection
-        node.setRunOnSlave(rrs.getRunOnSlave());
-        ServerConfig conf = DbleServer.getInstance().getConfig();
-        ShardingNode dn = conf.getShardingNodes().get(node.getName());
-        dn.getConnection(dn.getDatabase(), session.getShardingService().isTxStart(), session.getShardingService().isAutocommit(), node, this, node);
+            // create new connection
+            node.setRunOnSlave(rrs.getRunOnSlave());
+            ServerConfig conf = DbleServer.getInstance().getConfig();
+            ShardingNode dn = conf.getShardingNodes().get(node.getName());
+            dn.getConnection(dn.getDatabase(), session.getShardingService().isTxStart(), session.getShardingService().isAutocommit(), node, this, node);
+        } finally {
+            TraceManager.finishSpan(session.getShardingService(), traceObject);
+        }
+    }
+
+
+    protected void executeInExistsConnection(BackendConnection conn) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(session.getShardingService(), "execute-in-exists-connection");
+        try {
+            TraceManager.crossThread(conn.getBackendService(), "backend-response-service", session.getShardingService());
+            execute(conn);
+        } finally {
+            TraceManager.finishSpan(session.getShardingService(), traceObject);
+        }
     }
 
     protected void execute(BackendConnection conn) {
@@ -221,8 +232,9 @@ public class SingleNodeHandler implements ResponseHandler, LoadDataResponseHandl
      */
     @Override
     public void okResponse(byte[] data, AbstractService service) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-ok-packet");
+        TraceManager.finishSpan(service, traceObject);
         this.netOutBytes += data.length;
-
         boolean executeResponse = ((MySQLResponseService) service).syncAndExecute();
         if (executeResponse) {
             this.resultSize += data.length;
@@ -257,6 +269,8 @@ public class SingleNodeHandler implements ResponseHandler, LoadDataResponseHandl
      */
     @Override
     public void rowEofResponse(byte[] eof, boolean isLeft, AbstractService service) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-rowEof-packet");
+        TraceManager.finishSpan(service, traceObject);
         this.netOutBytes += eof.length;
         this.resultSize += eof.length;
         // if it's call statement,it will not release connection
@@ -350,7 +364,6 @@ public class SingleNodeHandler implements ResponseHandler, LoadDataResponseHandl
 
     @Override
     public boolean rowResponse(byte[] row, RowDataPacket rowPacket, boolean isLeft, AbstractService service) {
-
         this.netOutBytes += row.length;
         this.resultSize += row.length;
         this.selectRows++;
@@ -383,6 +396,8 @@ public class SingleNodeHandler implements ResponseHandler, LoadDataResponseHandl
 
     @Override
     public void connectionClose(AbstractService service, String reason) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-connection-closed");
+        TraceManager.finishSpan(service, traceObject);
         if (connClosed) {
             return;
         }
@@ -404,7 +419,7 @@ public class SingleNodeHandler implements ResponseHandler, LoadDataResponseHandl
 
     @Override
     public String toString() {
-        return "SingleNodeHandler [node=" + node + ", packetId=" + (byte) session.getShardingService().nextPacketId() + "]";
+        return "SingleNodeHandler [node=" + node + ", packetId=" + (byte) session.getShardingService().getPacketId().get() + "]";
     }
 
 }

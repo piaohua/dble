@@ -43,11 +43,13 @@ import com.actiontech.dble.services.mysqlsharding.ShardingService;
 import com.actiontech.dble.singleton.HaConfigManager;
 import com.actiontech.dble.singleton.PauseShardingNodeManager;
 import com.actiontech.dble.singleton.ProxyMeta;
+import com.actiontech.dble.singleton.TraceManager;
 import com.actiontech.dble.util.ResourceUtil;
 import com.actiontech.dble.util.StringUtil;
 import com.actiontech.dble.util.TimeUtil;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import io.opentracing.Span;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -840,16 +842,21 @@ public final class ClusterLogic {
     }
 
     public static String waitingForAllTheNode(String path, String checkString) throws Exception {
-        Map<String, String> expectedMap = ClusterHelper.getOnlineMap();
-        StringBuffer errorMsg = new StringBuffer();
-        for (; ; ) {
-            errorMsg.setLength(0);
-            if (checkResponseForOneTime(checkString, path, expectedMap, errorMsg)) {
-                break;
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("wait-for-others-cluster");
+        try {
+            Map<String, String> expectedMap = ClusterHelper.getOnlineMap();
+            StringBuffer errorMsg = new StringBuffer();
+            for (; ; ) {
+                errorMsg.setLength(0);
+                if (checkResponseForOneTime(checkString, path, expectedMap, errorMsg)) {
+                    break;
+                }
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(50));
             }
-            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(50));
+            return errorMsg.length() <= 0 ? null : errorMsg.toString();
+        } finally {
+            TraceManager.finishSpan(traceObject);
         }
-        return errorMsg.length() <= 0 ? null : errorMsg.toString();
     }
 
     public static void syncDbXmlToLocal(XmlProcessBase xmlParseBase, KvBean configValue) throws Exception {

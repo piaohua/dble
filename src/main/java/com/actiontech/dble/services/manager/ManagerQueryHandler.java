@@ -10,6 +10,9 @@ import com.actiontech.dble.net.mysql.OkPacket;
 import com.actiontech.dble.route.parser.ManagerParse;
 import com.actiontech.dble.services.manager.handler.*;
 import com.actiontech.dble.services.manager.response.*;
+import com.actiontech.dble.singleton.TraceManager;
+import com.google.common.collect.ImmutableMap;
+import io.opentracing.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,96 +35,104 @@ public class ManagerQueryHandler {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(String.valueOf(service) + sql);
         }
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "manager-query-handle");
+        traceObject.log(ImmutableMap.of("sql", sql));
+        try {
+            int rs = ManagerParse.parse(sql);
+            int sqlType = rs & 0xff;
+            if (readOnly && sqlType != ManagerParse.SELECT && sqlType != ManagerParse.SHOW) {
+                service.writeErrMessage(ErrorCode.ER_USER_READ_ONLY, "User READ ONLY");
+                return;
+            }
+            switch (sqlType) {
+                case ManagerParse.SELECT:
+                    SelectHandler.handle(sql, service, rs >>> SHIFT);
+                    break;
+                case ManagerParse.SET:
+                    OkPacket ok = new OkPacket();
+                    ok.setPacketId(service.nextPacketId());
+                    ok.write(service.getConnection());
+                    break;
+                case ManagerParse.SHOW:
+                    ShowHandler.handle(sql, service, rs >>> SHIFT);
+                    break;
+                case ManagerParse.KILL_CONN:
+                    KillConnection.response(sql, rs >>> SHIFT, service);
+                    break;
+                case ManagerParse.KILL_XA_SESSION:
+                    KillXASession.response(sql, rs >>> SHIFT, service);
+                    break;
+                case ManagerParse.KILL_DDL_LOCK:
+                    String tableInfo = sql.substring(rs >>> SHIFT).trim();
+                    KillDdlLock.response(sql, tableInfo, service);
+                    break;
+                case ManagerParse.OFFLINE:
+                    Offline.execute(service);
+                    break;
+                case ManagerParse.ONLINE:
+                    Online.execute(service);
+                    break;
+                case ManagerParse.PAUSE:
+                    PauseStart.execute(service, sql);
+                    break;
+                case ManagerParse.RESUME:
+                    PauseEnd.execute(service);
+                    break;
+                case ManagerParse.STOP:
+                    StopHandler.handle(sql, service, rs >>> SHIFT);
+                    break;
+                case ManagerParse.DRY_RUN:
+                    DryRun.execute(service);
+                    break;
+                case ManagerParse.RELOAD:
+                    ReloadHandler.handle(sql, service, rs >>> SHIFT);
+                    break;
+                case ManagerParse.ROLLBACK:
+                    RollbackHandler.handle(sql, service, rs >>> SHIFT);
+                    break;
+                case ManagerParse.CONFIGFILE:
+                    ConfFileHandler.handle(sql, service);
+                    break;
+                case ManagerParse.LOGFILE:
+                    ShowServerLog.handle(sql, service);
+                    break;
+                case ManagerParse.CREATE_DB:
+                    DatabaseHandler.handle(sql, service, true);
+                    break;
+                case ManagerParse.DROP_DB:
+                    DatabaseHandler.handle(sql, service, false);
+                    break;
+                case ManagerParse.ENABLE:
+                    EnableHandler.handle(sql, service, rs >>> SHIFT);
+                    break;
+                case ManagerParse.DISABLE:
+                    DisableHandler.handle(sql, service, rs >>> SHIFT);
+                    break;
+                case ManagerParse.CHECK:
+                    CheckHandler.handle(sql, service, rs >>> SHIFT);
+                    break;
+                case ManagerParse.RELEASE_RELOAD_METADATA:
+                    ReleaseReloadMetadata.execute(service);
+                    break;
+                case ManagerParse.DB_GROUP:
+                    DbGroupHAHandler.handle(sql, service);
+                    break;
+                case ManagerParse.SPLIT:
+                    SplitDumpHandler.handle(sql, service, rs >>> SHIFT);
+                    break;
+                case ManagerParse.FLOW_CONTROL:
+                    FlowControlHandler.handle(sql, service);
+                    break;
+                default:
+                    service.writeErrMessage(ErrorCode.ER_YES, "Unsupported statement");
+            }
+        } catch (Exception e) {
+            service.writeErrMessage(ErrorCode.ER_YES, "get error call manager command " + e.getMessage());
+        }
+    }
 
-        int rs = ManagerParse.parse(sql);
-        int sqlType = rs & 0xff;
-        if (readOnly && sqlType != ManagerParse.SELECT && sqlType != ManagerParse.SHOW) {
-            service.writeErrMessage(ErrorCode.ER_USER_READ_ONLY, "User READ ONLY");
-            return;
-        }
-        switch (sqlType) {
-            case ManagerParse.SELECT:
-                SelectHandler.handle(sql, service, rs >>> SHIFT);
-                break;
-            case ManagerParse.SET:
-                OkPacket ok = new OkPacket();
-                ok.setPacketId(service.nextPacketId());
-                ok.write(service.getConnection());
-                break;
-            case ManagerParse.SHOW:
-                ShowHandler.handle(sql, service, rs >>> SHIFT);
-                break;
-            case ManagerParse.KILL_CONN:
-                KillConnection.response(sql, rs >>> SHIFT, service);
-                break;
-            case ManagerParse.KILL_XA_SESSION:
-                KillXASession.response(sql, rs >>> SHIFT, service);
-                break;
-            case ManagerParse.KILL_DDL_LOCK:
-                String tableInfo = sql.substring(rs >>> SHIFT).trim();
-                KillDdlLock.response(sql, tableInfo, service);
-                break;
-            case ManagerParse.OFFLINE:
-                Offline.execute(service);
-                break;
-            case ManagerParse.ONLINE:
-                Online.execute(service);
-                break;
-            case ManagerParse.PAUSE:
-                PauseStart.execute(service, sql);
-                break;
-            case ManagerParse.RESUME:
-                PauseEnd.execute(service);
-                break;
-            case ManagerParse.STOP:
-                StopHandler.handle(sql, service, rs >>> SHIFT);
-                break;
-            case ManagerParse.DRY_RUN:
-                DryRun.execute(service);
-                break;
-            case ManagerParse.RELOAD:
-                ReloadHandler.handle(sql, service, rs >>> SHIFT);
-                break;
-            case ManagerParse.ROLLBACK:
-                RollbackHandler.handle(sql, service, rs >>> SHIFT);
-                break;
-            case ManagerParse.CONFIGFILE:
-                ConfFileHandler.handle(sql, service);
-                break;
-            case ManagerParse.LOGFILE:
-                ShowServerLog.handle(sql, service);
-                break;
-            case ManagerParse.CREATE_DB:
-                DatabaseHandler.handle(sql, service, true);
-                break;
-            case ManagerParse.DROP_DB:
-                DatabaseHandler.handle(sql, service, false);
-                break;
-            case ManagerParse.ENABLE:
-                EnableHandler.handle(sql, service, rs >>> SHIFT);
-                break;
-            case ManagerParse.DISABLE:
-                DisableHandler.handle(sql, service, rs >>> SHIFT);
-                break;
-            case ManagerParse.CHECK:
-                CheckHandler.handle(sql, service, rs >>> SHIFT);
-                break;
-            case ManagerParse.RELEASE_RELOAD_METADATA:
-                ReleaseReloadMetadata.execute(service);
-                break;
-            case ManagerParse.DB_GROUP:
-                DbGroupHAHandler.handle(sql, service);
-                break;
-            case ManagerParse.SPLIT:
-                // todo 空闲检测需要处理 service.skipIdleCheck(true);
-                SplitDumpHandler.handle(sql, service, rs >>> SHIFT);
-                break;
-            case ManagerParse.FLOW_CONTROL:
-                FlowControlHandler.handle(sql, service);
-                break;
-            default:
-                service.writeErrMessage(ErrorCode.ER_YES, "Unsupported statement");
-        }
+    public void setReadOnly(Boolean readOnly) {
+        this.readOnly = readOnly;
     }
 
 }

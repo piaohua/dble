@@ -24,6 +24,7 @@ import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
 import com.actiontech.dble.services.mysqlsharding.ShardingService;
+import com.actiontech.dble.singleton.TraceManager;
 import com.actiontech.dble.singleton.WriteQueueFlowController;
 import com.actiontech.dble.statistic.stat.QueryResult;
 import com.actiontech.dble.statistic.stat.QueryResultDispatcher;
@@ -97,39 +98,54 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
 
     @Override
     public void execute() throws Exception {
-        lock.lock();
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(session.getShardingService(), "execute-for-sql");
         try {
-            this.reset();
-            this.fieldsReturned = false;
-            this.affectedRows = 0L;
-            this.insertId = 0L;
-        } finally {
-            lock.unlock();
-        }
-        LOGGER.debug("rrs.getRunOnSlave()-" + rrs.getRunOnSlave());
-        StringBuilder sb = new StringBuilder();
-        for (final RouteResultsetNode node : rrs.getNodes()) {
-            unResponseRrns.add(node);
-            if (node.isModifySQL()) {
-                sb.append("[").append(node.getName()).append("]").append(node.getStatement()).append(";\n");
+            lock.lock();
+            try {
+                this.reset();
+                this.fieldsReturned = false;
+                this.affectedRows = 0L;
+                this.insertId = 0L;
+            } finally {
+                lock.unlock();
             }
-        }
-        if (sb.length() > 0) {
-            TxnLogHelper.putTxnLog(session.getShardingService(), sb.toString());
-        }
+            LOGGER.debug("rrs.getRunOnSlave()-" + rrs.getRunOnSlave());
+            StringBuilder sb = new StringBuilder();
+            for (final RouteResultsetNode node : rrs.getNodes()) {
+                unResponseRrns.add(node);
+                if (node.isModifySQL()) {
+                    sb.append("[").append(node.getName()).append("]").append(node.getStatement()).append(";\n");
+                }
+            }
+            if (sb.length() > 0) {
+                TxnLogHelper.putTxnLog(session.getShardingService(), sb.toString());
+            }
 
-        for (final RouteResultsetNode node : rrs.getNodes()) {
-            BackendConnection conn = session.getTarget(node);
-            if (session.tryExistsCon(conn, node)) {
-                node.setRunOnSlave(rrs.getRunOnSlave());
-                innerExecute(conn, node);
-            } else {
-                connRrns.add(node);
-                // create new connection
-                node.setRunOnSlave(rrs.getRunOnSlave());
-                ShardingNode dn = DbleServer.getInstance().getConfig().getShardingNodes().get(node.getName());
-                dn.getConnection(dn.getDatabase(), session.getShardingService().isTxStart(), sessionAutocommit, node, this, node);
+            for (final RouteResultsetNode node : rrs.getNodes()) {
+                BackendConnection conn = session.getTarget(node);
+                if (session.tryExistsCon(conn, node)) {
+                    node.setRunOnSlave(rrs.getRunOnSlave());
+                    executeInExistsConnection(conn, node);
+                } else {
+                    connRrns.add(node);
+                    // create new connection
+                    node.setRunOnSlave(rrs.getRunOnSlave());
+                    ShardingNode dn = DbleServer.getInstance().getConfig().getShardingNodes().get(node.getName());
+                    dn.getConnection(dn.getDatabase(), session.getShardingService().isTxStart(), sessionAutocommit, node, this, node);
+                }
             }
+        } finally {
+            TraceManager.finishSpan(session.getShardingService(), traceObject);
+        }
+    }
+
+    protected void executeInExistsConnection(BackendConnection conn, RouteResultsetNode node) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(session.getShardingService(), "execute-in-exists-connection");
+        try {
+            TraceManager.crossThread(conn.getBackendService(), "backend-response-service", session.getShardingService());
+            innerExecute(conn, node);
+        } finally {
+            TraceManager.finishSpan(session.getShardingService(), traceObject);
         }
     }
 
@@ -164,6 +180,8 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
     @Override
     public void connectionClose(AbstractService service, String reason) {
         pauseTime((MySQLResponseService) service);
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-connection-closed");
+        TraceManager.finishSpan(service, traceObject);
         if (checkClosedConn((MySQLResponseService) service)) {
             return;
         }
@@ -219,6 +237,8 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
 
     @Override
     public void errorResponse(byte[] data, AbstractService service) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-sql-execute-error");
+        TraceManager.finishSpan(service, traceObject);
         pauseTime((MySQLResponseService) service);
         ErrorPacket errPacket = new ErrorPacket();
         errPacket.read(data);
@@ -249,6 +269,8 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
 
     @Override
     public void okResponse(byte[] data, AbstractService service) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-ok-response");
+        TraceManager.finishSpan(service, traceObject);
         this.netOutBytes += data.length;
         boolean executeResponse = ((MySQLResponseService) service).syncAndExecute();
         if (LOGGER.isDebugEnabled()) {
@@ -339,6 +361,8 @@ public class MultiNodeQueryHandler extends MultiNodeHandler implements LoadDataR
 
     @Override
     public void rowEofResponse(final byte[] eof, boolean isLeft, AbstractService service) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-rowEof-response");
+        TraceManager.finishSpan(service, traceObject);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("on row end response " + service);
         }

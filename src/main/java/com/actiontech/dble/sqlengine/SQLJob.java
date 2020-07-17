@@ -18,6 +18,9 @@ import com.actiontech.dble.net.service.AbstractService;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.parser.ServerParse;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
+import com.actiontech.dble.singleton.TraceManager;
+import com.google.common.collect.ImmutableMap;
+import io.opentracing.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +66,8 @@ public class SQLJob implements ResponseHandler, Runnable, Cloneable {
     }
 
     public void run() {
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("sql-job-start");
+        traceObject.log(ImmutableMap.of("sql", sql));
         try {
             if (ds == null) {
                 RouteResultsetNode node = new RouteResultsetNode(shardingNode, ServerParse.SELECT, sql);
@@ -75,6 +80,8 @@ public class SQLJob implements ResponseHandler, Runnable, Cloneable {
         } catch (Exception e) {
             LOGGER.warn("can't get connection", e);
             doFinished(true);
+        } finally {
+            TraceManager.finishSpan(traceObject);
         }
     }
 
@@ -92,11 +99,15 @@ public class SQLJob implements ResponseHandler, Runnable, Cloneable {
         }
         conn.getBackendService().setResponseHandler(this);
         conn.getBackendService().setComplexQuery(true);
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(conn.getBackendService(), "sql-job-send-command");
         try {
             conn.getBackendService().query(sql, true);
             connection = conn;
         } catch (Exception e) { // (UnsupportedEncodingException e) {
+            LOGGER.debug("......", e);
             doFinished(true);
+        } finally {
+            TraceManager.finishSpan(traceObject);
         }
 
     }

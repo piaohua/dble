@@ -13,9 +13,11 @@ import com.actiontech.dble.route.parser.druid.ServerSchemaStatVisitor;
 import com.actiontech.dble.route.util.RouterUtil;
 
 import com.actiontech.dble.services.mysqlsharding.ShardingService;
+import com.actiontech.dble.singleton.TraceManager;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 import com.alibaba.druid.sql.parser.SQLStatementParser;
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,17 +31,22 @@ public class DefaultRouteStrategy extends AbstractRouteStrategy {
 
 
     public SQLStatement parserSQL(String originSql, ShardingService service) throws SQLSyntaxErrorException {
-        SQLStatementParser parser;
-        parser = new MySqlStatementParser(originSql);
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "sql-parse");
         try {
-            return parser.parseStatement(true);
-        } catch (Exception t) {
-            LOGGER.info("routeNormalSqlWithAST", t);
-            if (t.getMessage() != null) {
-                throw new SQLSyntaxErrorException(t.getMessage());
-            } else {
-                throw new SQLSyntaxErrorException(t);
+            SQLStatementParser parser;
+            parser = new MySqlStatementParser(originSql);
+            try {
+                return parser.parseStatement(true);
+            } catch (Exception t) {
+                LOGGER.info("routeNormalSqlWithAST", t);
+                if (t.getMessage() != null) {
+                    throw new SQLSyntaxErrorException(t.getMessage());
+                } else {
+                    throw new SQLSyntaxErrorException(t);
+                }
             }
+        } finally {
+            TraceManager.finishSpan(service, traceObject);
         }
     }
 
@@ -84,7 +91,13 @@ public class DefaultRouteStrategy extends AbstractRouteStrategy {
         }
         service.getSession2().endParse();
         DruidParser druidParser = DruidParserFactory.create(statement, rrs.getSqlType());
-        return RouterUtil.routeFromParser(druidParser, schema, rrs, statement, new ServerSchemaStatVisitor(), service, isExplain);
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "simple-route-detail");
+        traceObject.log(ImmutableMap.of("druidParser", druidParser.getClass().toString()));
+        try {
+            return RouterUtil.routeFromParser(druidParser, schema, rrs, statement, new ServerSchemaStatVisitor(), service, isExplain);
+        } finally {
+            TraceManager.finishSpan(service, traceObject);
+        }
 
     }
 

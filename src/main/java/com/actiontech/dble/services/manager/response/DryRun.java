@@ -24,7 +24,9 @@ import com.actiontech.dble.services.manager.ManagerService;
 import com.actiontech.dble.meta.table.DryRunGetNodeTablesHandler;
 import com.actiontech.dble.server.variables.SystemVariables;
 import com.actiontech.dble.server.variables.VarsExtractorHandler;
+import com.actiontech.dble.singleton.TraceManager;
 import com.actiontech.dble.util.StringUtil;
+import io.opentracing.Span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,13 +68,13 @@ public final class DryRun {
     private DryRun() {
     }
 
-    public static void execute(ManagerService c) {
+    public static void execute(ManagerService service) {
         LOGGER.info("reload config(dry-run): load all xml info start");
         ConfigInitializer loader;
         try {
             loader = new ConfigInitializer(false);
         } catch (Exception e) {
-            c.writeErrMessage(ErrorCode.ER_UNKNOWN_ERROR, e.getMessage());
+            service.writeErrMessage(ErrorCode.ER_UNKNOWN_ERROR, e.getMessage());
             return;
         }
 
@@ -134,8 +136,7 @@ public final class DryRun {
             list.add(new ErrorInfo("Cluster", "NOTICE", "Dble is in single mod"));
         }
 
-        printResult(c, list);
-
+        printResult(service, list);
     }
 
     private static void ucoreConnectionTest(List<ErrorInfo> list) {
@@ -150,23 +151,27 @@ public final class DryRun {
 
     private static void tableExistsCheck(List<ErrorInfo> list, ServerConfig serverConfig, boolean isLowerCase) {
         //get All the exists table from all shardingNode
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("table-exists-check");
+        try {
+            Map<String, Set<String>> tableMap = showShardingNodeTable(serverConfig, isLowerCase, list);
 
-        Map<String, Set<String>> tableMap = showShardingNodeTable(serverConfig, isLowerCase, list);
+            for (SchemaConfig schema : serverConfig.getSchemas().values()) {
+                for (BaseTableConfig table : schema.getTables().values()) {
+                    StringBuilder sb = new StringBuilder("");
+                    for (String exDn : table.getShardingNodes()) {
+                        if (tableMap.get(exDn) != null && !tableMap.get(exDn).contains(table.getName())) {
+                            sb.append(exDn).append(",");
+                        }
+                    }
 
-        for (SchemaConfig schema : serverConfig.getSchemas().values()) {
-            for (BaseTableConfig table : schema.getTables().values()) {
-                StringBuilder sb = new StringBuilder("");
-                for (String exDn : table.getShardingNodes()) {
-                    if (tableMap.get(exDn) != null && !tableMap.get(exDn).contains(table.getName())) {
-                        sb.append(exDn).append(",");
+                    if (sb.length() > 1) {
+                        sb.setLength(sb.length() - 1);
+                        list.add(new ErrorInfo("Meta", "WARNING", "Table " + schema.getName() + "." + table.getName() + " don't exists in shardingNode[" + sb.toString() + "]"));
                     }
                 }
-
-                if (sb.length() > 1) {
-                    sb.setLength(sb.length() - 1);
-                    list.add(new ErrorInfo("Meta", "WARNING", "Table " + schema.getName() + "." + table.getName() + " don't exists in shardingNode[" + sb.toString() + "]"));
-                }
             }
+        } finally {
+            TraceManager.finishSpan(traceObject);
         }
     }
 

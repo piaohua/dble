@@ -10,8 +10,10 @@ import com.actiontech.dble.config.model.sharding.table.BaseTableConfig;
 import com.actiontech.dble.config.model.sharding.table.GlobalTableConfig;
 import com.actiontech.dble.net.mysql.*;
 import com.actiontech.dble.services.manager.ManagerService;
+import com.actiontech.dble.singleton.TraceManager;
 import com.actiontech.dble.util.LongUtil;
 import com.actiontech.dble.util.StringUtil;
+import io.opentracing.Span;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -118,10 +120,11 @@ public final class CheckGlobalConsistency {
                 }
             }
         }
-
-        consistencyCheck.start();
-
-
+        if (jobs.size() == 0) {
+            consistencyCheck.response();
+        } else {
+            consistencyCheck.start();
+        }
     }
 
     private void response() {
@@ -156,9 +159,14 @@ public final class CheckGlobalConsistency {
 
 
     private void start() {
-        counter = new AtomicInteger(globalCheckJobs.size());
-        for (GlobalCheckJob job : globalCheckJobs) {
-            job.checkGlobalTable();
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("global-check-start");
+        try {
+            counter = new AtomicInteger(globalCheckJobs.size());
+            for (GlobalCheckJob job : globalCheckJobs) {
+                job.checkGlobalTable();
+            }
+        } finally {
+            TraceManager.finishSpan(traceObject);
         }
     }
 
@@ -174,12 +182,14 @@ public final class CheckGlobalConsistency {
 
 
     public void collectResult(String schema, String table, int distinctNo, int errorNo) {
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("single-table-global-finish");
         lock.lock();
         try {
             List<ConsistencyResult> list = resultMap.computeIfAbsent(schema, k -> Collections.synchronizedList(new ArrayList<>()));
             list.add(new ConsistencyResult(table, distinctNo, errorNo));
         } finally {
             lock.unlock();
+            TraceManager.finishSpan(traceObject);
         }
         if (counter.decrementAndGet() <= 0) {
             response();

@@ -150,6 +150,7 @@ public class FetchStoreNodeOfChildTableHandler implements ResponseHandler {
     public void connectionAcquired(BackendConnection conn) {
         conn.getBackendService().setResponseHandler(this);
         conn.getBackendService().setSession(session);
+        conn.getBackendService().setSession(session);
         try {
             conn.getBackendService().query(sql);
         } catch (Exception e) {

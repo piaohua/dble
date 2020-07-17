@@ -4,6 +4,7 @@ import com.actiontech.dble.backend.mysql.ByteUtil;
 import com.actiontech.dble.backend.mysql.nio.handler.LoadDataResponseHandler;
 import com.actiontech.dble.backend.mysql.nio.handler.ResponseHandler;
 import com.actiontech.dble.net.mysql.*;
+import com.actiontech.dble.singleton.TraceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +77,6 @@ public class MysqlBackendLogicHandler {
                         handleErrorPacket(data);
                         break;
                     case EOFPacket.FIELD_COUNT:
-                        LOGGER.info("size of the data " + data.length);
                         if (data.length > MySQLPacket.MAX_EOF_SIZE) {
                             handleRowPacket(data);
                         } else {

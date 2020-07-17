@@ -395,6 +395,7 @@ public final class UcoreSender extends AbstractConsulSender {
                 setSourceComponentId(sourceComponentId).
                 setAlertComponentId(alert.getAlertComponentId()).
                 setAlertComponentType(alert.getAlertComponentType()).
+                setResolveTimestampUnix(alert.getResolveTimestampUnix()).
                 setServerId(serverId).
                 setTimestampUnix(System.currentTimeMillis() * 1000000);
         if (alert.getLabels() != null) {

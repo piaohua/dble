@@ -7,14 +7,20 @@ package com.actiontech.dble.plan.optimizer;
 
 import com.actiontech.dble.plan.node.JoinNode;
 import com.actiontech.dble.plan.node.PlanNode;
+import com.actiontech.dble.singleton.TraceManager;
 
 public final class JoinPreProcessor {
     private JoinPreProcessor() {
     }
 
     public static PlanNode optimize(PlanNode qtn) {
-        qtn = findAndChangeRightJoinToLeftJoin(qtn);
-        return qtn;
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("optimize-for-join-order");
+        try {
+            qtn = findAndChangeRightJoinToLeftJoin(qtn);
+            return qtn;
+        } finally {
+            TraceManager.finishSpan(traceObject);
+        }
     }
 
     /**

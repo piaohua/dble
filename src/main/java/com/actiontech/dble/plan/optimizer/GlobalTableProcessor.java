@@ -10,6 +10,7 @@ import com.actiontech.dble.plan.node.JoinNode;
 import com.actiontech.dble.plan.node.PlanNode;
 import com.actiontech.dble.plan.node.PlanNode.PlanNodeType;
 import com.actiontech.dble.plan.util.PlanUtil;
+import com.actiontech.dble.singleton.TraceManager;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -19,8 +20,13 @@ public final class GlobalTableProcessor {
     }
 
     public static PlanNode optimize(PlanNode qtn) {
-        initGlobalStatus(qtn);
-        return qtn;
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("optimize-for-global-table");
+        try {
+            initGlobalStatus(qtn);
+            return qtn;
+        }finally {
+            TraceManager.finishSpan(traceObject);
+        }
     }
 
     /**

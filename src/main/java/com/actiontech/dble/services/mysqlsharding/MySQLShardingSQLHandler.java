@@ -11,6 +11,7 @@ import com.actiontech.dble.server.response.ShowCreateView;
 import com.actiontech.dble.server.util.SchemaUtil;
 import com.actiontech.dble.singleton.ProxyMeta;
 import com.actiontech.dble.singleton.RouteService;
+import com.actiontech.dble.singleton.TraceManager;
 import com.actiontech.dble.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,32 +33,37 @@ public class MySQLShardingSQLHandler {
     }
 
     public void routeEndExecuteSQL(String sql, int type, SchemaConfig schemaConfig) {
-        if (service.getSession2().isKilled()) {
-            service.writeErrMessage(ErrorCode.ER_QUERY_INTERRUPTED, "The query is interrupted.");
-            return;
-        }
-
-        RouteResultset rrs;
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "route&execute");
         try {
-            rrs = RouteService.getInstance().route(schemaConfig, type, sql, service);
-            if (rrs == null) {
+            if (service.getSession2().isKilled()) {
+                service.writeErrMessage(ErrorCode.ER_QUERY_INTERRUPTED, "The query is interrupted.");
                 return;
             }
-            if (rrs.getSqlType() == ServerParse.DDL && rrs.getSchema() != null) {
-                if (ProxyMeta.getInstance().getTmManager().getCatalogs().get(rrs.getSchema()).getView(rrs.getTable()) != null) {
-                    ProxyMeta.getInstance().getTmManager().removeMetaLock(rrs.getSchema(), rrs.getTable());
-                    String msg = "Table '" + rrs.getTable() + "' already exists as a view";
-                    LOGGER.info(msg);
-                    throw new SQLNonTransientException(msg);
-                }
-            }
-        } catch (Exception e) {
-            executeException(e, sql);
-            return;
-        }
 
-        service.getSession2().endRoute(rrs);
-        service.getSession2().execute(rrs);
+            RouteResultset rrs;
+            try {
+                rrs = RouteService.getInstance().route(schemaConfig, type, sql, service);
+                if (rrs == null) {
+                    return;
+                }
+                if (rrs.getSqlType() == ServerParse.DDL && rrs.getSchema() != null) {
+                    if (ProxyMeta.getInstance().getTmManager().getCatalogs().get(rrs.getSchema()).getView(rrs.getTable()) != null) {
+                        ProxyMeta.getInstance().getTmManager().removeMetaLock(rrs.getSchema(), rrs.getTable());
+                        String msg = "Table '" + rrs.getTable() + "' already exists as a view";
+                        LOGGER.info(msg);
+                        throw new SQLNonTransientException(msg);
+                    }
+                }
+            } catch (Exception e) {
+                executeException(e, sql);
+                return;
+            }
+
+            service.getSession2().endRoute(rrs);
+            service.getSession2().execute(rrs);
+        } finally {
+            traceObject.finish();
+        }
     }
 
 

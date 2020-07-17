@@ -18,6 +18,7 @@ import com.actiontech.dble.plan.common.exception.MySQLOutPutException;
 import com.actiontech.dble.route.RouteResultsetNode;
 import com.actiontech.dble.server.NonBlockingSession;
 import com.actiontech.dble.services.mysqlsharding.MySQLResponseService;
+import com.actiontech.dble.singleton.TraceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,21 +65,26 @@ public class BaseSelectHandler extends BaseDMLHandler {
     }
 
     public void execute(MySQLResponseService service) {
-        if (session.closed()) {
-            service.setRowDataFlowing(false);
-            session.clearResources(true);
-            return;
+        TraceManager.
+        try {
+            if (session.closed()) {
+                service.setRowDataFlowing(false);
+                session.clearResources(true);
+                return;
+            }
+            service.setSession(session);
+            if (service.getConnection().isClosed()) {
+                service.setRowDataFlowing(false);
+                session.onQueryError("failed or cancelled by other thread".getBytes());
+                return;
+            }
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(service.toString() + " send sql:" + rrss.getStatement());
+            }
+            service.executeMultiNode(rrss, session.getShardingService(), autocommit);
+        } finally {
+
         }
-        service.setSession(session);
-        if (service.getConnection().isClosed()) {
-            service.setRowDataFlowing(false);
-            session.onQueryError("failed or cancelled by other thread".getBytes());
-            return;
-        }
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(service.toString() + " send sql:" + rrss.getStatement());
-        }
-        service.executeMultiNode(rrss, session.getShardingService(), autocommit);
     }
 
     public RouteResultsetNode getRrss() {

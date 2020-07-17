@@ -13,6 +13,7 @@ import com.actiontech.dble.plan.node.PlanNode;
 import com.actiontech.dble.plan.node.PlanNode.PlanNodeType;
 import com.actiontech.dble.plan.node.QueryNode;
 import com.actiontech.dble.plan.util.PlanUtil;
+import com.actiontech.dble.singleton.TraceManager;
 import com.alibaba.druid.sql.ast.SQLOrderingSpecification;
 
 import java.util.ArrayList;
@@ -30,9 +31,14 @@ public final class OrderByPusher {
     }
 
     public static PlanNode optimize(PlanNode qtn) {
-        qtn = preOrderByPusher(qtn);
-        qtn = pushOrderBy(qtn);
-        return qtn;
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("optimize-for-order-by");
+        try {
+            qtn = preOrderByPusher(qtn);
+            qtn = pushOrderBy(qtn);
+            return qtn;
+        } finally {
+            TraceManager.finishSpan(traceObject);
+        }
     }
 
     private static PlanNode preOrderByPusher(PlanNode qtn) {
