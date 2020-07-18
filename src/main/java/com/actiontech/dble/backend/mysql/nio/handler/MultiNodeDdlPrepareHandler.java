@@ -105,7 +105,7 @@ public class MultiNodeDdlPrepareHandler extends MultiNodeHandler implements Exec
                 BackendConnection conn = session.getTarget(node);
                 if (session.tryExistsCon(conn, node)) {
                     node.setRunOnSlave(rrs.getRunOnSlave());
-                    innerExecute(conn.getBackendService(), node);
+                    existsConnectionExecute(conn.getBackendService(), node);
                 } else {
                     // create new connection
                     node.setRunOnSlave(rrs.getRunOnSlave());
@@ -116,6 +116,11 @@ public class MultiNodeDdlPrepareHandler extends MultiNodeHandler implements Exec
         } finally {
             TraceManager.finishSpan(session.getShardingService(), traceObject);
         }
+    }
+
+    private void existsConnectionExecute(MySQLResponseService responseService, RouteResultsetNode node) {
+        TraceManager.crossThread(responseService, "execute-in-exists-connection", session.getShardingService());
+        innerExecute(responseService, node);
     }
 
     private void innerExecute(MySQLResponseService responseService, RouteResultsetNode node) {

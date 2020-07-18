@@ -65,26 +65,22 @@ public class BaseSelectHandler extends BaseDMLHandler {
     }
 
     public void execute(MySQLResponseService service) {
-        TraceManager.
-        try {
-            if (session.closed()) {
-                service.setRowDataFlowing(false);
-                session.clearResources(true);
-                return;
-            }
-            service.setSession(session);
-            if (service.getConnection().isClosed()) {
-                service.setRowDataFlowing(false);
-                session.onQueryError("failed or cancelled by other thread".getBytes());
-                return;
-            }
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(service.toString() + " send sql:" + rrss.getStatement());
-            }
-            service.executeMultiNode(rrss, session.getShardingService(), autocommit);
-        } finally {
-
+        TraceManager.crossThread(service, "base-sql-execute", session.getShardingService());
+        if (session.closed()) {
+            service.setRowDataFlowing(false);
+            session.clearResources(true);
+            return;
         }
+        service.setSession(session);
+        if (service.getConnection().isClosed()) {
+            service.setRowDataFlowing(false);
+            session.onQueryError("failed or cancelled by other thread".getBytes());
+            return;
+        }
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(service.toString() + " send sql:" + rrss.getStatement());
+        }
+        service.executeMultiNode(rrss, session.getShardingService(), autocommit);
     }
 
     public RouteResultsetNode getRrss() {

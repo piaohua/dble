@@ -73,7 +73,7 @@ public class MultiNodeDDLExecuteHandler extends MultiNodeQueryHandler {
                 BackendConnection conn = session.getTarget(node);
                 if (session.tryExistsCon(conn, node)) {
                     node.setRunOnSlave(rrs.getRunOnSlave());
-                    innerExecute(conn.getBackendService(), node);
+                    existsConnectionExecute(conn.getBackendService(), node);
                 } else {
                     connRrns.add(node);
                     node.setRunOnSlave(rrs.getRunOnSlave());
@@ -87,10 +87,18 @@ public class MultiNodeDDLExecuteHandler extends MultiNodeQueryHandler {
     }
 
 
+    private void existsConnectionExecute(MySQLResponseService responseService, RouteResultsetNode node) {
+        TraceManager.sessionFinish(responseService);
+        TraceManager.crossThread(responseService, "execute-in-exists-connection", session.getShardingService());
+        innerExecute(responseService, node);
+    }
+
 
 
     @Override
     public void errorResponse(byte[] data, AbstractService service) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-error-response");
+        TraceManager.finishSpan(service, traceObject);
         DDLTraceManager.getInstance().updateConnectionStatus(session.getShardingService(), (MySQLResponseService) service,
                 DDLTraceInfo.DDLConnectionStatus.CONN_EXECUTE_ERROR);
         ErrorPacket errPacket = new ErrorPacket();
@@ -123,6 +131,8 @@ public class MultiNodeDDLExecuteHandler extends MultiNodeQueryHandler {
 
     @Override
     public void connectionClose(AbstractService service, String reason) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-connection-closed");
+        TraceManager.finishSpan(service, traceObject);
         DDLTraceManager.getInstance().updateConnectionStatus(session.getShardingService(), (MySQLResponseService) service,
                 DDLTraceInfo.DDLConnectionStatus.EXECUTE_CONN_CLOSE);
         if (checkClosedConn((MySQLResponseService) service)) {
@@ -167,6 +177,8 @@ public class MultiNodeDDLExecuteHandler extends MultiNodeQueryHandler {
 
     @Override
     public void okResponse(byte[] data, AbstractService service) {
+        TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "get-ok-response");
+        TraceManager.finishSpan(service, traceObject);
         boolean executeResponse = ((MySQLResponseService) service).syncAndExecute();
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("received ok response ,executeResponse:" + executeResponse + " from " + service);
