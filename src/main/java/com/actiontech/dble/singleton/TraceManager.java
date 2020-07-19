@@ -1,5 +1,6 @@
 package com.actiontech.dble.singleton;
 
+import com.actiontech.dble.config.model.SystemConfig;
 import com.actiontech.dble.net.service.AbstractService;
 import com.google.common.collect.ImmutableMap;
 import io.jaegertracing.internal.JaegerTracer;
@@ -12,8 +13,6 @@ import io.jaegertracing.internal.samplers.ProbabilisticSampler;
 import io.jaegertracing.thrift.internal.senders.HttpSender;
 import io.opentracing.Scope;
 import io.opentracing.Span;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +23,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by szf on 2020/5/9.
  */
 public class TraceManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TraceManager.class);
     private static final TraceManager INSTANCE = new TraceManager();
     private final JaegerTracer tracer;
     private final Map<AbstractService, List<TraceObject>> connectionTracerMap = new ConcurrentHashMap<>();
@@ -32,24 +30,27 @@ public class TraceManager {
 
 
     private TraceManager() {
-        final String endPoint = "http://10.186.60.96:14268/api/traces";
+        final String endPoint = SystemConfig.getInstance().getTraceEndPoint();
+        if (endPoint != null) {
+            final CompositeReporter compositeReporter = new CompositeReporter(
+                    new RemoteReporter.Builder()
+                            .withSender(new HttpSender.Builder(endPoint).build())
+                            .build(),
+                    new LoggingReporter()
+            );
 
-        final CompositeReporter compositeReporter = new CompositeReporter(
-                new RemoteReporter.Builder()
-                        .withSender(new HttpSender.Builder(endPoint).build())
-                        .build(),
-                new LoggingReporter()
-        );
+            final Metrics metrics = new Metrics(new NoopMetricsFactory());
 
-        final Metrics metrics = new Metrics(new NoopMetricsFactory());
+            JaegerTracer.Builder builder = new JaegerTracer.Builder("DBLE")
+                    .withReporter(compositeReporter)
+                    .withMetrics(metrics)
+                    .withExpandExceptionLogs()
+                    .withSampler(new ProbabilisticSampler(0.5));
 
-        JaegerTracer.Builder builder = new JaegerTracer.Builder("DBLE")
-                .withReporter(compositeReporter)
-                .withMetrics(metrics)
-                .withExpandExceptionLogs()
-                .withSampler(new ProbabilisticSampler(0.5));
-
-        tracer = builder.build();
+            tracer = builder.build();
+        } else {
+            tracer = null;
+        }
     }
 
     public static JaegerTracer getTracer() {
@@ -58,80 +59,101 @@ public class TraceManager {
 
 
     public static void sessionStart(AbstractService service, String traceMessage) {
-        if (INSTANCE.connectionTracerMap.get(service) == null) {
-            TraceObject traceObject = spanCreateActive(traceMessage, false, null, service);
-            traceObject.span.log(ImmutableMap.of("service detail", service.toBriefString()));
-            List<TraceObject> spanList = new ArrayList<>();
-            spanList.add(traceObject);
-            INSTANCE.connectionTracerMap.put(service, spanList);
+        if (INSTANCE.tracer != null) {
+            if (INSTANCE.connectionTracerMap.get(service) == null) {
+                TraceObject traceObject = spanCreateActive(traceMessage, false, null, service);
+                traceObject.span.log(ImmutableMap.of("service detail", service.toBriefString()));
+                List<TraceObject> spanList = new ArrayList<>();
+                spanList.add(traceObject);
+                INSTANCE.connectionTracerMap.put(service, spanList);
+            }
         }
     }
 
 
     public static void sessionFinish(AbstractService service) {
-        TraceObject object = popServiceSpan(service, true);
-        while (object != null) {
-            TraceManager.finishSpan(object);
-            object = popServiceSpan(service, true);
+        if (INSTANCE.tracer != null) {
+            TraceObject object = popServiceSpan(service, true);
+            while (object != null) {
+                TraceManager.finishSpan(object);
+                object = popServiceSpan(service, true);
+            }
+            INSTANCE.connectionTracerMap.remove(service);
         }
-        INSTANCE.connectionTracerMap.remove(service);
     }
 
     public static void queryFinish(AbstractService service) {
-        TraceObject object = popServiceSpan(service, true);
-        TraceObject object2 = popServiceSpan(service, false);
-        while (object != null && object2 != null) {
-            TraceManager.finishSpan(object);
-            object = popServiceSpan(service, true);
-            object2 = popServiceSpan(service, false);
+        if (INSTANCE.tracer != null) {
+            TraceObject object = popServiceSpan(service, true);
+            TraceObject object2 = popServiceSpan(service, false);
+            while (object != null && object2 != null) {
+                TraceManager.finishSpan(object);
+                object = popServiceSpan(service, true);
+                object2 = popServiceSpan(service, false);
+            }
         }
     }
 
     public static TraceObject serviceTrace(AbstractService service, String traceMessage) {
-        List<TraceObject> spanList = INSTANCE.connectionTracerMap.get(service);
-        INSTANCE.seriveces.set(service);
-        if (spanList != null) {
-            TraceObject fSpan = popServiceSpan(service, false);
-            TraceObject span = spanCreateActive(traceMessage, true, fSpan, service);
-            spanList.add(span);
-            return span;
+        if (INSTANCE.tracer != null) {
+            List<TraceObject> spanList = INSTANCE.connectionTracerMap.get(service);
+            INSTANCE.seriveces.set(service);
+            if (spanList != null) {
+                TraceObject fSpan = popServiceSpan(service, false);
+                TraceObject span = spanCreateActive(traceMessage, true, fSpan, service);
+                spanList.add(span);
+                return span;
+            }
         }
         return null;
     }
 
     public static AbstractService getThreadService() {
-        return INSTANCE.seriveces.get();
+        if (INSTANCE.tracer != null) {
+            return INSTANCE.seriveces.get();
+        } else {
+            return null;
+        }
     }
 
     public static TraceObject crossThread(AbstractService service, String traceMessage, AbstractService fService) {
-        if (fService != null) {
-            TraceObject fSpan = popServiceSpan(fService, false);
-            TraceObject span = spanCreateActive(traceMessage, true, fSpan, service);
-            List<TraceObject> spanList = new ArrayList<>();
-            spanList.add(span);
-            INSTANCE.connectionTracerMap.put(service, spanList);
-            return span;
+        if (INSTANCE.tracer != null) {
+            if (fService != null) {
+                TraceObject fSpan = popServiceSpan(fService, false);
+                TraceObject span = spanCreateActive(traceMessage, true, fSpan, service);
+                List<TraceObject> spanList = new ArrayList<>();
+                spanList.add(span);
+                INSTANCE.connectionTracerMap.put(service, spanList);
+                return span;
+            }
         }
         return null;
     }
 
     public static TraceObject threadTrace(String traceMessage) {
-        TraceObject to = spanCreateActive(traceMessage, true, null, null);
-        return to;
+        if (INSTANCE.tracer != null) {
+            TraceObject to = spanCreateActive(traceMessage, true, null, null);
+            return to;
+        }
+        return null;
     }
 
     public static void finishSpan(AbstractService service, TraceManager.TraceObject to) {
-        TraceObject traceObject = popServiceSpan(service, false);
-        if (to != null && traceObject == to) {
-            traceObject = popServiceSpan(service, true);
-            traceObject.finish();
-            return;
+        if (INSTANCE.tracer != null) {
+            TraceObject traceObject = popServiceSpan(service, false);
+            if (to != null && traceObject == to) {
+                traceObject = popServiceSpan(service, true);
+                traceObject.finish();
+                return;
+            }
         }
     }
 
     public static void finishSpan(TraceObject object) {
-        if (object != null) {
-            object.finish();
+        if (INSTANCE.tracer != null) {
+            if (object != null) {
+                object.finish();
+            }
         }
     }
 
@@ -163,13 +185,11 @@ public class TraceManager {
         return new TraceObject(span, scope, service);
     }
 
-
-    public static void finishList(List<Span> list) {
-        for (int i = list.size() - 1; i >= 0; i--) {
-            list.get(i).finish();
+    public static void log(Map<String, ?> var1, TraceObject traceObject) {
+        if (traceObject != null) {
+            traceObject.log(var1);
         }
     }
-
 
     public static class TraceObject {
         final Scope scope;

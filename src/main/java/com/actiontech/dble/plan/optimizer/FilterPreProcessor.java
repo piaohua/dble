@@ -18,6 +18,7 @@ import com.actiontech.dble.plan.node.PlanNode;
 import com.actiontech.dble.plan.util.FilterUtils;
 import com.actiontech.dble.plan.util.PlanUtil;
 import com.actiontech.dble.singleton.TraceManager;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.*;
 
@@ -38,6 +39,7 @@ public final class FilterPreProcessor {
             qtn = preProcess(qtn);
             return qtn;
         } finally {
+            TraceManager.log(ImmutableMap.of("plan-node", qtn), traceObject);
             TraceManager.finishSpan(traceObject);
         }
     }

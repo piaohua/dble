@@ -292,7 +292,7 @@ public class MySQLResponseService extends MySQLBasedService {
     private void synAndDoExecute(StringBuilder synSQL, RouteResultsetNode rrn, CharsetNames clientCharset) {
         TraceManager.TraceObject traceObject = TraceManager.serviceTrace(this, "syn&do-execute-sql");
         if (synSQL != null && traceObject != null) {
-            traceObject.log(ImmutableMap.of("synSQL", synSQL));
+            TraceManager.log(ImmutableMap.of("synSQL", synSQL), traceObject);
         }
         try {
             if (synSQL == null) {
@@ -546,7 +546,7 @@ public class MySQLResponseService extends MySQLBasedService {
     public void executeMultiNode(RouteResultsetNode rrn, ShardingService service,
                                  boolean isAutoCommit) {
         TraceManager.TraceObject traceObject = TraceManager.serviceTrace(this, "execute-route-multi-result");
-        traceObject.log(ImmutableMap.of("route-result-set", rrn.toString(), "service-detail", this.toString()));
+        TraceManager.log(ImmutableMap.of("route-result-set", rrn.toString(), "service-detail", this.toString()), traceObject);
         try {
             String xaTxId = getConnXID(session.getSessionXaID(), rrn.getMultiplexNum().longValue());
             if (!service.isAutocommit() && !service.isTxStart() && rrn.isModifySQL()) {
@@ -562,7 +562,7 @@ public class MySQLResponseService extends MySQLBasedService {
     public void execute(RouteResultsetNode rrn, ShardingService service,
                         boolean isAutoCommit) {
         TraceManager.TraceObject traceObject = TraceManager.serviceTrace(this, "execute-route-result");
-        traceObject.log(ImmutableMap.of("route-result-set", rrn, "service-detail", this.compactInfo()));
+        TraceManager.log(ImmutableMap.of("route-result-set", rrn, "service-detail", this.compactInfo()), traceObject);
         try {
             String xaTxId = getConnXID(session.getSessionXaID(), rrn.getMultiplexNum().longValue());
             if (!service.isAutocommit() && !service.isTxStart() && rrn.isModifySQL()) {

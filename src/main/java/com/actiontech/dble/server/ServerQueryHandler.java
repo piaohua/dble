@@ -47,7 +47,7 @@ public class ServerQueryHandler implements FrontendQueryHandler {
             LOGGER.debug(service + sql);
         }
         TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "handle-query-sql");
-        traceObject.log(ImmutableMap.of("sql", sql));
+        TraceManager.log(ImmutableMap.of("sql", sql), traceObject);
         try {
             if (service.getSession2().isKilled()) {
                 LOGGER.info("sql[" + sql + "] is killed.");

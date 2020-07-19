@@ -235,7 +235,7 @@ public class ProxyMetaManager {
 
     public TableMeta getSyncTableMeta(String schema, String tbName) throws SQLNonTransientException {
         TraceManager.TraceObject traceObject = TraceManager.threadTrace("get-sync-meta");
-        traceObject.log(ImmutableMap.of("schema", schema, "table", tbName));
+        TraceManager.log(ImmutableMap.of("schema", schema, "table", tbName), traceObject);
         try {
             while (true) {
                 int oldVersion = version.get();
@@ -266,7 +266,7 @@ public class ProxyMetaManager {
 
     public PlanNode getSyncView(String schema, String vName) throws SQLNonTransientException {
         TraceManager.TraceObject traceObject = TraceManager.threadTrace("get-sync-view");
-        traceObject.log(ImmutableMap.of("schema", schema, "table", vName));
+        TraceManager.log(ImmutableMap.of("schema", schema, "table", vName), traceObject);
         try {
             while (true) {
                 int oldVersion = version.get();

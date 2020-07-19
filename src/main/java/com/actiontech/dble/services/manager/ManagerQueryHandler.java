@@ -36,7 +36,7 @@ public class ManagerQueryHandler {
             LOGGER.debug(String.valueOf(service) + sql);
         }
         TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "manager-query-handle");
-        traceObject.log(ImmutableMap.of("sql", sql));
+        TraceManager.log(ImmutableMap.of("sql", sql), traceObject);
         try {
             int rs = ManagerParse.parse(sql);
             int sqlType = rs & 0xff;

@@ -15,6 +15,7 @@ import com.actiontech.dble.plan.node.MergeNode;
 import com.actiontech.dble.plan.node.PlanNode;
 import com.actiontech.dble.plan.util.PlanUtil;
 import com.actiontech.dble.singleton.TraceManager;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.*;
 
@@ -33,6 +34,7 @@ public final class SelectedProcessor {
             qtn = pushSelected(qtn, new HashSet<Item>());
             return qtn;
         } finally {
+            TraceManager.log(ImmutableMap.of("plan-node", qtn), traceObject);
             TraceManager.finishSpan(traceObject);
         }
     }

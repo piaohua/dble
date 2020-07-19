@@ -15,6 +15,7 @@ import com.actiontech.dble.plan.node.QueryNode;
 import com.actiontech.dble.plan.util.PlanUtil;
 import com.actiontech.dble.singleton.TraceManager;
 import com.alibaba.druid.sql.ast.SQLOrderingSpecification;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -37,6 +38,7 @@ public final class OrderByPusher {
             qtn = pushOrderBy(qtn);
             return qtn;
         } finally {
+            TraceManager.log(ImmutableMap.of("plan-node", qtn), traceObject);
             TraceManager.finishSpan(traceObject);
         }
     }

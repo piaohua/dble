@@ -8,6 +8,7 @@ package com.actiontech.dble.plan.optimizer;
 import com.actiontech.dble.plan.node.JoinNode;
 import com.actiontech.dble.plan.node.PlanNode;
 import com.actiontech.dble.singleton.TraceManager;
+import com.google.common.collect.ImmutableMap;
 
 public final class JoinPreProcessor {
     private JoinPreProcessor() {
@@ -19,6 +20,7 @@ public final class JoinPreProcessor {
             qtn = findAndChangeRightJoinToLeftJoin(qtn);
             return qtn;
         } finally {
+            TraceManager.log(ImmutableMap.of("plan-node", qtn), traceObject);
             TraceManager.finishSpan(traceObject);
         }
     }

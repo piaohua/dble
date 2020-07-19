@@ -17,6 +17,7 @@ import com.actiontech.dble.plan.node.QueryNode;
 import com.actiontech.dble.plan.util.FilterUtils;
 import com.actiontech.dble.plan.util.PlanUtil;
 import com.actiontech.dble.singleton.TraceManager;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -74,6 +75,7 @@ public final class FilterPusher {
             qtn = pushFilter(qtn, new ArrayList<Item>());
             return qtn;
         } finally {
+            TraceManager.log(ImmutableMap.of("plan-node", qtn), traceObject);
             TraceManager.finishSpan(traceObject);
         }
     }

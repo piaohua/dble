@@ -441,7 +441,7 @@ public class NonBlockingSession implements Session {
     @Override
     public void execute(RouteResultset rrs) {
         TraceManager.TraceObject traceObject = TraceManager.serviceTrace(shardingService, "execute-sql-for-sharding");
-        traceObject.log(ImmutableMap.of("route-result-set", rrs));
+        TraceManager.log(ImmutableMap.of("route-result-set", rrs), traceObject);
         try {
             if (killed) {
                 shardingService.writeErrMessage(ErrorCode.ER_QUERY_INTERRUPTED, "The query is interrupted.");
@@ -557,7 +557,7 @@ public class NonBlockingSession implements Session {
                 shardingService.writeErrMessage(ErrorCode.ERR_HANDLE_DATA, e.toString());
             }
         } finally {
-            traceObject.log(ImmutableMap.of("executableHandler", executableHandler));
+            TraceManager.log(ImmutableMap.of("executableHandler", executableHandler), traceObject);
             TraceManager.finishSpan(traceObject);
         }
     }
@@ -862,7 +862,7 @@ public class NonBlockingSession implements Session {
             }
             return false;
         } finally {
-            traceObject.finish();
+            TraceManager.finishSpan(traceObject);
         }
     }
 

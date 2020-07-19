@@ -67,7 +67,7 @@ public class SQLJob implements ResponseHandler, Runnable, Cloneable {
 
     public void run() {
         TraceManager.TraceObject traceObject = TraceManager.threadTrace("sql-job-start");
-        traceObject.log(ImmutableMap.of("sql", sql));
+        TraceManager.log(ImmutableMap.of("sql", sql), traceObject);
         try {
             if (ds == null) {
                 RouteResultsetNode node = new RouteResultsetNode(shardingNode, ServerParse.SELECT, sql);

@@ -92,7 +92,7 @@ public class DefaultRouteStrategy extends AbstractRouteStrategy {
         service.getSession2().endParse();
         DruidParser druidParser = DruidParserFactory.create(statement, rrs.getSqlType());
         TraceManager.TraceObject traceObject = TraceManager.serviceTrace(service, "simple-route-detail");
-        traceObject.log(ImmutableMap.of("druidParser", druidParser.getClass().toString()));
+        TraceManager.log(ImmutableMap.of("druidParser", druidParser.getClass().toString()), traceObject);
         try {
             return RouterUtil.routeFromParser(druidParser, schema, rrs, statement, new ServerSchemaStatVisitor(), service, isExplain);
         } finally {

@@ -115,7 +115,7 @@ public final class RouteService {
             return rrs;
         } finally {
             if (rrs != null) {
-                traceObject.log(ImmutableMap.of("route-result-set", rrs));
+                TraceManager.log(ImmutableMap.of("route-result-set", rrs), traceObject);
             }
             TraceManager.finishSpan(service, traceObject);
         }

@@ -8,13 +8,14 @@ package com.actiontech.dble.plan.optimizer;
 import com.actiontech.dble.plan.node.JoinNode;
 import com.actiontech.dble.plan.node.PlanNode;
 import com.actiontech.dble.singleton.TraceManager;
+import com.google.common.collect.ImmutableMap;
 
 public final class JoinERProcessor {
     private JoinERProcessor() {
     }
 
     public static PlanNode optimize(PlanNode qtn) {
-        TraceManager.TraceObject traceObject = TraceManager.threadTrace("optimize-re-push-down");
+        TraceManager.TraceObject traceObject = TraceManager.threadTrace("optimize-er-relation");
         try {
             if (qtn instanceof JoinNode) {
                 qtn = new ERJoinChooser((JoinNode) qtn).optimize();
@@ -26,6 +27,7 @@ public final class JoinERProcessor {
             }
             return qtn;
         } finally {
+            TraceManager.log(ImmutableMap.of("plan-node", qtn), traceObject);
             TraceManager.finishSpan(traceObject);
         }
     }

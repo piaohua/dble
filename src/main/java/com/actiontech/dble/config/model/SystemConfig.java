@@ -156,6 +156,7 @@ public final class SystemConfig {
     private int flowControlStartThreshold = 4096;
     private int flowControlStopThreshold = 256;
     private boolean useOuterHa = true;
+    private String traceEndPoint = null;
     private String fakeMySQLVersion = null;
 
     public int getTransactionRotateSize() {
@@ -1148,6 +1149,15 @@ public final class SystemConfig {
         this.fakeMySQLVersion = mysqlVersion;
     }
 
+    public String getTraceEndPoint() {
+        return traceEndPoint;
+    }
+
+    @SuppressWarnings("unused")
+    public void setTraceEndPoint(String traceEndPoint) {
+        this.traceEndPoint = traceEndPoint;
+    }
+
     @Override
     public String toString() {
         return "SystemConfig [" +
@@ -1228,6 +1238,7 @@ public final class SystemConfig {
                 ", flowControlStopThreshold=" + flowControlStopThreshold +
                 ", useOuterHa=" + useOuterHa +
                 ", fakeMySQLVersion=" + fakeMySQLVersion +
+                ", traceEndPoint=" + traceEndPoint +
                 "]";
     }
 }

@@ -11,6 +11,7 @@ import com.actiontech.dble.plan.node.PlanNode;
 import com.actiontech.dble.plan.node.PlanNode.PlanNodeType;
 import com.actiontech.dble.plan.util.PlanUtil;
 import com.actiontech.dble.singleton.TraceManager;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,6 +26,7 @@ public final class GlobalTableProcessor {
             initGlobalStatus(qtn);
             return qtn;
         }finally {
+            TraceManager.log(ImmutableMap.of("plan-node", qtn), traceObject);
             TraceManager.finishSpan(traceObject);
         }
     }
